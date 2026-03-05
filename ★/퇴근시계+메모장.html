@@ -57,14 +57,11 @@
       padding: 40px;
       text-align: center;
     }
-    #countdown {
-      font-size: 2em;
-      margin-bottom: 30px;
-    }
+    /* 카운트다운 관련 스타일 제거됨 */
     #schedule {
       width: 100%;
       max-width: 500px;
-      height: 200px;
+      height: 300px; /* 입력창을 조금 더 키웠습니다 */
       font-size: 1em;
       padding: 10px;
       border: 1px solid #ccc;
@@ -128,11 +125,9 @@
   </div>
 
   <div id="main">
-    <h1>⏰ 퇴근까지 남은 시간</h1>
-    <div id="countdown">계산 중...</div>
-
+    <h1>🗓 업무 정리 메모</h1>
+    
     <div>
-      <label for="schedule">🗓 오늘 일정 메모</label>
       <div id="todayDate"></div>
       <textarea id="schedule" placeholder="오늘 할 일을 적어보세요!"></textarea><br>
       <button id="saveBtn">저장</button>
@@ -166,22 +161,7 @@
     return `📅 ${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${dayNames[d.getDay()]})`;
   }
 
-  function updateCountdown() {
-    const now = new Date();
-    const end = new Date();
-    end.setHours(18, 30, 0, 0); // 퇴근 시간 설정 (18:30)
-    
-    if (now > end) {
-      document.getElementById("countdown").innerText = "🎉 퇴근했어요!";
-      return;
-    }
-    const diff = end - now;
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    document.getElementById("countdown").innerText =
-      `${hours}시간 ${minutes}분 ${seconds}초 남음`;
-  }
+  // updateCountdown 함수 제거됨
 
   function loadMemo(dateKey) {
     currentDate = dateKey;
@@ -246,10 +226,8 @@
     });
   }
 
-  // 저장 버튼
   saveBtn.addEventListener("click", saveMemo);
 
-  // 단축키: 저장(Ctrl+S), 백업(Ctrl+Shift+S)
   document.addEventListener("keydown", function (e) {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
       e.preventDefault();
@@ -261,12 +239,10 @@
     }
   });
 
-  // 다크모드 토글
   toggleDarkModeBtn.addEventListener("click", () => {
     document.body.classList.toggle("dark-mode");
   });
 
-  // 수동 백업 기능
   backupBtn.addEventListener("click", function () {
     const allMemos = {};
     Object.keys(localStorage).forEach(key => {
@@ -285,7 +261,6 @@
     URL.revokeObjectURL(url);
   });
 
-  // 복원 기능
   restoreBtn.addEventListener("click", () => restoreInput.click());
 
   restoreInput.addEventListener("change", function () {
@@ -310,7 +285,6 @@
     reader.readAsText(file);
   });
 
-  // 글머리 기호 처리 (Tab)
   schedule.addEventListener("keydown", function (e) {
     const cursor = schedule.selectionStart;
     const value = schedule.value;
@@ -346,15 +320,12 @@
     }
   });
 
-  // 날짜 검색
   searchInput.addEventListener("input", updateDateList);
 
-  // 초기화
+  // 초기화 부분에서 카운트다운 관련 호출 제거
   todayDateEl.textContent = displayDate(currentDate);
   schedule.value = localStorage.getItem("memo_" + currentDate) || "";
   updateDateList();
-  updateCountdown();
-  setInterval(updateCountdown, 1000);
 </script>
 
 </body>
