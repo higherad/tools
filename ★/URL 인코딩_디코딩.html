@@ -1,114 +1,191 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>URL 인코딩/디코딩 도구</title>
-<style>
-  :root{
-    --bg:#f4f6f9; --card:#fff; --text:#1f2937; --muted:#6b7280;
-    --primary:#2e7d32; --primary-d:#256628;
-    --blue:#1976d2; --blue-d:#0d47a1;
-    --gray:#6b7280; --gray-d:#4b5563;
-    --radius:14px; --radius-sm:10px;
-    --gap-lg:24px; --gap-md:14px; --gap-sm:8px;
-    --shadow:0 6px 22px rgba(0,0,0,.08);
-    --border:#e5e7eb;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>URL 인코딩/디코딩 도구</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <style>
+    :root {
+      --primary: #2e7d32;
+      --primary-dark: #1b5e20;
+      --blue: #1976d2;
+      --blue-dark: #0d47a1;
+      --bg: #f8f9fa;
+      --card: #ffffff;
+      --border: #e0e0e0;
+      --text: #333;
+      --muted: #666;
+      --radius: 12px;
+      --shadow: 0 8px 30px rgba(0,0,0,0.05);
+    }
 
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; padding:40px 16px; display:flex; justify-content:center; align-items:flex-start;
-    background:var(--bg); color:var(--text); font-family:"Noto Sans KR",system-ui,Arial,sans-serif;
-  }
-  .container{
-    width:100%; max-width:720px; background:var(--card);
-    border-radius:var(--radius); box-shadow:var(--shadow);
-    padding:28px; 
-  }
+    * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
+    body {
+      margin: 0; padding: 40px 20px;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex; justify-content: center;
+    }
 
-  h1{
-    margin:0 0 var(--gap-lg); text-align:center; font-size:22px; font-weight:800; color:var(--primary);
-  }
+    .container {
+      width: 100%; max-width: 800px;
+      background: var(--card);
+      padding: 32px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(0,0,0,0.03);
+    }
 
-  .stack{display:flex; flex-direction:column; gap:var(--gap-lg)}
-  .field{display:flex; flex-direction:column; gap:var(--gap-sm)}
-  .label{font-weight:700; font-size:14px; color:#374151}
+    h2 {
+      margin-top: 0;
+      color: var(--primary);
+      font-size: 24px;
+      text-align: center;
+      margin-bottom: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
 
-  textarea{
-    width:100%; min-height:120px;
-    padding:14px 16px; line-height:1.6; font-size:15px;
-    border-radius:var(--radius-sm); border:1px solid var(--border);
-    background:#fafafa; color:#111827; resize:vertical; transition:.2s;
-  }
-  textarea:focus{outline:none; border-color:var(--primary); background:#fff}
+    .field-group {
+      margin-bottom: 24px;
+    }
 
-  .btns{
-    display:flex; justify-content:center; gap:16px; flex-wrap:wrap;
-  }
-  button{
-    appearance:none; border:0; border-radius:10px; padding:10px 18px;
-    font-weight:700; font-size:14px; cursor:pointer; transition:.2s;
-    color:#fff;
-  }
-  .encode{background:var(--primary)} .encode:hover{background:var(--primary-d)}
-  .decode{background:var(--blue)}   .decode:hover{background:var(--blue-d)}
-  .clear{background:var(--gray)}    .clear:hover{background:var(--gray-d)}
+    .label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: var(--muted);
+      margin-left: 4px;
+    }
 
-  /* 결과 영역 높이만 살짝 크게 */
-  #result{min-height:140px; font-family:Consolas,ui-monospace,monospace}
+    textarea {
+      width: 100%;
+      min-height: 160px;
+      padding: 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: #fafafa;
+      font-size: 15px;
+      line-height: 1.6;
+      resize: vertical;
+      transition: all 0.2s ease;
+    }
 
-  /* 모바일 여백 균일화 */
-  @media (max-width:480px){
-    body{padding:20px 12px}
-    .container{padding:20px}
-  }
-</style>
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.1);
+    }
+
+    .btn-container {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    button {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: white;
+    }
+
+    .btn-encode { background-color: var(--primary); }
+    .btn-encode:hover { background-color: var(--primary-dark); transform: translateY(-1px); }
+    
+    .btn-decode { background-color: var(--blue); }
+    .btn-decode:hover { background-color: var(--blue-dark); transform: translateY(-1px); }
+
+    .btn-clear { 
+      background-color: #f1f3f4; 
+      color: #5f6368;
+      border: 1px solid #dadce0;
+    }
+    .btn-clear:hover { background-color: #e8eaed; }
+
+    #result {
+      background: #fdfdfd;
+      font-family: 'Consolas', 'Monaco', monospace;
+      color: #1a1a1a;
+      border-color: var(--border);
+    }
+
+    .info-text {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 480px) {
+      .btn-container { flex-direction: column; }
+      body { padding: 20px 15px; }
+    }
+  </style>
 </head>
 <body>
-  <main class="container">
-    <h1>URL 인코딩/디코딩 도구</h1>
-    <section class="stack">
-      <div class="field">
-        <span class="label">텍스트 입력</span>
-        <textarea id="inputText" placeholder="여기에 URL 또는 텍스트를 입력하세요."></textarea>
-      </div>
 
-      <div class="btns">
-        <button class="encode" onclick="encodeURL()">🔒 인코딩</button>
-        <button class="decode" onclick="decodeURL()">🔓 디코딩</button>
-        <button class="clear"  onclick="clearText()">🧹 지우기</button>
-      </div>
+<div class="container">
+  <h2>🔗 URL 인코딩/디코딩</h2>
+  
+  <div class="field-group">
+    <span class="label">입력 텍스트</span>
+    <textarea id="inputText" placeholder="인코딩 또는 디코딩할 URL/텍스트를 입력하세요..."></textarea>
+  </div>
 
-      <div class="field">
-        <span class="label">결과</span>
-        <textarea id="result" readonly placeholder="결과가 여기에 표시됩니다."></textarea>
-      </div>
-    </section>
-  </main>
+  <div class="btn-container">
+    <button class="btn-encode" onclick="encodeURL()">🔒 인코딩</button>
+    <button class="btn-decode" onclick="decodeURL()">🔓 디코딩</button>
+    <button class="btn-clear" onclick="clearText()">🧹 초기화</button>
+  </div>
+
+  <div class="field-group">
+    <span class="label">결과</span>
+    <textarea id="result" readonly placeholder="결과가 여기에 표시됩니다..."></textarea>
+  </div>
+
+  <p class="info-text">* 특수문자 및 한글이 포함된 URL을 안전하게 변환합니다.</p>
+</div>
 
 <script>
-  const $ = (id)=>document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
 
-  function encodeURL(){
+  function encodeURL() {
     const v = $("inputText").value;
+    if(!v.trim()) return;
     $("result").value = encodeURIComponent(v);
   }
 
-  function decodeURL(){
+  function decodeURL() {
     const v = $("inputText").value;
-    try{
+    if(!v.trim()) return;
+    try {
       $("result").value = decodeURIComponent(v);
-    }catch(e){
-      $("result").value = "⚠️ 오류: 유효하지 않은 인코딩 문자열입니다.";
+    } catch (e) {
+      $("result").value = "⚠️ 오류: 유효하지 않은 인코딩 문자열입니다. 형식을 확인해주세요.";
     }
   }
 
-  function clearText(){
+  function clearText() {
     $("inputText").value = "";
     $("result").value = "";
+    $("inputText").focus();
   }
 </script>
+
 </body>
 </html>
