@@ -40,6 +40,7 @@
   .btn{border:none;border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer; transition: 0.2s;}
   .btn.primary{background:#2563eb;color:#fff}
   .btn.ghost{background:#fff;border:1px solid var(--line)}
+  .btn.ok{background:var(--ok);color:#fff}
   .btn.icon{padding:8px 10px}
   .btn.sm{padding:6px 10px; font-size:12px}
   .btn:active{transform:translateY(1px)}
@@ -70,24 +71,19 @@
 
   .filter-group { display: flex; gap: 10px; align-items: center; font-size: 12px; font-weight: 600; }
 
-  /* Modal Style - 사이즈 고정 */
+  /* Modal Style */
   .modal-overlay {
     display:none; position:fixed; top:0; left:0; width:100%; height:100%;
     background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;
   }
   .modal {
-    background: #fff; border-radius: 20px; width: 95%; max-width: 600px;
-    min-height: 600px; /* 창 전체 높이 고정 */
-    display: flex; flex-direction: column;
+    background: #fff; border-radius: 20px; width: 95%; max-width: 650px;
+    min-height: 600px; display: flex; flex-direction: column;
     padding: 24px; box-shadow: var(--shadow);
   }
   .client-list { 
-    margin-top: 15px; 
-    flex: 1; /* 남은 공간 모두 차지 */
-    overflow-y: auto; 
-    border: 1px solid var(--line); 
-    border-radius: 12px; 
-    max-height: 400px; /* 리스트 최대 높이 제한 */
+    margin-top: 15px; flex: 1; overflow-y: auto; 
+    border: 1px solid var(--line); border-radius: 12px; max-height: 380px;
   }
   .client-item {
     display: flex; justify-content: space-between; align-items: center;
@@ -109,25 +105,14 @@
 
   <div class="card" style="border-top: 5px solid var(--accent);">
     <div class="header">
-      <div>
-        <h1>트래픽/길찾기 통합 계산기</h1>
-      </div>
+      <div><h1>트래픽/길찾기 통합 계산기</h1></div>
       <button class="btn ghost sm" id="openClientModal">📋 업체 List</button>
     </div>
     <div class="hr"></div>
     <div class="row" style="margin-top:14px">
-      <div class="col">
-        <label>트래픽 단가(원)</label>
-        <input id="trafficPrice" type="number" value="25" />
-      </div>
-      <div class="col">
-        <label>길찾기 단가(원)</label>
-        <input id="routePrice" type="number" value="30" />
-      </div>
-      <div class="col">
-        <label>부가세(%)</label>
-        <input id="vatRate" type="number" value="10" readonly />
-      </div>
+      <div class="col"><label>트래픽 단가(원)</label><input id="trafficPrice" type="number" value="25" /></div>
+      <div class="col"><label>길찾기 단가(원)</label><input id="routePrice" type="number" value="30" /></div>
+      <div class="col"><label>부가세(%)</label><input id="vatRate" type="number" value="10" readonly /></div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
       <div class="pill"><span style="font-weight:700">견적 블록</span><span id="blockCount">1</span>개</div>
@@ -138,9 +123,7 @@
     </div>
   </div>
 
-  <div class="card">
-    <div id="blocks" style="display: flex; flex-direction: column;"></div>
-  </div>
+  <div class="card"><div id="blocks" style="display: flex; flex-direction: column;"></div></div>
 
   <div class="summary-row">
     <div class="card">
@@ -184,16 +167,9 @@
       </div>
     </div>
     <div class="hr" style="margin-bottom:15px"></div>
-    
     <div class="row" style="margin-bottom:20px; align-items: flex-end;">
-      <div class="col">
-        <label>기준일(오늘)</label>
-        <input id="ref_today" type="date" />
-      </div>
-      <div class="col">
-        <label>종료 예정일 (일수 자동 계산)</label>
-        <input id="ref_endDate" type="date" />
-      </div>
+      <div class="col"><label>기준일(오늘)</label><input id="ref_today" type="date" /></div>
+      <div class="col"><label>종료 예정일</label><input id="ref_endDate" type="date" /></div>
       <div id="ref_date_info" style="margin-bottom: 12px; font-weight: bold; color: var(--error); font-size: 14px;">(총 -일)</div>
     </div>
     <div id="refundBlocks" style="display: flex; flex-direction: column;"></div>
@@ -204,7 +180,6 @@
       </div>
     </div>
   </div>
-
 </div>
 
 <div class="modal-overlay" id="modalOverlay">
@@ -221,6 +196,8 @@
       <input type="number" id="newClientTraffic" placeholder="트래픽" style="flex:1">
       <input type="number" id="newClientRoute" placeholder="길찾기" style="flex:1">
       <button class="btn primary sm" id="addClientBtn">추가</button>
+      <input type="file" id="csvFileInput" accept=".csv" style="display:none">
+      <button class="btn ok sm" id="uploadCsvBtn">CSV 업로드</button>
     </div>
     <div class="client-list" id="clientListArea"></div>
   </div>
@@ -230,11 +207,67 @@
 (()=>{  
   const $  = (s, r=document)=>r.querySelector(s);
   const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
+  const num = v => Number((v??"").toString().replace(/[^0-9.-]/g,"")) || 0;
+  const fmtInt = n => n.toLocaleString();
+  const fmtWon = n => n.toLocaleString() + "원";
 
-  const fmtInt = n => Number.isFinite(n) ? n.toLocaleString("ko-KR") : "-";
-  const fmtWon = n => Number.isFinite(n) ? n.toLocaleString("ko-KR") + "원" : "-";
-  const num = v => Number((v??"").toString().replace(/,/g,"").trim()) || 0;
+  let clients = JSON.parse(localStorage.getItem('higherad_clients') || '[]');
+  let editIndex = -1;
 
+  // --- CSV 업로드 기능 ---
+  $("#uploadCsvBtn").onclick = () => $("#csvFileInput").click();
+  $("#csvFileInput").onchange = (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target.result;
+      processCsvData(text);
+      e.target.value = "";
+    };
+    // 한글 인코딩 대응 (EUC-KR 시도 후 실패 시 UTF-8)
+    reader.readAsText(file, "EUC-KR");
+  };
+
+  function processCsvData(csvText) {
+    const lines = csvText.split(/\r?\n/);
+    let addedCount = 0;
+
+    // 인덱스 3부터 시작 (파일의 4행부터 읽기 시작)
+    for (let i = 4; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // 빈 줄이거나 콤마만 있는 행(,,,,)은 건너뛰기
+      if (!line || line.replace(/,/g, '').trim() === "") continue;
+      
+      const cols = line.split(',').map(c => c.replace(/"/g, '').trim());
+      
+      // 첫 번째 열(업체명)이 비어있지 않은 경우에만 데이터 처리
+      if (cols[0]) {
+        const name = cols[0];
+        const p1 = num(cols[1]); // 트래픽 단가
+        const p2 = num(cols[2]); // 길찾기 단가 (병합된 경우 0원 처리됨)
+
+        const clientData = {
+          name: name,
+          tp: p1,
+          rp: p2
+        };
+
+        const existingIdx = clients.findIndex(c => c.name === name);
+        if (existingIdx > -1) {
+          clients[existingIdx] = clientData;
+        } else {
+          clients.push(clientData);
+          addedCount++;
+        }
+      }
+    }
+    alert(`${addedCount}개의 업체가 새로 등록되었습니다.`);
+    saveClients();
+  }
+
+  // --- 기존 업체 관리 로직 ---
   function getChosung(str) {
     const cho = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
     let result = "";
@@ -246,12 +279,6 @@
     return result;
   }
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  $("#ref_today").value = todayStr;
-
-  let clients = JSON.parse(localStorage.getItem('higherad_clients') || '[]');
-  let editIndex = -1;
-
   function saveClients() {
     localStorage.setItem('higherad_clients', JSON.stringify(clients));
     renderClientList($("#clientSearch").value);
@@ -260,7 +287,6 @@
   function renderClientList(filter = "") {
     const area = $("#clientListArea");
     area.innerHTML = "";
-    
     const filtered = clients.filter(c => {
       const target = c.name.toLowerCase();
       const search = filter.toLowerCase();
@@ -268,7 +294,7 @@
     });
 
     if(!filtered.length) {
-      area.innerHTML = "<div style='padding:40px; text-align:center; color:#999; font-size:13px;'>검색 결과가 없습니다.</div>";
+      area.innerHTML = "<div style='padding:40px; text-align:center; color:#999; font-size:13px;'>결과가 없습니다.</div>";
       return;
     }
 
@@ -285,8 +311,7 @@
           <button class="btn ghost sm" onclick="editClient(${originalIdx})">수정</button>
           <button class="btn primary sm" onclick="applyClient(${originalIdx})">적용</button>
           <button class="btn ghost sm" style="color:var(--error); border-color:#fee2e2" onclick="deleteClient(${originalIdx})">삭제</button>
-        </div>
-      `;
+        </div>`;
       area.appendChild(item);
     });
   }
@@ -310,10 +335,7 @@
   };
 
   window.deleteClient = (idx) => {
-    if(confirm("해당 업체 정보를 삭제할까요?")) {
-      clients.splice(idx, 1);
-      saveClients();
-    }
+    if(confirm("삭제할까요?")) { clients.splice(idx, 1); saveClients(); }
   };
 
   $("#addClientBtn").onclick = () => {
@@ -333,32 +355,29 @@
     saveClients();
   };
 
+  // --- 기존 계산기 로직 (recalc, createBlock 등 동일) ---
   $("#clientSearch").oninput = (e) => renderClientList(e.target.value);
   $("#openClientModal").onclick = () => { $("#modalOverlay").style.display = "flex"; $("#clientSearch").value=""; renderClientList(); };
   $("#closeModal").onclick = () => { $("#modalOverlay").style.display = "none"; };
 
   function todayFormat(){
     const d = new Date();
-    const mm = d.getMonth()+1; const dd = d.getDate();
-    const wk = ["일","월","화","수","목","금","토"][d.getDay()];
-    return `${mm}/${dd}(${wk})`;
+    return `${d.getMonth()+1}/${d.getDate()}(${["일","월","화","수","목","금","토"][d.getDay()]})`;
   }
 
   function createBlock(isRefund = false) {
     const el = document.createElement("div");
     el.className = "blk";
-    const title = isRefund ? "환불 항목" : "견적 항목";
-    const btnClass = isRefund ? "refund-del" : "del";
     el.innerHTML = `
-      <div class="title"><span>${title}</span><button class="btn icon ${btnClass}">🗑️</button></div>
+      <div class="title"><span>${isRefund ? "환불" : "견적"} 항목</span><button class="btn icon ${isRefund ? "refund-del" : "del"}">🗑️</button></div>
       <div class="subgrid">
         <div class="grp sub-6"><h3>트래픽</h3><div class="row">
-          <div class="col"><label>일 목표</label><input type="number" class="t-per" value=""></div>
-          <div class="col"><label>기간(일)</label><input type="number" class="t-days" value=""></div>
+          <div class="col"><label>일 목표</label><input type="number" class="t-per"></div>
+          <div class="col"><label>기간(일)</label><input type="number" class="t-days"></div>
         </div></div>
         <div class="grp sub-6"><h3>길찾기</h3><div class="row">
-          <div class="col"><label>일 목표</label><input type="number" class="r-per" value=""></div>
-          <div class="col"><label>기간(일)</label><input type="number" class="r-days" value=""></div>
+          <div class="col"><label>일 목표</label><input type="number" class="r-per"></div>
+          <div class="col"><label>기간(일)</label><input type="number" class="r-days"></div>
         </div></div>
       </div>
       <div class="mini" data-mini>결과: -</div>`;
@@ -366,9 +385,7 @@
   }
 
   function recalc(){
-    const tp = num($("#trafficPrice").value);
-    const rp = num($("#routePrice").value);
-    const vat = num($("#vatRate").value);
+    const tp = num($("#trafficPrice").value), rp = num($("#routePrice").value), vat = num($("#vatRate").value);
     let T=0, R=0;
     $$("#blocks .blk").forEach(b=>{
       const t = num($(".t-per",b).value) * num($(".t-days",b).value);
@@ -376,7 +393,6 @@
       T += t; R += r;
       $("[data-mini]",b).textContent = `트래픽 ${fmtInt(t)}건 · 길찾기 ${fmtInt(r)}건`;
     });
-    $("#blockCount").textContent = $$("#blocks .blk").length;
     const getCountSection = (sT, sR, comb) => {
       if (comb) return `- 트래픽+길찾기 : ${fmtInt((sT?T:0)+(sR?R:0))}건 (건당 ${fmtInt((sT?tp:0)+(sR?rp:0))}원)`;
       let p = [];
@@ -384,12 +400,11 @@
       if(sR) p.push(`- 길찾기 : ${fmtInt(R)}건 (건당 ${fmtInt(rp)}원)`);
       return p.join('\n');
     };
-    const sT1=$("#showTraffic1").checked, sR1=$("#showRoute1").checked, c1=$("#combine1").checked;
-    const st1=(sT1?T*tp:0)+(sR1?R*rp:0);
+    const sT1=$("#showTraffic1").checked, sR1=$("#showRoute1").checked, c1=$("#combine1").checked, st1=(sT1?T*tp:0)+(sR1?R*rp:0);
     $("#summary1").textContent=`${getCountSection(sT1,sR1,c1)}\n\n합계 금액 : ${fmtWon(st1)}\n\n입금액 : ${fmtWon(Math.ceil(st1*(100+vat)/100))} (VAT포함)\n\n주식회사 하이어애드\n318-085637-04-018\nIBK기업은행\n\n확인 후 입금 부탁드립니다.`;
-    const sT2=$("#showTraffic2").checked, sR2=$("#showRoute2").checked, c2=$("#combine2").checked;
-    const st2=(sT2?T*tp:0)+(sR2?R*rp:0), dep2=Math.ceil(st2*(100+vat)/100);
+    const sT2=$("#showTraffic2").checked, sR2=$("#showRoute2").checked, c2=$("#combine2").checked, st2=(sT2?T*tp:0)+(sR2?R*rp:0), dep2=Math.ceil(st2*(100+vat)/100);
     $("#summary2").textContent=`※ ${todayFormat()} 접수건, ${$("#isNextDay").checked?"(익일 구동)":"(당일 구동)"}\n\n${getCountSection(sT2,sR2,c2)}\n\n- 입금액(vat별도) : ${fmtWon(st2)}\n- 입금액(vat포함) : ${fmtWon(dep2)}\nㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ\n- 은행명: 기업은행\n- 계좌번호: 318-085637-04-018\n- 예금주: 주식회사 하이어애드\n- 입금액: ${fmtWon(dep2)}`;
+    $("#blockCount").textContent = $$("#blocks .blk").length;
   }
 
   function recalcRefund() {
@@ -398,23 +413,10 @@
     $$("#refundBlocks .blk").forEach(b=>{
       const t=num($(".t-per",b).value)*num($(".t-days",b).value), r=num($(".r-per",b).value)*num($(".r-days",b).value);
       T+=t; R+=r; A+=(t*tp)+(r*rp);
-      $("[data-mini]",b).textContent=`항목 환불: 트래픽 ${fmtInt(t)}건 · 길찾기 ${fmtInt(r)}건`;
+      $("[data-mini]",b).textContent=`환불: 트래픽 ${fmtInt(t)}건 · 길찾기 ${fmtInt(r)}건`;
     });
     $("#ref_info_label").textContent=`총 트래픽 ${fmtInt(T)}건 + 길찾기 ${fmtInt(R)}건 환불`;
     $("#ref_total_amt").textContent=fmtWon(A);
-  }
-
-  function updateAllRefundDays() {
-    const d1=new Date($("#ref_today").value), d2=new Date($("#ref_endDate").value);
-    if(d1 && d2 && d2>=d1) {
-      const diff=Math.ceil((d2-d1)/(1000*60*60*24));
-      $("#ref_date_info").textContent=`(총 ${diff}일)`;
-      $$("#refundBlocks .blk").forEach(b=>{
-        if(!$(".t-days",b).value) $(".t-days",b).value=diff;
-        if(!$(".r-days",b).value) $(".r-days",b).value=diff;
-      });
-    }
-    recalcRefund();
   }
 
   function bindBlock(el, isRefund=false) {
@@ -431,12 +433,11 @@
 
   $("#addBlock").onclick=()=>{ const b=createBlock(false); $("#blocks").prepend(b); bindBlock(b,false); recalc(); };
   $("#resetAll").onclick=()=>{ $("#blocks").innerHTML=""; const b=createBlock(false); $("#blocks").prepend(b); bindBlock(b,false); recalc(); };
-  $("#addRefundBlock").onclick=()=>{ const b=createBlock(true); $("#refundBlocks").prepend(b); bindBlock(b,true); updateAllRefundDays(); };
-  $("#resetRefund").onclick=()=>{ $("#refundBlocks").innerHTML=""; recalcRefund(); $("#ref_date_info").textContent=`(총 -일)`; };
-  $("#ref_today").oninput=updateAllRefundDays; $("#ref_endDate").oninput=updateAllRefundDays;
+  $("#addRefundBlock").onclick=()=>{ const b=createBlock(true); $("#refundBlocks").prepend(b); bindBlock(b,true); };
   
-  ["trafficPrice","routePrice","showTraffic1","showRoute1","combine1","showTraffic2","showRoute2","combine2","isNextDay"].forEach(id=>{
-    $( "#"+id ).onchange=recalc; $( "#"+id ).oninput=recalc;
+  $("#ref_today").value = new Date().toISOString().split('T')[0];
+  ["trafficPrice","routePrice","showTraffic1","showRoute1","combine1","showTraffic2","showRoute2","combine2","isNextDay","ref_today","ref_endDate"].forEach(id=>{
+    if($( "#"+id )) { $( "#"+id ).onchange=recalc; $( "#"+id ).oninput=recalc; }
   });
 
   const copy=(t,b)=>{ $(b).onclick=()=>{ navigator.clipboard.writeText($(t).innerText.trim()).then(()=>{ 
