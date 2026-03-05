@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📋 업무 정리 메모</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
-  <style>
+<style>
     :root {
       --primary: #2e7d32;
       --primary-hover: #1b5e20;
@@ -151,6 +151,7 @@
 
     #todayDate { font-size: 18px; font-weight: 700; color: var(--text-main); }
     
+    /* 🛠 수정된 부분: 기호 가독성 강화 */
     #schedule {
       width: 100%;
       height: 500px;
@@ -159,14 +160,17 @@
       border: 1px solid var(--border);
       background: var(--bg-main);
       color: var(--text-main);
-      font-size: 16px;
-      line-height: 1.7;
+      /* 기호를 큼직하게 보이게 하는 핵심 설정 */
+      font-size: 18px; 
+      line-height: 1.85; 
+      letter-spacing: -0.01em;
       resize: none;
       box-shadow: var(--shadow);
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, background 0.2s;
+      outline: none;
     }
 
-    #schedule:focus { outline: none; border-color: var(--primary); background: #fff; }
+    #schedule:focus { border-color: var(--primary); background: #fff; }
     body.dark-mode #schedule:focus { background: #2a2a2a; }
 
     .bottom-area {
@@ -225,7 +229,7 @@
     <div class="memo-container">
       <div class="memo-header">
         <div id="todayDate"></div>
-        <span style="font-size: 12px; color: var(--text-muted);">Tab: 기호 변환 | Ctrl+S: 저장</span>
+        <span style="font-size: 12px; color: var(--text-muted);">Ctrl+S: 저장</span>
       </div>
       <textarea id="schedule" placeholder="오늘 진행할 업무 리스트를 정리해 보세요."></textarea>
       
@@ -339,20 +343,83 @@
     reader.readAsText(file);
   });
 
+  // 노션 스타일 자동 변환 로직 (수정 버전)
   schedule.addEventListener("keydown", function (e) {
-    if (e.key === "Tab") {
-      const cursor = this.selectionStart;
-      const value = this.value;
-      const lineStart = value.lastIndexOf("\n", cursor - 1) + 1;
-      const currentLine = value.substring(lineStart, cursor);
-      let newLine = "";
-      if (/^\s*\*$/.test(currentLine)) newLine = "• ";
-      else if (/^\s*• /.test(currentLine)) newLine = "  ◦ ";
-      else if (/^\s*◦ /.test(currentLine)) newLine = "    ▪ ";
-      if(newLine) {
+    const cursor = this.selectionStart;
+    const value = this.value;
+    const lineStart = value.lastIndexOf("\n", cursor - 1) + 1;
+    const currentLine = value.substring(lineStart, cursor); // 현재 줄의 커서 앞까지의 텍스트
+
+    // 1. 스페이스바 입력 시 기호 변환
+    if (e.key === " ") {
+      let replacement = "";
+      
+      // trim()을 써서 앞뒤 공백을 제거한 상태로 비교합니다.
+      if (currentLine === "*" || currentLine === "-") {
+        replacement = "• ";
+      } else if (currentLine === ">") {
+        replacement = "▶ ";
+      } else if (currentLine === "->") {
+        replacement = "→ ";
+      }
+
+      if (replacement) {
+        e.preventDefault(); // 스페이스가 입력되는 기본 동작을 막고
+        // 현재 줄의 시작부터 커서까지를 교체합니다.
+        this.value = value.substring(0, lineStart) + replacement + value.substring(cursor);
+        // 커서 위치를 바뀐 글자 바로 뒤로 이동시킵니다.
+        this.selectionStart = this.selectionEnd = lineStart + replacement.length;
+        return; // 변환 성공 시 종료
+      }
+    }
+
+    // 2. 엔터 키 입력 시 이전 줄의 불렛 유지
+    if (e.key === "Enter") {
+      const bulletMatch = currentLine.match(/^(\s*[•◦▪▶→]\s*)/);
+      if (bulletMatch) {
+        // 만약 내용 없이 불렛만 있는 상태에서 엔터를 치면 불렛 삭제 (리스트 종료)
+        if (currentLine.trim() === bulletMatch[0].trim()) {
+          e.preventDefault();
+          this.value = value.substring(0, lineStart) + "\n" + value.substring(cursor);
+          this.selectionStart = this.selectionEnd = lineStart + 1;
+        } else {
+          // 내용이 있다면 다음 줄에 불렛 자동 생성
+          e.preventDefault();
+          const nextBullet = "\n" + bulletMatch[0];
+          this.value = value.substring(0, cursor) + nextBullet + value.substring(cursor);
+          this.selectionStart = this.selectionEnd = cursor + nextBullet.length;
+        }
+      }
+    }
+
+    // 3. 백스페이스로 불렛 한꺼번에 지우기
+    if (e.key === "Backspace") {
+      const bulletMatch = currentLine.match(/^(\s*[•◦▪▶→]\s*)$/);
+      if (bulletMatch) {
         e.preventDefault();
-        this.value = value.substring(0, lineStart) + newLine + value.substring(this.selectionEnd);
+        this.value = value.substring(0, lineStart) + value.substring(cursor);
+        this.selectionStart = this.selectionEnd = lineStart;
+      }
+    }
+
+    // 4. 기존 탭(Tab) 기능 유지 및 개선 (들여쓰기)
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const isBullet = currentLine.match(/^(\s*)([•◦▪])\s/);
+      if (isBullet) {
+        let nextSymbol = "•";
+        if (isBullet[2] === "•") nextSymbol = "◦";
+        else if (isBullet[2] === "◦") nextSymbol = "▪";
+        
+        const indent = isBullet[1] + "  ";
+        const newLine = indent + nextSymbol + " ";
+        this.value = value.substring(0, lineStart) + newLine + value.substring(cursor);
         this.selectionStart = this.selectionEnd = lineStart + newLine.length;
+      } else {
+        // 일반 텍스트에서 탭은 2칸 공백
+        const start = this.selectionStart;
+        this.value = value.substring(0, start) + "  " + value.substring(this.selectionEnd);
+        this.selectionStart = this.selectionEnd = start + 2;
       }
     }
   });
