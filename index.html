@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -18,7 +20,6 @@
       --store-color: #FBBC05;
     }
 
-    /* 터치 잔상 제거 및 기본 설정 */
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
     body {
@@ -33,7 +34,8 @@
       background-color: var(--sidebar-bg);
       border-right: 1px solid var(--border-color);
       display: flex; flex-direction: column;
-      transition: all 0.3s ease;
+      transition: all 0.3s ease; /* 접기 애니메이션 */
+      z-index: 20;
     }
     
     .sidebar-header { 
@@ -69,7 +71,7 @@
 
     .tool-button {
       display: flex; align-items: center; padding: 10px 12px; font-size: 14px;
-      cursor: grab; background-color: #fff; border: 1px solid #eee; border-radius: 8px; transition: all 0.2s;
+      cursor: pointer; background-color: #fff; border: 1px solid #eee; border-radius: 8px; transition: all 0.2s;
     }
     .tool-button:hover { background-color: var(--hover-color); transform: translateX(3px); }
     .tool-button.active { background-color: var(--active-bg); border-color: #a0c4ff; font-weight: bold; }
@@ -118,31 +120,39 @@
     .sidebar-footer { padding: 10px; border-top: 1px solid #eee; display: flex; gap: 5px; }
     .footer-btn { flex: 1; font-size: 11px; padding: 8px 5px; cursor: pointer; background: #fff; border: 1px solid #ddd; border-radius: 4px; }
 
+    /* [접기 버튼 스타일] */
+    #toggleMenuBtn {
+      display: none; width: 100%; padding: 6px; background: #eee;
+      border: none; border-top: 1px solid #ddd; cursor: pointer;
+      align-items: center; justify-content: center; color: #666;
+    }
+
     /* ============================================================
-       [모바일 전용 반응형 레이아웃] - 이 부분이 추가되었습니다.
+       [모바일 전용 반응형 레이아웃]
        ============================================================ */
     @media (max-width: 768px) {
-      body { flex-direction: column; overflow-y: auto; } /* 위아래로 쌓임 */
+      body { flex-direction: column; overflow-y: hidden; }
 
       #sidebar {
-        width: 100%; min-width: 100%; height: auto;
+        width: 100%; min-width: 100%; height: 50%; /* 화면의 절반 차지 */
         border-right: none; border-bottom: 1px solid var(--border-color);
       }
-      
-      .scroll-area { max-height: 250px; } /* 사이드바 메뉴 영역 높이 제한 */
+
+      /* 접혔을 때 상태 */
+      #sidebar.collapsed { height: 62px !important; }
+      #sidebar.collapsed .scroll-area, 
+      #sidebar.collapsed .sidebar-footer { display: none; }
+
+      #toggleMenuBtn { display: flex; } /* 모바일에서만 노출 */
       
       #naverClock { font-size: 28px; padding: 8px 20px; }
-      
-      .quick-links { 
-        grid-template-columns: repeat(2, 1fr); /* 2열로 변경 */
-        gap: 10px; 
-      }
-      
+      .quick-links { grid-template-columns: repeat(2, 1fr); gap: 10px; }
       .link-card { aspect-ratio: 1.5 / 1; }
       .link-card span { font-size: 11px; }
 
       #welcome { padding: 20px 15px; }
-      #content { height: auto; min-height: 500px; }
+      #content { height: 100%; flex-grow: 1; overflow-y: auto; }
+      #toolFrame { height: 100%; }
     }
   </style>
 </head>
@@ -167,6 +177,9 @@
       <button class="footer-btn" onclick="exportData()">💾 백업</button>
       <button class="footer-btn" onclick="importData()">📂 복구</button>
     </div>
+    <button id="toggleMenuBtn" onclick="toggleSidebar()">
+      <span id="toggleIcon" class="material-symbols-outlined">expand_less</span>
+    </button>
   </div>
 
   <div id="content">
@@ -238,10 +251,23 @@
       setupDragAndDrop();
     };
 
+    // 모바일 사이드바 접기/펴기
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const icon = document.getElementById('toggleIcon');
+      sidebar.classList.toggle('collapsed');
+      icon.textContent = sidebar.classList.contains('collapsed') ? 'expand_more' : 'expand_less';
+    }
+
     function goHome() {
       document.querySelectorAll('.tool-button').forEach(b => b.classList.remove('active'));
       frame.src = ""; frame.style.display = "none";
       loader.style.display = "none"; welcome.style.display = "flex";
+      // 홈으로 가면 모바일에서 메뉴 다시 펴주기
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('collapsed');
+        document.getElementById('toggleIcon').textContent = 'expand_less';
+      }
     }
 
     function filterTools() {
@@ -264,6 +290,12 @@
         welcome.style.display = "none"; loader.style.display = "block";
         frame.style.display = "block"; frame.src = tool.file;
         frame.onload = () => { loader.style.display = "none"; };
+        
+        // [추가] 모바일에서 도구 클릭 시 자동으로 메뉴 접기
+        if (window.innerWidth <= 768) {
+          document.getElementById('sidebar').classList.add('collapsed');
+          document.getElementById('toggleIcon').textContent = 'expand_more';
+        }
       };
       btn.ondragstart = (e) => { dragged = btn; e.dataTransfer.effectAllowed = 'move'; };
       return btn;
@@ -302,45 +334,29 @@
       localStorage.setItem("toolDashboardState", JSON.stringify(state));
     }
 
-  function loadState() {
-  const saved = localStorage.getItem("toolDashboardState");
-  let state = saved ? JSON.parse(saved) : { fav: [], active: defaultTools.map(t => t.file), inactive: [] };
+    function loadState() {
+      const saved = localStorage.getItem("toolDashboardState");
+      let state = saved ? JSON.parse(saved) : { fav: [], active: defaultTools.map(t => t.file), inactive: [] };
+      const currentSavedFiles = [...(state.fav || []), ...(state.active || []), ...(state.inactive || [])];
+      const newTools = defaultTools.filter(t => !currentSavedFiles.includes(t.file));
 
-  // 1. 현재 저장된 데이터(localStorage)에 있는 모든 파일 목록 추출
-  const currentSavedFiles = [
-    ...(state.fav || []),
-    ...(state.active || []),
-    ...(state.inactive || [])
-  ];
-
-  // 2. defaultTools 배열에는 있지만, 현재 저장된 데이터에는 없는 '새 도구' 찾기
-  const newTools = defaultTools.filter(t => !currentSavedFiles.includes(t.file));
-
-  // 3. 새 도구가 있다면 '사용 중(active)' 섹션 배열에만 추가
-  if (newTools.length > 0) {
-    newTools.forEach(nt => {
-      // 중복 방지를 한 번 더 체크 후 '사용 중' 섹션에 추가
-      if (!state.active.includes(nt.file)) {
-        state.active.push(nt.file);
+      if (newTools.length > 0) {
+        newTools.forEach(nt => { if (!state.active.includes(nt.file)) state.active.push(nt.file); });
+        localStorage.setItem("toolDashboardState", JSON.stringify(state));
       }
-    });
-    // 업데이트된 상태를 브라우저에 즉시 저장 (다음 접속 시에도 유지됨)
-    localStorage.setItem("toolDashboardState", JSON.stringify(state));
-  }
 
-  // 화면 그리기 (렌더링)
-  const render = (files, container) => {
-    files.forEach(file => {
-      const tool = defaultTools.find(t => t.file === file);
-      if (tool) container.appendChild(createButton(tool));
-    });
-  };
+      const render = (files, container) => {
+        files.forEach(file => {
+          const tool = defaultTools.find(t => t.file === file);
+          if (tool) container.appendChild(createButton(tool));
+        });
+      };
 
-  sections.forEach(s => s.innerHTML = ""); // 기존 내용 비우기
-  render(state.fav || [], sections[0]);    // ⭐ 자주 쓰는 도구
-  render(state.active || [], sections[1]); // 🛠 사용 중
-  render(state.inactive || [], sections[2]); // 📦 미사용
-}
+      sections.forEach(s => s.innerHTML = ""); 
+      render(state.fav || [], sections[0]);
+      render(state.active || [], sections[1]);
+      render(state.inactive || [], sections[2]);
+    }
 
     function updateClock() {
       const now = new Date();
