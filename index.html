@@ -40,6 +40,17 @@
       display: flex; height: 100vh; overflow: hidden; color: var(--text-main);
     }
 
+    /* [로그인 오버레이 스타일 추가] */
+    #authOverlay {
+      position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85);
+      display: flex; justify-content: center; align-items: center; z-index: 1000;
+    }
+    .auth-card { background: white; padding: 35px; border-radius: 16px; width: 340px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .auth-card h3 { margin-top: 0; color: var(--primary-color); }
+    .auth-card input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; }
+    .auth-btn { width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+    .auth-footer { font-size: 13px; color: #777; margin-top: 20px; cursor: pointer; text-decoration: underline; }
+
     /* [사이드바] */
     #sidebar {
       width: 260px; min-width: 260px;
@@ -129,7 +140,7 @@
     .c-store { border-top: 4px solid var(--store-color); }
     .c-store .material-symbols-outlined { color: var(--store-color); }
 
-    .sidebar-footer { padding: 10px; border-top: 1px solid #eee; display: flex; gap: 5px; }
+    .sidebar-footer { padding: 10px; border-top: 1px solid #eee; display: flex; flex-wrap: wrap; gap: 5px; }
     .footer-btn { flex: 1; font-size: 11px; padding: 8px 5px; cursor: pointer; background: #fff; border: 1px solid #ddd; border-radius: 4px; }
 
     #toggleMenuBtn {
@@ -160,6 +171,24 @@
 </head>
 <body>
 
+  <div id="authOverlay">
+    <div class="auth-card" id="loginBox">
+      <h3>🔐 하이어애드 통합 도구</h3>
+      <input type="text" id="userId" placeholder="아이디">
+      <input type="password" id="userPw" placeholder="비밀번호">
+      <button class="auth-btn" onclick="handleLogin()">로그인</button>
+      <p class="auth-footer" onclick="toggleAuth(true)">계정이 없으신가요? 회원가입</p>
+    </div>
+    <div class="auth-card" id="regBox" style="display: none;">
+      <h3>📝 신규 가입</h3>
+      <input type="text" id="regId" placeholder="아이디">
+      <input type="password" id="regPw" placeholder="비밀번호 (6자 이상)">
+      <input type="password" id="regPwConfirm" placeholder="비밀번호 확인">
+      <button class="auth-btn" style="background: #444;" onclick="handleRegister()">가입하기</button>
+      <p class="auth-footer" onclick="toggleAuth(false)">이미 계정이 있습니다</p>
+    </div>
+  </div>
+
   <div id="sidebar">
     <div class="sidebar-header">
       <button class="home-btn" title="메인으로 이동" onclick="goHome()">
@@ -176,8 +205,12 @@
       <div id="inactiveTools" class="section"></div>
     </div>
     <div class="sidebar-footer">
-      <button class="footer-btn" onclick="exportData()">💾 전체 백업</button>
-      <button class="footer-btn" onclick="importData()">📂 전체 복구</button>
+      <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+        <span id="displayUser" style="font-size: 11px; color: #999; margin-left: 5px;"></span>
+        <button class="footer-btn" style="flex: none; width: auto; padding: 4px 8px;" onclick="handleLogout()">로그아웃</button>
+      </div>
+      <button class="footer-btn" onclick="exportData()">💾 로컬 백업</button>
+      <button class="footer-btn" onclick="importData()">📂 로컬 복구</button>
     </div>
     <button id="toggleMenuBtn" onclick="toggleSidebar()">
       <span id="toggleIcon" class="material-symbols-outlined">expand_less</span>
@@ -218,10 +251,106 @@
           <span>광고주 페이지</span>
         </a>
       </div>
-      <p style="color: #bbb; margin-top: 40px; font-size: 12px;">백업 시 메뉴 순서와 도구 내 작성 데이터가 모두 저장됩니다.</p>
+      <p style="color: #bbb; margin-top: 40px; font-size: 12px;">클라우드 동기화 중입니다. 로그인하면 어디서든 내 설정이 유지됩니다.</p>
     </div>
     <iframe id="toolFrame"></iframe>
   </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCRnAMy3PyD0zracrwyo17hEZ-R40pAvt4",
+      authDomain: "higherad-530c4.firebaseapp.com",
+      databaseURL: "https://higherad-530c4-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "higherad-530c4",
+      storageBucket: "higherad-530c4.firebasestorage.app",
+      messagingSenderId: "1028078651420",
+      appId: "1:1028078651420:web:71c8b8c5e69f0772d637d9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+// 일반 ID를 이메일 형식으로 변환
+    const formatId = (id) => `${id.trim()}@higherad.com`;
+
+    // [추가] 엔터 키 감지 이벤트 등록
+    // 로그인 창 엔터
+    document.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        const isLoginVisible = document.getElementById('loginBox').style.display !== 'none';
+        const isRegVisible = document.getElementById('regBox').style.display !== 'none';
+        
+        if (isLoginVisible) handleLogin();
+        else if (isRegVisible) handleRegister();
+      }
+    });
+
+    window.toggleAuth = (isReg) => {
+      document.getElementById('loginBox').style.display = isReg ? 'none' : 'block';
+      document.getElementById('regBox').style.display = isReg ? 'block' : 'none';
+    };
+
+    window.handleLogin = async () => {
+      const id = document.getElementById('userId').value;
+      const pw = document.getElementById('userPw').value;
+      if(!id || !pw) return alert("아이디와 비밀번호를 입력하세요.");
+      try {
+        await signInWithEmailAndPassword(auth, formatId(id), pw);
+      } catch (e) {
+        alert("로그인 실패: 정보를 확인하세요.");
+      }
+    };
+
+    window.handleRegister = async () => {
+      const id = document.getElementById('regId').value;
+      const pw = document.getElementById('regPw').value;
+      const pwC = document.getElementById('regPwConfirm').value;
+      if(!id || pw.length < 6) return alert("아이디 입력 및 비밀번호 6자 이상 필수");
+      if(pw !== pwC) return alert("비밀번호가 일치하지 않습니다.");
+      try {
+        await createUserWithEmailAndPassword(auth, formatId(id), pw);
+        alert("가입 성공! 이제 로그인 해주세요.");
+        window.toggleAuth(false);
+      } catch (e) {
+        alert("가입 실패: " + e.message);
+      }
+    };
+
+    window.handleLogout = () => { if(confirm("로그아웃 하시겠습니까?")) signOut(auth).then(()=>location.reload()); };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        document.getElementById('authOverlay').style.display = 'none';
+        document.getElementById('displayUser').textContent = user.email.split('@')[0] + "님";
+        const snapshot = await get(ref(db, 'users/' + user.uid));
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          Object.keys(data).forEach(key => localStorage.setItem(key, data[key]));
+        }
+        initApp(); // 로그인 후 기존 앱 로직 실행
+      } else {
+        document.getElementById('authOverlay').style.display = 'flex';
+      }
+    });
+
+    // 클라우드 저장용 함수 추가
+    window.saveToCloud = function() {
+      const user = auth.currentUser;
+      if (user) {
+        const payload = {};
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          payload[key] = localStorage.getItem(key);
+        }
+        set(ref(db, 'users/' + user.uid), payload);
+      }
+    }
+  </script>
 
   <script>
     const sections = ['favTools', 'activeTools', 'inactiveTools'].map(id => document.getElementById(id));
@@ -247,12 +376,13 @@
       {file: "★/업체별 수량 관리.html", label: "📚 업체별 수량 관리"},
     ];
 
-    window.onload = () => {
+    // 기존 onload를 initApp으로 변경하여 Firebase 인증 후에 호출되도록 함
+    function initApp() {
       loadState();
       updateClock();
       setInterval(updateClock, 1000);
       setupDragAndDrop();
-    };
+    }
 
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
@@ -331,6 +461,8 @@
         inactive: Array.from(sections[2].children).map(b => b.dataset.file)
       };
       localStorage.setItem("toolDashboardState", JSON.stringify(state));
+      // [변경] 저장할 때 클라우드로 자동 업로드
+      if(typeof window.saveToCloud === 'function') window.saveToCloud();
     }
 
     function loadState() {
@@ -364,19 +496,13 @@
       document.getElementById('todayDisplay').textContent = `${now.getFullYear()}. ${now.getMonth()+1}. ${now.getDate()} (${days[now.getDay()]})`;
     }
 
-    // [개선] 전체 데이터 백업 (메뉴 설정 + 모든 도구의 데이터)
     function exportData() {
       const allData = {};
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         allData[key] = localStorage.getItem(key);
       }
-
-      if (Object.keys(allData).length === 0) {
-        alert("백업할 데이터가 없습니다.");
-        return;
-      }
-
+      if (Object.keys(allData).length === 0) return alert("백업할 데이터가 없습니다.");
       const blob = new Blob([JSON.stringify(allData)], {type: "application/json"});
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -384,28 +510,22 @@
       a.click();
     }
 
-    // [개선] 전체 데이터 복구
     function importData() {
       const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".json";
+      input.type = "file"; input.accept = ".json";
       input.onchange = e => {
         const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = event => {
           try {
             const importedData = JSON.parse(event.target.result);
-            if (confirm("기존의 모든 설정과 작성된 데이터가 덮어씌워집니다. 계속하시겠습니까?")) {
-              // 한 번에 적용
-              Object.keys(importedData).forEach(key => {
-                localStorage.setItem(key, importedData[key]);
-              });
+            if (confirm("기존 데이터가 덮어씌워집니다. 계속하시겠습니까?")) {
+              Object.keys(importedData).forEach(key => localStorage.setItem(key, importedData[key]));
+              if(typeof window.saveToCloud === 'function') window.saveToCloud(); // 복구 후 클라우드 동기화
               alert("성공적으로 복구되었습니다.");
               location.reload();
             }
-          } catch (err) {
-            alert("파일 읽기 중 오류가 발생했습니다. 올바른 백업 파일인지 확인해주세요.");
-          }
+          } catch (err) { alert("파일 오류가 발생했습니다."); }
         };
         reader.readAsText(file);
       };
