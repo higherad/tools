@@ -40,7 +40,6 @@
       display: flex; height: 100vh; overflow: hidden; color: var(--text-main);
     }
 
-    /* [수정] 로그인 오버레이: 초기 상태를 display: none으로 설정하여 깜빡임 방지 */
     #authOverlay {
       position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85);
       display: none; justify-content: center; align-items: center; z-index: 1000;
@@ -51,7 +50,6 @@
     .auth-btn { width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; font-weight: bold; }
     .auth-footer { font-size: 13px; color: #777; margin-top: 20px; cursor: pointer; text-decoration: underline; }
 
-    /* [사이드바] */
     #sidebar {
       width: 260px; min-width: 260px;
       background-color: var(--sidebar-bg);
@@ -99,7 +97,6 @@
     .tool-button:hover { background-color: var(--hover-color); transform: translateX(3px); }
     .tool-button.active { background-color: var(--active-bg); border-color: #a0c4ff; font-weight: bold; }
 
-    /* [메인 콘텐츠] */
     #content { flex-grow: 1; position: relative; background: #fff; overflow-y: auto; display: flex; flex-direction: column; }
     iframe { width: 100%; height: 100%; border: none; display: none; flex-grow: 1; }
 
@@ -209,6 +206,7 @@
         <span id="displayUser" style="font-size: 11px; color: #999; margin-left: 5px;"></span>
         <button class="footer-btn" style="flex: none; width: auto; padding: 4px 8px;" onclick="handleLogout()">로그아웃</button>
       </div>
+      <p style="width: 100%; text-align: center; font-size: 10px; color: #bbb; margin: 5px 0 0 0;">☁️ 모든 데이터가 실시간 저장 중입니다</p>
     </div>
     <button id="toggleMenuBtn" onclick="toggleSidebar()">
       <span id="toggleIcon" class="material-symbols-outlined">expand_less</span>
@@ -254,7 +252,7 @@
     <iframe id="toolFrame"></iframe>
   </div>
 
-<script type="module">
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
     import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
@@ -275,7 +273,12 @@
 
     const formatId = (id) => `${id.trim()}@higherad.com`;
 
-    // [1] 인증 상태 감지 및 데이터 서버 강제 로드
+    // [전역 등록] 로그인/회원가입 폼 전환
+    window.toggleAuth = (isRegister) => {
+      document.getElementById('loginBox').style.display = isRegister ? 'none' : 'block';
+      document.getElementById('regBox').style.display = isRegister ? 'block' : 'none';
+    };
+
     onAuthStateChanged(auth, async (user) => {
       const authOverlay = document.getElementById('authOverlay');
       if (user) {
@@ -283,17 +286,15 @@
         document.getElementById('displayUser').textContent = user.email.split('@')[0] + "님";
         
         try {
-          // 서버에서 해당 유저의 모든 데이터(메뉴 순서 + 메모 내용 등) 가져오기
           const snapshot = await get(ref(db, 'users/' + user.uid));
           if (snapshot.exists()) {
             const data = snapshot.val();
-            // 로컬 스토리지를 서버 데이터로 완전히 동기화
             localStorage.clear();
             Object.keys(data).forEach(key => {
               localStorage.setItem(key, data[key]);
             });
           }
-          initApp(); // 데이터 주입 완료 후 앱 실행
+          initApp();
         } catch (e) {
           console.error("데이터 동기화 실패:", e);
           initApp();
@@ -303,24 +304,19 @@
       }
     });
 
-    // [2] 서버 실시간 저장 (모든 localStorage 내용 포함)
     window.saveToCloud = function() {
       const user = auth.currentUser;
       if (!user) return;
-
       const payload = {};
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         payload[key] = localStorage.getItem(key);
       }
-      
-      // 서버의 'users/UID' 경로에 전체 덮어씌움 (메뉴 구성 + 내부 메모 전체 데이터)
       update(ref(db, 'users/' + user.uid), payload)
         .then(() => console.log("Cloud Synced"))
         .catch(err => console.error("Sync Error:", err));
     };
 
-    // 로그인/회원가입/로그아웃 로직
     window.handleLogin = async () => {
       const id = document.getElementById('userId').value;
       const pw = document.getElementById('userPw').value;
@@ -335,7 +331,22 @@
       if(!id || pw.length < 6) return alert("비밀번호는 6자 이상이어야 합니다.");
       if(pw !== pwC) return alert("비밀번호가 일치하지 않습니다.");
       try {
-        await createUserWithEmailAndPassword(auth, formatId(id), pw);
+        const userCredential = await createUserWithEmailAndPassword(auth, formatId(id), pw);
+        const user = userCredential.user;
+
+        // 회원가입 시 초기 메뉴 세팅 강제 주입
+        const initialState = {
+          fav: [],
+          active: defaultTools.map(t => t.file),
+          inactive: []
+        };
+
+        await set(ref(db, 'users/' + user.uid), {
+          toolDashboardState: JSON.stringify(initialState),
+          email: user.email,
+          createdAt: new Date().toISOString()
+        });
+
         alert("가입 성공! 로그인 해주세요.");
         window.toggleAuth(false);
       } catch (e) { alert("가입 실패: " + e.message); }
@@ -375,7 +386,6 @@
       setupDragAndDrop();
     }
 
-    // [3] 상태 변경 시 로컬과 서버 동시 업데이트
     function saveState() {
       const state = {
         fav: Array.from(sections[0].children).map(b => b.dataset.file),
@@ -383,8 +393,6 @@
         inactive: Array.from(sections[2].children).map(b => b.dataset.file)
       };
       localStorage.setItem("toolDashboardState", JSON.stringify(state));
-      
-      // 서버 저장 함수 호출 (전체 로컬 데이터 동기화)
       if(typeof window.saveToCloud === 'function') window.saveToCloud();
     }
 
@@ -474,6 +482,13 @@
         const label = btn.textContent.toLowerCase().replace(/\s/g, "");
         btn.style.display = label.includes(query) ? "flex" : "none";
       });
+    }
+
+    function toggleSidebar() {
+      const sb = document.getElementById('sidebar');
+      const icon = document.getElementById('toggleIcon');
+      sb.classList.toggle('collapsed');
+      icon.textContent = sb.classList.contains('collapsed') ? 'expand_more' : 'expand_less';
     }
   </script>
 </body>
