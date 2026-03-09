@@ -324,20 +324,29 @@
 
     // [수정] 인증 상태 확인 로직: 확인 전까지 오버레이 숨김 유지 후 상태에 따라 노출
     onAuthStateChanged(auth, async (user) => {
-      const authOverlay = document.getElementById('authOverlay');
-      if (user) {
-        authOverlay.style.display = 'none'; // 로그인된 경우 확실히 숨김
-        document.getElementById('displayUser').textContent = user.email.split('@')[0] + "님";
-        const snapshot = await get(ref(db, 'users/' + user.uid));
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          Object.keys(data).forEach(key => localStorage.setItem(key, data[key]));
-        }
-        initApp(); // 로그인 후 기존 앱 로직 실행
-      } else {
-        authOverlay.style.display = 'flex'; // 로그아웃된 경우에만 로그인 창 노출
-      }
-    });
+  const authOverlay = document.getElementById('authOverlay');
+  if (user) {
+    authOverlay.style.display = 'none';
+    document.getElementById('displayUser').textContent = user.email.split('@')[0] + "님";
+    
+    // 서버에서 데이터를 가져와 로컬 스토리지에 강제 업데이트
+    const snapshot = await get(ref(db, 'users/' + user.uid));
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      // 기존 로컬 스토리지를 비우고 서버 데이터로 교체
+      localStorage.clear(); 
+      Object.keys(data).forEach(key => localStorage.setItem(key, data[key]));
+      
+      // 데이터 적용 후 앱 초기화
+      initApp(); 
+    } else {
+      // 서버에 데이터가 없는 신규 계정이라면 기본값으로 초기화
+      initApp();
+    }
+  } else {
+    authOverlay.style.display = 'flex';
+  }
+  });
 
     // 클라우드 저장용 함수
     window.saveToCloud = function() {
