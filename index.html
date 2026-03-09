@@ -40,10 +40,10 @@
       display: flex; height: 100vh; overflow: hidden; color: var(--text-main);
     }
 
-    /* [로그인 오버레이 스타일 추가] */
+    /* [수정] 로그인 오버레이: 초기 상태를 display: none으로 설정하여 깜빡임 방지 */
     #authOverlay {
       position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85);
-      display: flex; justify-content: center; align-items: center; z-index: 1000;
+      display: none; justify-content: center; align-items: center; z-index: 1000;
     }
     .auth-card { background: white; padding: 35px; border-radius: 16px; width: 340px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
     .auth-card h3 { margin-top: 0; color: var(--primary-color); }
@@ -275,11 +275,10 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-// 일반 ID를 이메일 형식으로 변환
+    // 일반 ID를 이메일 형식으로 변환
     const formatId = (id) => `${id.trim()}@higherad.com`;
 
-    // [추가] 엔터 키 감지 이벤트 등록
-    // 로그인 창 엔터
+    // 엔터 키 감지 이벤트 등록
     document.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         const isLoginVisible = document.getElementById('loginBox').style.display !== 'none';
@@ -323,9 +322,11 @@
 
     window.handleLogout = () => { if(confirm("로그아웃 하시겠습니까?")) signOut(auth).then(()=>location.reload()); };
 
+    // [수정] 인증 상태 확인 로직: 확인 전까지 오버레이 숨김 유지 후 상태에 따라 노출
     onAuthStateChanged(auth, async (user) => {
+      const authOverlay = document.getElementById('authOverlay');
       if (user) {
-        document.getElementById('authOverlay').style.display = 'none';
+        authOverlay.style.display = 'none'; // 로그인된 경우 확실히 숨김
         document.getElementById('displayUser').textContent = user.email.split('@')[0] + "님";
         const snapshot = await get(ref(db, 'users/' + user.uid));
         if (snapshot.exists()) {
@@ -334,11 +335,11 @@
         }
         initApp(); // 로그인 후 기존 앱 로직 실행
       } else {
-        document.getElementById('authOverlay').style.display = 'flex';
+        authOverlay.style.display = 'flex'; // 로그아웃된 경우에만 로그인 창 노출
       }
     });
 
-    // 클라우드 저장용 함수 추가
+    // 클라우드 저장용 함수
     window.saveToCloud = function() {
       const user = auth.currentUser;
       if (user) {
@@ -376,7 +377,6 @@
       {file: "★/업체별 수량 관리.html", label: "📚 업체별 수량 관리"},
     ];
 
-    // 기존 onload를 initApp으로 변경하여 Firebase 인증 후에 호출되도록 함
     function initApp() {
       loadState();
       updateClock();
@@ -461,7 +461,6 @@
         inactive: Array.from(sections[2].children).map(b => b.dataset.file)
       };
       localStorage.setItem("toolDashboardState", JSON.stringify(state));
-      // [변경] 저장할 때 클라우드로 자동 업로드
       if(typeof window.saveToCloud === 'function') window.saveToCloud();
     }
 
@@ -521,7 +520,7 @@
             const importedData = JSON.parse(event.target.result);
             if (confirm("기존 데이터가 덮어씌워집니다. 계속하시겠습니까?")) {
               Object.keys(importedData).forEach(key => localStorage.setItem(key, importedData[key]));
-              if(typeof window.saveToCloud === 'function') window.saveToCloud(); // 복구 후 클라우드 동기화
+              if(typeof window.saveToCloud === 'function') window.saveToCloud();
               alert("성공적으로 복구되었습니다.");
               location.reload();
             }
