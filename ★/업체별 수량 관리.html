@@ -36,7 +36,7 @@
         </div>
     </header>
 
-    <main class="p-6 max-w-7xl mx-auto">
+    <main class="p-6 max-w-7xl mx-auto" x-cloak>
         <div class="flex items-center gap-1 mb-6 bg-white p-1 rounded-xl shadow-sm border border-gray-200 overflow-x-auto whitespace-nowrap">
             <template x-for="(tab, index) in branches" :key="tab">
                 <div @dblclick="startEditing(tab)" 
@@ -182,7 +182,7 @@
                 <button @click="showPasteModal = false" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times-circle text-xl"></i></button>
             </div>
             <div class="p-6">
-                <textarea x-model="pasteData" rows="10" class="w-full border-2 border-gray-200 rounded-xl p-4 text-sm font-mono focus:border-indigo-500 outline-none transition bg-gray-50" placeholder="업체명 | URL | MID | 키워드 | 일수 | 시작일 | 일목표"></textarea>
+                <textarea x-model="pasteData" rows="10" class="w-full border-2 border-gray-200 rounded-xl p-4 text-sm font-mono focus:border-indigo-500 outline-none transition bg-gray-50" placeholder="업체명 | URL | MID | 키워드 | 일수 | 시작일 | 일목표 (탭 구분)"></textarea>
                 <div class="flex gap-3 mt-5">
                     <button @click="processPaste()" class="flex-grow bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-lg">일괄 등록 시작</button>
                     <button @click="showPasteModal = false; pasteData = ''" class="px-6 bg-gray-100 text-gray-500 font-bold rounded-xl font-bold">취소</button>
@@ -191,37 +191,77 @@
         </div>
     </div>
 
-    <script>
-        function managementApp() {
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCRnAMy3PyD0zracrwyo17hEZ-R40pAvt4",
+            authDomain: "higherad-530c4.firebaseapp.com",
+            databaseURL: "https://higherad-530c4-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "higherad-530c4",
+            storageBucket: "higherad-530c4.firebasestorage.app",
+            messagingSenderId: "1028078651420",
+            appId: "1:1028078651420:web:71c8b8c5e69f0772d637d9"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        window.managementApp = function() {
             return {
                 items: [],
                 branches: ['A영업점', 'B영업점', 'C영업점'],
-                activeTab: '', // 초기에는 비워둠 (init에서 첫 번째 탭 할당)
+                activeTab: '',
                 editingTab: null,
                 tempTabText: '',
                 showPasteModal: false,
                 pasteData: '',
                 selectedIds: [],
-                
-                init() {
-                    const savedItems = localStorage.getItem('higher_ad_items');
-                    const savedBranches = localStorage.getItem('higher_ad_branches');
-                    if (savedItems) this.items = JSON.parse(savedItems);
-                    if (savedBranches) this.branches = JSON.parse(savedBranches);
-                    
-                    // 시작 페이지를 항상 첫 번째 탭으로 설정
-                    if (this.branches.length > 0) {
-                        this.activeTab = this.branches[0];
-                    }
+                userId: null,
+                isLoading: true,
 
-                    this.items.forEach(item => {
-                        if(!item.id) item.id = Date.now() + Math.random();
+                init() {
+                    onAuthStateChanged(auth, async (user) => {
+                        if (user) {
+                            this.userId = user.uid;
+                            await this.loadFromServer();
+                        } else {
+                            alert("세션이 만료되었거나 로그인이 필요합니다.");
+                            window.location.href = "index.html"; 
+                        }
                     });
                 },
 
-                saveData() {
-                    localStorage.setItem('higher_ad_items', JSON.stringify(this.items));
-                    localStorage.setItem('higher_ad_branches', JSON.stringify(this.branches));
+                async loadFromServer() {
+                    try {
+                        const snapshot = await get(ref(db, `users/${this.userId}/managementData`));
+                        if (snapshot.exists()) {
+                            const data = snapshot.val();
+                            this.items = data.items || [];
+                            this.branches = data.branches || ['A영업점', 'B영업점', 'C영업점'];
+                        }
+                        this.activeTab = this.branches[0] || '';
+                    } catch (e) {
+                        console.error("데이터 로드 실패:", e);
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                async saveData() {
+                    if (!this.userId) return;
+                    try {
+                        await set(ref(db, `users/${this.userId}/managementData`), {
+                            items: this.items,
+                            branches: this.branches,
+                            lastUpdated: new Date().toISOString()
+                        });
+                    } catch (e) {
+                        console.error("클라우드 저장 실패:", e);
+                    }
                 },
 
                 resetCurrentTab() {
@@ -236,6 +276,7 @@
                     this.editingTab = tab;
                     this.tempTabText = tab;
                 },
+
                 saveTabName(oldName) {
                     const newName = this.tempTabText.trim();
                     if (newName && newName !== oldName && !this.branches.includes(newName)) {
@@ -247,6 +288,7 @@
                     }
                     this.editingTab = null;
                 },
+
                 addBranch() {
                     const name = prompt('새로운 영업점 이름을 입력하세요:');
                     if (name && !this.branches.includes(name)) {
@@ -255,10 +297,11 @@
                         this.saveData();
                     }
                 },
+
                 removeBranch() {
-                    const name = prompt(`현재 영업점 [${this.activeTab}]을 삭제하시겠습니까?\n삭제를 원하시면 영업점 이름을 정확히 입력하세요.`);
+                    const name = prompt(`현재 영업점 [${this.activeTab}]을 삭제하시겠습니까?\n이름을 정확히 입력하세요.`);
                     if (name === this.activeTab) {
-                        if(confirm(`정말로 [${this.activeTab}]의 모든 데이터와 함께 삭제하시겠습니까?`)) {
+                        if(confirm(`정말로 삭제하시겠습니까?`)) {
                             this.items = this.items.filter(item => item.branch !== this.activeTab);
                             this.branches = this.branches.filter(b => b !== this.activeTab);
                             this.activeTab = this.branches[0] || '';
@@ -273,9 +316,7 @@
 
                 calculateTotalQuantity() {
                     return this.filteredItems().reduce((acc, i) => {
-                        const goal = Number(i.goal) || 0;
-                        const days = Number(i.days) || 0;
-                        return acc + (goal * days);
+                        return acc + (Number(i.goal) || 0) * (Number(i.days) || 0);
                     }, 0);
                 },
 
@@ -287,12 +328,14 @@
                         this.selectedIds = this.selectedIds.filter(id => !currentIds.includes(id));
                     }
                 },
+
                 isAllSelected() {
                     const currentIds = this.filteredItems().map(i => i.id);
                     return currentIds.length > 0 && currentIds.every(id => this.selectedIds.includes(id));
                 },
+
                 bulkUpdateStatus(newStatus) {
-                    if(!confirm(`${this.selectedIds.length}개 항목의 상태를 [${newStatus}]로 변경하시겠습니까?`)) return;
+                    if(!confirm(`${this.selectedIds.length}개 항목 상태를 [${newStatus}]로 변경하시겠습니까?`)) return;
                     this.items.forEach(item => {
                         if(this.selectedIds.includes(item.id)) item.status = newStatus;
                     });
