@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>📋 업무 정리 메모</title>
+  <title>📋 실시간 업무 메모</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <style>
     :root {
@@ -14,18 +14,8 @@
       --border: #e0e0e0;
       --text-main: #2c3e50;
       --text-muted: #7f8c8d;
-      --danger: #e74c3c;
       --radius: 12px;
       --shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-
-    body.dark-mode {
-      --bg-sidebar: #1e1e1e;
-      --bg-main: #252525;
-      --border: #3d3d3d;
-      --text-main: #e0e0e0;
-      --text-muted: #a0a0a0;
-      --shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
     * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
@@ -36,7 +26,6 @@
       height: 100vh;
       background-color: var(--bg-main);
       color: var(--text-main);
-      transition: background 0.3s;
       overflow: hidden;
     }
 
@@ -49,15 +38,6 @@
       flex-direction: column;
       padding: 20px 16px;
       z-index: 100;
-    }
-
-    .top-btns { display: flex; gap: 8px; margin-bottom: 16px; }
-
-    .icon-btn {
-      flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
-      background: var(--bg-main); color: var(--text-main); font-size: 13px;
-      font-weight: 600; cursor: pointer; display: flex; align-items: center;
-      justify-content: center; gap: 4px; transition: all 0.2s;
     }
 
     #searchInput {
@@ -74,6 +54,7 @@
       border: 1px solid transparent;
     }
     .date-item:hover { background: rgba(0,0,0,0.05); border-color: var(--border); }
+    .date-item.active { background: #e8f5e9; border-color: var(--primary); color: var(--primary); font-weight: 600; }
     .delete-icon { color: var(--text-muted); font-size: 16px; padding: 4px; }
 
     /* [메인 콘텐츠] */
@@ -107,60 +88,30 @@
 
     #message { font-weight: 600; color: var(--primary); display: none; margin-top: 10px; }
 
-    /* ============================================================
-       [모바일 반응형 최적화]
-       ============================================================ */
     @media (max-width: 850px) {
       body { flex-direction: column; overflow-y: auto; }
-
-      /* 버튼들을 상단에 고정 */
-      .top-btns {
-        position: sticky; top: 0; background: var(--bg-sidebar);
-        margin: -20px -16px 15px -16px; padding: 12px 16px;
-        border-bottom: 1px solid var(--border); z-index: 101;
-      }
-
-      #sidebar {
-        width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border);
-        padding: 20px 15px 10px 15px; order: 2;
-      }
-      
+      #sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); padding: 20px 15px; order: 2; }
       #dateList { max-height: 200px; }
-
       #main { padding: 30px 15px; order: 1; }
-
-      h1 { font-size: 19px; margin-bottom: 20px; }
-
-      #schedule { height: 40vh; font-size: 15px; padding: 15px; }
-
-      .memo-header span { display: none; }
+      #schedule { height: 45vh; }
     }
   </style>
 </head>
 <body>
 
   <div id="sidebar">
-    <div class="top-btns">
-      <button id="backupBtn" class="icon-btn">📤 백업</button>
-      <button id="restoreBtn" class="icon-btn">📥 복원</button>
-      <button id="toggleDarkMode" class="icon-btn">🌙</button>
-    </div>
-    <h3 style="margin: 0 0 8px 4px; font-size: 13px; color: var(--text-muted); font-weight: 700;">📅 메모 히스토리</h3>
+    <h3 style="margin: 0 0 12px 4px; font-size: 14px; color: var(--text-muted); font-weight: 700;">📅 히스토리</h3>
     <input id="searchInput" type="text" placeholder="날짜 검색...">
-    <input type="file" id="restoreInput" accept=".json" style="display:none;">
     <div id="dateList"></div>
   </div>
 
   <div id="main">
     <h1>🗓 업무 정리 메모</h1>
-
     <div class="memo-container">
       <div class="memo-header">
         <div id="todayDate"></div>
-        <span style="font-size: 12px; color: var(--text-muted);">Ctrl+S: 저장</span>
       </div>
-      <textarea id="schedule" placeholder="오늘의 업무를 정리해 보세요."></textarea>
-      
+      <textarea id="schedule" placeholder="업무 내용을 입력하세요."></textarea>
       <div class="bottom-area">
         <button id="saveBtn">저장하기</button>
         <div id="message">💾 저장되었습니다!</div>
@@ -168,74 +119,99 @@
     </div>
   </div>
 
-<script>
-  // 로직 부분은 기존과 동일하되 스크롤 동작만 보강
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+  import { getDatabase, ref, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCRnAMy3PyD0zracrwyo17hEZ-R40pAvt4",
+    authDomain: "higherad-530c4.firebaseapp.com",
+    databaseURL: "https://higherad-530c4-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "higherad-530c4",
+    storageBucket: "higherad-530c4.firebasestorage.app",
+    messagingSenderId: "1028078651420",
+    appId: "1:1028078651420:web:71c8b8c5e69f0772d637d9"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+
   const schedule = document.getElementById("schedule");
   const saveBtn = document.getElementById("saveBtn");
   const message = document.getElementById("message");
   const dateList = document.getElementById("dateList");
   const todayDateEl = document.getElementById("todayDate");
   const searchInput = document.getElementById("searchInput");
-  const toggleDarkModeBtn = document.getElementById("toggleDarkMode");
-  const backupBtn = document.getElementById("backupBtn");
-  const restoreBtn = document.getElementById("restoreBtn");
-  const restoreInput = document.getElementById("restoreInput");
 
   const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
-  const today = new Date();
-  let currentDate = formatDate(today);
+  let currentDate = new Date().toISOString().slice(0, 10);
+  let currentUser = null;
+  let allMemoData = {};
 
-  function formatDate(date) { return date.toISOString().slice(0, 10); }
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentUser = user;
+      const memosRef = ref(db, `users/${currentUser.uid}/memos`);
+      onValue(memosRef, (snapshot) => {
+        allMemoData = snapshot.val() || {};
+        updateUI();
+      });
+    }
+  });
 
   function displayDate(dateStr) {
     const d = new Date(dateStr);
     return `📅 ${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${dayNames[d.getDay()]})`;
   }
 
-  function loadMemo(dateKey) {
-    currentDate = dateKey;
-    schedule.value = localStorage.getItem("memo_" + dateKey) || "";
-    todayDateEl.textContent = displayDate(dateKey);
-    if(window.innerWidth <= 850) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }
-
-  function saveMemo() {
-    localStorage.setItem("memo_" + currentDate, schedule.value);
-    showMessage("💾 저장되었습니다!");
-    updateDateList();
-  }
-
-  function deleteMemo(dateKey) {
-    if (confirm(`${dateKey} 메모를 삭제할까요?`)) {
-      localStorage.removeItem("memo_" + dateKey);
-      if (currentDate === dateKey) schedule.value = "";
-      updateDateList();
-    }
-  }
-
-  function showMessage(text) {
-    message.innerText = text;
-    message.style.display = "block";
-    setTimeout(() => { message.style.display = "none"; }, 2000);
-  }
-
-  function updateDateList() {
+  function updateUI() {
+    // 현재 날짜 표시 및 텍스트 로드
+    todayDateEl.textContent = displayDate(currentDate);
+    schedule.value = allMemoData[currentDate] || "";
+    
+    // 리스트 갱신
     dateList.innerHTML = "";
-    const keys = Object.keys(localStorage).filter(k => k.startsWith("memo_"));
     const query = searchInput.value.trim();
-    const dates = keys.map(k => k.replace("memo_", "")).filter(d => d.includes(query)).sort().reverse();
+    const dates = Object.keys(allMemoData)
+      .filter(d => d.includes(query))
+      .sort().reverse();
+
+    // 데이터가 아예 없는 경우 오늘 날짜라도 리스트에 표시
+    if (dates.length === 0 && query === "") dates.push(currentDate);
 
     dates.forEach(date => {
       const container = document.createElement("div");
-      container.className = "date-item";
+      container.className = `date-item ${date === currentDate ? 'active' : ''}`;
       const dayName = dayNames[new Date(date).getDay()];
       container.innerHTML = `<span>${date} (${dayName})</span><span class="delete-icon">🗑</span>`;
-      container.onclick = () => loadMemo(date);
-      container.querySelector(".delete-icon").onclick = (e) => { e.stopPropagation(); deleteMemo(date); };
+      
+      container.onclick = () => {
+        currentDate = date;
+        updateUI();
+        if(window.innerWidth <= 850) window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      container.querySelector(".delete-icon").onclick = (e) => {
+        e.stopPropagation();
+        if (confirm(`${date} 메모를 삭제할까요?`)) {
+          remove(ref(db, `users/${currentUser.uid}/memos/${date}`));
+        }
+      };
       dateList.appendChild(container);
     });
+  }
+
+  async function saveMemo() {
+    if (!currentUser) return;
+    try {
+      await update(ref(db, `users/${currentUser.uid}/memos`), {
+        [currentDate]: schedule.value
+      });
+      message.style.display = "block";
+      setTimeout(() => { message.style.display = "none"; }, 2000);
+    } catch (e) { alert("저장 실패"); }
   }
 
   saveBtn.addEventListener("click", saveMemo);
@@ -246,34 +222,7 @@
     }
   });
 
-  toggleDarkModeBtn.addEventListener("click", () => document.body.classList.toggle("dark-mode"));
-
-  backupBtn.addEventListener("click", () => {
-    const allMemos = {};
-    Object.keys(localStorage).forEach(key => { if (key.startsWith("memo_")) allMemos[key] = localStorage.getItem(key); });
-    const blob = new Blob([JSON.stringify(allMemos, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `memo_backup_${formatDate(new Date())}.json`;
-    a.click();
-  });
-
-  restoreBtn.addEventListener("click", () => restoreInput.click());
-  restoreInput.addEventListener("change", function () {
-    const file = this.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target.result);
-        Object.keys(data).forEach(key => { if (key.startsWith("memo_")) localStorage.setItem(key, data[key]); });
-        alert("✅ 메모 복원이 완료되었습니다!");
-        updateDateList();
-        loadMemo(currentDate);
-      } catch (err) { alert("❌ 복원 실패: 잘못된 파일 형식입니다."); }
-    };
-    reader.readAsText(file);
-  });
+  searchInput.addEventListener("input", updateUI);
 
   // 특수 기호 변환 로직
   schedule.addEventListener("keydown", function (e) {
@@ -311,11 +260,6 @@
       }
     }
   });
-
-  searchInput.addEventListener("input", updateDateList);
-  todayDateEl.textContent = displayDate(currentDate);
-  schedule.value = localStorage.getItem("memo_" + currentDate) || "";
-  updateDateList();
 </script>
 </body>
 </html>
