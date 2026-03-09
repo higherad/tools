@@ -286,17 +286,26 @@
         document.getElementById('displayUser').textContent = user.email.split('@')[0] + "님";
         
         try {
+          // 1. 서버에서 최신 데이터 강제 로드
           const snapshot = await get(ref(db, 'users/' + user.uid));
           if (snapshot.exists()) {
             const data = snapshot.val();
-            localStorage.clear();
-            Object.keys(data).forEach(key => {
-              localStorage.setItem(key, data[key]);
-            });
+            
+            // 2. 메뉴 설정 데이터가 있는지 확인 후 덮어쓰기
+            if (data.toolDashboardState) {
+              localStorage.setItem("toolDashboardState", data.toolDashboardState);
+              // 3. 다른 추가 데이터(메모 등)가 있다면 함께 동기화
+              Object.keys(data).forEach(key => {
+                if(key !== 'email' && key !== 'createdAt') {
+                  localStorage.setItem(key, data[key]);
+                }
+              });
+            }
           }
-          initApp();
+          // 4. 데이터 주입 완료 후 앱 초기화 (이 순서가 중요합니다)
+          initApp(); 
         } catch (e) {
-          console.error("데이터 동기화 실패:", e);
+          console.error("모바일 동기화 실패:", e);
           initApp();
         }
       } else {
