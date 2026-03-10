@@ -233,8 +233,10 @@
 
   if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  
   let userPath = "";
-  let clients = []; // 로컬 캐시 초기화 제거
+  let clients = []; 
+  let editIndex = -1;
 
   const $  = (s, r=document)=>r.querySelector(s);
   const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
