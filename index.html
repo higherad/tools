@@ -373,6 +373,24 @@
           if (tool) container.appendChild(createButton(tool));
         });
       };
+
+      // 1. 모든 섹션에 포함된 파일 리스트 추출
+      const allSavedFiles = [...(state.fav || []), ...(state.active || []), ...(state.inactive || [])];
+      
+      // 2. 누락된 메뉴(신규 메뉴) 찾기
+      const missingTools = defaultTools.filter(tool => !allSavedFiles.includes(tool.file));
+
+      // 3. 누락된 메뉴가 있다면 'active' 상태에 강제로 추가 (데이터 보정)
+      if (missingTools.length > 0) {
+        missingTools.forEach(tool => {
+          state.active.unshift(tool.file); // 사용 중 섹션 최상단에 추가
+        });
+        // 서버와 로컬 스토리지에 즉시 반영하여 다음부터는 누락되지 않게 함
+        if (window.saveStateToServer) window.saveStateToServer(state);
+        localStorage.setItem("toolDashboardState", JSON.stringify(state));
+      }
+
+      // 4. 최종 결과 렌더링
       render(state.fav, sections[0]);
       render(state.active, sections[1]);
       render(state.inactive, sections[2]);
