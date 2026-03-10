@@ -228,61 +228,63 @@
                 pasteData: '',
                 selectedIds: [],
                 
-                async init() {
-                    // 1. 초기 탭 설정
+async init() {
+                    // 1. 기본 탭 설정
                     if (!this.activeTab) this.activeTab = this.branches[0];
 
-                    // 2. [보완] 로컬 캐시에서 먼저 불러오기 (초고속 로딩)
-                    const localItems = localStorage.getItem('higher_ad_items');
-                    const localBranches = localStorage.getItem('higher_ad_branches');
-                    if (localItems) this.items = JSON.parse(localItems);
-                    if (localBranches) this.branches = JSON.parse(localBranches);
+                    // 2. Firebase 인증 상태 감지 (인덱스 페이지의 로그인 정보 활용)
+                    firebase.auth().onAuthStateChanged(async (user) => {
+                        if (user) {
+                            // 로그인된 사용자의 UID로 경로 설정
+                            const userPath = `users/${user.uid}/higher_ad_v2`;
+                            this.userPath = userPath; 
 
-                    try {
-                        // 3. [핵심] Firebase에서 최신 데이터 강제 동기화
-                        const snapshot = await db.ref('higher_ad_v2').once('value');
-                        const data = snapshot.val();
-                        
-                        if (data) {
-                            this.items = data.items || [];
-                            this.branches = data.branches || ['A영업점', 'B영업점', 'C영업점'];
-                            // 로컬 캐시 업데이트
-                            this.updateLocalCache();
-                        }
-                    } catch (e) {
-                        console.error("데이터 로드 실패:", e);
-                    }
+                            // 해당 경로에서 데이터 가져오기
+                            const snapshot = await db.ref(userPath).once('value');
+                            const data = snapshot.val();
+                            
+                            if (data) {
+                                this.items = data.items || [];
+                                this.branches = data.branches || ['A영업점', 'B영업점', 'C영업점'];
+                            }
 
-                    // 4. 실시간 리스너 (다른 기기 수정 반영)
-                    db.ref('higher_ad_v2').on('value', (snapshot) => {
-                        const data = snapshot.val();
-                        if (data) {
-                            this.items = data.items || [];
-                            this.branches = data.branches || ['A영업점', 'B영업점', 'C영업점'];
-                            this.updateLocalCache();
+                            // 실시간 리스너 연결
+                            db.ref(userPath).on('value', (snapshot) => {
+                                const data = snapshot.val();
+                                if (data) {
+                                    this.items = data.items || [];
+                                    this.branches = data.branches || ['A영업점', 'B영업점', 'C영업점'];
+                                }
+                            });
+                        } else {
+                            // 로그인이 안 되어 있다면 인덱스나 로그인 페이지로 튕기기 (선택 사항)
+                            alert("로그인이 필요합니다.");
+                            // location.href = 'index.html'; 
                         }
                     });
                 },
 
-                // [추가] 로컬 저장소 업데이트 함수
-                updateLocalCache() {
-                    localStorage.setItem('higher_ad_items', JSON.stringify(this.items));
-                    localStorage.setItem('higher_ad_branches', JSON.stringify(this.branches));
-                },
-
                 saveData() {
-                    // 1. Firebase 서버 저장
+                    // 로그인이 확인되어 userPath가 생성된 경우에만 저장 실행
+                    if (!this.userPath) {
+                        console.error("사용자 인증 정보가 없습니다.");
+                        return;
+                    }
+
                     const dataToSave = {
                         items: JSON.parse(JSON.stringify(this.items)),
                         branches: this.branches
                     };
                     
-                    db.ref('higher_ad_v2').set(dataToSave).then(() => {
-                        // 2. 성공 시 로컬 캐시도 즉시 갱신
-                        this.updateLocalCache();
-                    }).catch(err => {
-                        alert("저장에 실패했습니다. 인터넷 연결을 확인해주세요.");
-                    });
+                    // 지정된 개인 경로(users/UID/...)에 저장
+                    db.ref(this.userPath).set(dataToSave)
+                        .then(() => {
+                            console.log("개인 데이터 저장 완료");
+                        })
+                        .catch(err => {
+                            console.error("저장 실패:", err);
+                            alert("저장 권한이 없습니다. 보안 규칙을 확인해주세요.");
+                        });
                 },
 
                 resetCurrentTab() {
