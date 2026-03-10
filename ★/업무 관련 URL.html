@@ -1,312 +1,414 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>업무 관련 URL</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-<style>
-    /* 기존 디자인 스타일 유지 */
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body {
-        font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-        background-color: #f0f2f5;
-        padding: 15px;
-        margin: 0;
-    }
-    h1 {
-        text-align: center;
-        color: #333;
-        margin: 10px 0 10px 0;
-        font-size: 1.5rem;
-    }
-
-    /* 개인화 안내 문구로 수정 */
-    .shared-notice {
-        background-color: #fdfae6; /* 주의보단 안내 느낌의 연한 노란색 계열로 변경 가능 */
-        border: 1px solid #ede0a6;
-        border-radius: 10px;
-        padding: 12px 15px;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        color: #555;
-        font-size: 13px;
-        line-height: 1.5;
-    }
-    .shared-notice .material-symbols-outlined {
-        color: #f59e0b;
-        font-size: 20px;
-        flex-shrink: 0;
-    }
-    .shared-notice b { color: #2563eb; }
-
-    #competitorContainer {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-    .competitorWrapper {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .drag-handle {
-        cursor: grab;
-        color: #ccc;
-        display: flex;
-        align-items: center;
-        padding: 5px;
-    }
-    .deleteBtn {
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #ffeded;
-        color: #e24a4a;
-        font-weight: bold;
-        border-radius: 8px;
-        cursor: pointer;
-        flex-shrink: 0;
-        border: 1px solid #ffcfcf;
-    }
-    .deleteBtn:hover { background-color: #e24a4a; color: #fff; }
-    .competitor {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        background: #fff;
-        padding: 15px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        flex: 1;
-        border: 1px solid #eee;
-    }
-    .comp-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-    }
-    .competitor label {
-        font-weight: 700;
-        color: #2e7d32;
-        font-size: 14px;
-        word-break: break-all;
-        flex: 1;
-        outline: none;
-    }
-    .competitor input[type="text"] {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-size: 13px;
-        background-color: #fafafa;
-    }
-    .copyBtn {
-        padding: 10px;
-        border: none;
-        border-radius: 8px;
-        background: #2e7d32;
-        color: #fff;
-        font-weight: 600;
-        cursor: pointer;
-        width: 100%;
-        font-size: 14px;
-    }
-    .action-group {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 10px;
-        margin-top: 20px;
-        position: sticky;
-        bottom: 10px;
-    }
-    #addBtn {
-        padding: 15px;
-        border: none;
-        border-radius: 12px;
-        font-weight: bold;
-        cursor: pointer;
-        font-size: 15px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        background: #444; 
-        color: #fff;
-    }
-
-    @media (min-width: 768px) {
-        body { padding: 30px; max-width: 800px; margin: 0 auto; }
-        .competitor { flex-direction: row; align-items: center; }
-        .competitor label { min-width: 150px; max-width: 200px; }
-        .copyBtn { width: auto; min-width: 80px; }
-        .action-group { display: flex; justify-content: center; position: static; }
-        #addBtn { width: 150px; }
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIGHER AD | 스마트 운영 관리</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        [x-cloak] { display: none !important; }
+        .tab-active { border-bottom: 3px solid #6366f1; color: #6366f1; font-weight: 800; }
+        input.tab-edit-input { background: transparent; border: none; outline: none; width: 80px; font-weight: 800; color: inherit; }
+        input[type="checkbox"] { cursor: pointer; }
+        /* 스크롤바 디자인 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    </style>
 </head>
-<body>
+<body class="bg-gray-100 font-sans" x-data="managementApp()" x-init="init()" @keydown.f2="startEditing(activeTab)">
 
-<h1>업무 관련 URL</h1>
+    <header class="bg-indigo-700 text-white p-4 shadow-md sticky top-0 z-50 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <i class="fas fa-layer-group text-2xl text-indigo-200"></i>
+            <h1 class="text-lg font-extrabold tracking-tight">HIGHER AD | 스마트 운영 관리</h1>
+        </div>
+        <div class="flex gap-2">
+            <button @click="showPasteModal = true" class="bg-white text-indigo-700 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-indigo-50 transition shadow-sm">
+                <i class="fas fa-paste mr-1"></i> 엑셀 복붙 등록
+            </button>
+            <label class="bg-indigo-500 hover:bg-indigo-600 px-3 py-1.5 rounded-lg text-sm font-bold cursor-pointer transition shadow-sm">
+                <i class="fas fa-file-excel mr-1"></i> CSV 업로드
+                <input type="file" accept=".csv" class="hidden" @change="handleFileUpload($event)">
+            </label>
+            <button @click="resetCurrentTab()" class="bg-indigo-800 hover:bg-red-600 px-3 py-1.5 rounded-lg text-sm font-bold transition" title="현재 탭 데이터 초기화">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </header>
 
-<div class="shared-notice">
-    <span class="material-symbols-outlined">info</span>
-    <div>
-        이 페이지는 <b>사용자 본인만 확인 가능한 개인 리스트</b>입니다.<br>
-        자주 사용하는 업무 링크를 자유롭게 추가하고 순서를 관리해 보세요.
-    </div>
-</div>
-
-<div id="competitorContainer"></div>
-
-<div class="action-group">
-    <button id="addBtn">➕ 항목 추가</button>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyCRnAMy3PyD0zracrwyo17hEZ-R40pAvt4",
-        authDomain: "higherad-530c4.firebaseapp.com",
-        databaseURL: "https://higherad-530c4-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "higherad-530c4",
-        storageBucket: "higherad-530c4.firebasestorage.app",
-        messagingSenderId: "1028078651420",
-        appId: "1:1028078651420:web:71c8b8c5e69f0772d637d9"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const auth = getAuth(app);
-
-    let userId = null;
-    let competitors = [];
-    const container = document.getElementById("competitorContainer");
-
-    const defaultData = [
-        { name: "하이어애드 도구 모음", url: "https://higheradtool.kro.kr/" }
-    ];
-
-    // 1. 인증 상태 감지 및 개인 데이터 로드
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            userId = user.uid;
-            const userDbRef = ref(db, `users/${userId}/links`);
+    <main class="p-6 max-w-7xl mx-auto">
+        <div class="flex items-center gap-1 mb-6 bg-white p-1 rounded-xl shadow-sm border border-gray-200 overflow-x-auto whitespace-nowrap">
+            <template x-for="(tab, index) in branches" :key="tab">
+                <div @dblclick="startEditing(tab)" 
+                     class="relative group flex items-center rounded-lg transition-all"
+                     :class="activeTab === tab ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-gray-500 hover:bg-gray-50'">
+                    
+                    <button @click="activeTab = tab; selectedIds = []" class="px-6 py-2.5 flex items-center gap-2">
+                        <template x-if="editingTab !== tab">
+                            <span x-text="tab"></span>
+                        </template>
+                        <template x-if="editingTab === tab">
+                            <input x-model="tempTabText" 
+                                   @blur="saveTabName(tab)" 
+                                   @keydown.enter="saveTabName(tab)"
+                                   @keydown.escape="editingTab = null"
+                                   class="tab-edit-input border-b-2 border-indigo-500"
+                                   x-init="$el.focus()">
+                        </template>
+                        <span class="bg-indigo-100 text-indigo-600 text-[10px] px-1.5 py-0.5 rounded-full" x-text="items.filter(i => i.branch === tab).length"></span>
+                    </button>
+                </div>
+            </template>
             
-            onValue(userDbRef, (snapshot) => {
-                const data = snapshot.val();
-                if (!data) {
-                    // 데이터가 전혀 없는 신규 유저에게만 기본값 생성
-                    set(userDbRef, defaultData);
-                } else {
-                    competitors = Array.isArray(data) ? data : Object.values(data);
-                    renderCompetitors();
+            <div class="flex items-center border-l ml-2 pl-2">
+                <button @click="addBranch()" class="p-2 text-gray-400 hover:text-indigo-500 transition" title="영업점 추가">
+                    <i class="fas fa-plus-circle"></i>
+                </button>
+                <button @click="removeBranch()" class="p-2 text-gray-400 hover:text-red-500 transition" title="현재 영업점 삭제">
+                    <i class="fas fa-minus-circle"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-gray-400">
+                <p class="text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-tighter" x-text="activeTab + ' 전체'"></p>
+                <p class="text-2xl font-black text-gray-800" x-text="filteredItems().length + '건'"></p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-blue-400">
+                <p class="text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-tighter">접수</p>
+                <p class="text-2xl font-black text-blue-600" x-text="filteredItems().filter(i => i.status === '접수').length"></p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-orange-400">
+                <p class="text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-tighter">정산대기</p>
+                <p class="text-2xl font-black text-orange-600" x-text="filteredItems().filter(i => i.status === '정산대기').length"></p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-green-500">
+                <p class="text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-tighter">완료</p>
+                <p class="text-2xl font-black text-green-600" x-text="filteredItems().filter(i => i.status === '완료').length"></p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-indigo-500">
+                <p class="text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-tighter">총 주문 수량</p>
+                <p class="text-2xl font-black text-indigo-600" x-text="calculateTotalQuantity().toLocaleString()"></p>
+            </div>
+        </div>
+
+        <div x-show="selectedIds.length > 0" x-transition class="mb-4 bg-indigo-600 p-3 rounded-xl shadow-lg flex items-center justify-between text-white" x-cloak>
+            <div class="flex items-center gap-4 ml-2">
+                <span class="font-bold text-sm leading-none"><i class="fas fa-check-double mr-2"></i><span x-text="selectedIds.length"></span>개 선택됨</span>
+                <div class="h-4 w-[1px] bg-white/30"></div>
+                <div class="flex gap-2">
+                    <button @click="bulkUpdateStatus('접수')" class="bg-white text-indigo-700 hover:bg-blue-50 px-3 py-1 rounded-lg text-xs font-bold transition shadow-sm">접수 전환</button>
+                    <button @click="bulkUpdateStatus('정산대기')" class="bg-white text-indigo-700 hover:bg-orange-50 px-3 py-1 rounded-lg text-xs font-bold transition shadow-sm">정산대기 전환</button>
+                    <button @click="bulkUpdateStatus('완료')" class="bg-white text-indigo-700 hover:bg-green-50 px-3 py-1 rounded-lg text-xs font-bold transition shadow-sm">완료 전환</button>
+                </div>
+            </div>
+            <button @click="selectedIds = []" class="text-xs opacity-70 hover:opacity-100 mr-2 underline underline-offset-4">선택 취소</button>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-gray-50 border-b text-gray-600 font-bold">
+                    <tr>
+                        <th class="p-4 w-12 text-center">
+                            <input type="checkbox" @change="toggleAllSelection($event)" :checked="isAllSelected()" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        </th>
+                        <th class="p-4">업체 정보 (MID)</th>
+                        <th class="p-4">순위 키워드</th>
+                        <th class="p-4 text-center">기간 / 일수</th>
+                        <th class="p-4 text-center">일목표</th>
+                        <th class="p-4">상태</th>
+                        <th class="p-4 text-center">삭제</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 font-medium">
+                    <template x-for="(item, index) in filteredItems()" :key="item.id">
+                        <tr class="hover:bg-indigo-50/30 transition duration-150" :class="selectedIds.includes(item.id) ? 'bg-indigo-50/60' : ''">
+                            <td class="p-4 text-center">
+                                <input type="checkbox" :value="item.id" x-model="selectedIds" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            </td>
+                            <td class="p-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-gray-900 leading-tight" x-text="item.name"></span>
+                                    <template x-if="item.url">
+                                        <a :href="item.url" target="_blank" class="text-gray-300 hover:text-indigo-600 transition">
+                                            <i class="fas fa-external-link-alt text-[10px]"></i>
+                                        </a>
+                                    </template>
+                                </div>
+                                <div class="text-[10px] text-indigo-500 mt-1 font-mono tracking-tighter" x-text="item.mid"></div>
+                            </td>
+                            <td class="p-4">
+                                <a :href="'https://m.search.naver.com/search.naver?query=' + encodeURIComponent(item.keyword)" 
+                                   target="_blank" 
+                                   class="inline-flex items-center gap-1.5 bg-gray-100 border border-gray-200 px-3 py-1 rounded text-gray-600 text-xs hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition">
+                                     <i class="fab fa-neos text-[10px] text-green-500"></i>
+                                     <span x-text="item.keyword"></span>
+                                </a>
+                            </td>
+                            <td class="p-4 text-center">
+                                <div class="font-bold text-gray-700" x-text="item.startDate"></div>
+                                <div class="text-[10px] text-gray-400 font-bold" x-text="item.days + ' Days'"></div>
+                            </td>
+                            <td class="p-4 text-center font-mono font-black text-gray-800 text-base" x-text="item.goal"></td>
+                            <td class="p-4">
+                                <select x-model="item.status" @change="saveData()" :class="{
+                                    'bg-blue-600 text-white': item.status === '접수',
+                                    'bg-orange-500 text-white': item.status === '정산대기',
+                                    'bg-green-600 text-white': item.status === '완료'
+                                }" class="text-[11px] font-black p-1.5 rounded-lg border-none cursor-pointer min-w-[85px]">
+                                    <option value="접수">접수</option>
+                                    <option value="정산대기">정산대기</option>
+                                    <option value="완료">완료</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-center">
+                                <button @click="removeItem(item)" class="text-gray-200 hover:text-red-500 transition px-2 py-1"><i class="fas fa-trash-alt text-lg"></i></button>
+                            </td>
+                        </tr>
+                    </template>
+                    <template x-if="filteredItems().length === 0">
+                        <tr>
+                            <td colspan="7" class="p-20 text-center text-gray-300">
+                                <i class="fas fa-folder-open text-4xl mb-4 block"></i>
+                                <p class="font-bold">등록된 데이터가 없습니다.</p>
+                                <p class="text-xs mt-1">상단 버튼을 통해 데이터를 추가해 주세요.</p>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <div x-show="showPasteModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" x-cloak x-transition>
+        <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
+            <div class="p-5 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-gray-800">
+                    <i class="fas fa-paste mr-2 text-indigo-500"></i>
+                    <span class="text-indigo-600" x-text="activeTab"></span> 탭에 등록
+                </h3>
+                <button @click="showPasteModal = false" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times-circle text-xl"></i></button>
+            </div>
+            <div class="p-6">
+                <textarea x-model="pasteData" rows="10" class="w-full border-2 border-gray-200 rounded-xl p-4 text-sm font-mono focus:border-indigo-500 outline-none transition bg-gray-50" placeholder="업체명 | URL | MID | 키워드 | 일수 | 시작일 | 일목표"></textarea>
+                <div class="flex gap-3 mt-5">
+                    <button @click="processPaste()" class="flex-grow bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-lg">일괄 등록 시작</button>
+                    <button @click="showPasteModal = false; pasteData = ''" class="px-6 bg-gray-100 text-gray-500 font-bold rounded-xl font-bold">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function managementApp() {
+            // Firebase 초기화
+            const firebaseConfig = {
+                databaseURL: "https://higherad-530c4-default-rtdb.asia-southeast1.firebasedatabase.app/"
+            };
+            
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            const db = firebase.database();
+
+            return {
+                items: [],
+                branches: ['A영업점', 'B영업점', 'C영업점'],
+                activeTab: 'A영업점',
+                editingTab: null,
+                tempTabText: '',
+                showPasteModal: false,
+                pasteData: '',
+                selectedIds: [],
+                
+                async init() {
+                    // 데이터 로드 전 로딩 상태 대신 기본 탭 설정
+                    if (!this.activeTab) this.activeTab = this.branches[0];
+
+                    // Firebase 실시간 리스너
+                    db.ref('higher_ad_v2').on('value', (snapshot) => {
+                        const data = snapshot.val();
+                        if (data) {
+                            // 데이터가 있을 때만 업데이트
+                            this.items = data.items || [];
+                            this.branches = data.branches || ['A영업점', 'B영업점', 'C영업점'];
+                            
+                            // 현재 활성화된 탭이 목록에 없으면 첫 번째로 이동
+                            if (!this.branches.includes(this.activeTab)) {
+                                this.activeTab = this.branches[0];
+                            }
+                        } else {
+                            // DB가 완전히 비어있을 때 초기 구조 생성 (강제 저장 방지)
+                            console.log("No data in DB. Ready for first input.");
+                        }
+
+                        // ID 누락 방지 (데이터 정합성)
+                        this.items.forEach(item => {
+                            if(!item.id) item.id = Date.now() + Math.random();
+                        });
+                    });
+                },
+
+                saveData() {
+                    // Firebase 쓰기
+                    db.ref('higher_ad_v2').set({
+                        items: JSON.parse(JSON.stringify(this.items)),
+                        branches: this.branches
+                    });
+                },
+
+                resetCurrentTab() {
+                    if(confirm(`[${this.activeTab}]의 모든 데이터를 초기화하시겠습니까?`)) {
+                        this.items = this.items.filter(item => item.branch !== this.activeTab);
+                        this.selectedIds = [];
+                        this.saveData();
+                    }
+                },
+
+                startEditing(tab) {
+                    this.editingTab = tab;
+                    this.tempTabText = tab;
+                },
+
+                saveTabName(oldName) {
+                    const newName = this.tempTabText.trim();
+                    if (newName && newName !== oldName && !this.branches.includes(newName)) {
+                        const idx = this.branches.indexOf(oldName);
+                        this.branches[idx] = newName;
+                        // 해당 탭에 속한 모든 아이템의 branch명도 함께 변경
+                        this.items.forEach(item => { if (item.branch === oldName) item.branch = newName; });
+                        this.activeTab = newName;
+                        this.saveData();
+                    }
+                    this.editingTab = null;
+                },
+
+                addBranch() {
+                    const name = prompt('새로운 영업점 이름을 입력하세요:');
+                    if (name && !this.branches.includes(name)) {
+                        this.branches.push(name);
+                        this.activeTab = name;
+                        this.saveData();
+                    }
+                },
+
+                removeBranch() {
+                    if (this.branches.length <= 1) {
+                        alert("최소 하나의 영업점은 존재해야 합니다.");
+                        return;
+                    }
+                    const confirmName = prompt(`현재 영업점 [${this.activeTab}]을 삭제하시겠습니까?\n삭제를 원하시면 영업점 이름을 정확히 입력하세요.`);
+                    if (confirmName === this.activeTab) {
+                        if(confirm(`정말로 [${this.activeTab}]의 모든 데이터와 함께 삭제하시겠습니까?`)) {
+                            this.items = this.items.filter(item => item.branch !== this.activeTab);
+                            this.branches = this.branches.filter(b => b !== this.activeTab);
+                            this.activeTab = this.branches[0];
+                            this.saveData();
+                        }
+                    }
+                },
+
+                filteredItems() {
+                    return this.items.filter(item => item.branch === this.activeTab);
+                },
+
+                calculateTotalQuantity() {
+                    return this.filteredItems().reduce((acc, i) => {
+                        const goal = Number(i.goal) || 0;
+                        const days = Number(i.days) || 0;
+                        return acc + (goal * days);
+                    }, 0);
+                },
+
+                toggleAllSelection(e) {
+                    const currentIds = this.filteredItems().map(i => i.id);
+                    if (e.target.checked) {
+                        this.selectedIds = [...new Set([...this.selectedIds, ...currentIds])];
+                    } else {
+                        this.selectedIds = this.selectedIds.filter(id => !currentIds.includes(id));
+                    }
+                },
+
+                isAllSelected() {
+                    const currentIds = this.filteredItems().map(i => i.id);
+                    return currentIds.length > 0 && currentIds.every(id => this.selectedIds.includes(id));
+                },
+
+                bulkUpdateStatus(newStatus) {
+                    if(!confirm(`${this.selectedIds.length}개 항목의 상태를 [${newStatus}]로 변경하시겠습니까?`)) return;
+                    this.items.forEach(item => {
+                        if(this.selectedIds.includes(item.id)) item.status = newStatus;
+                    });
+                    this.selectedIds = [];
+                    this.saveData();
+                },
+
+                processPaste() {
+                    if(!this.pasteData.trim()) return;
+                    const rows = this.pasteData.trim().split('\n');
+                    const newItems = rows.map(row => {
+                        const cols = row.split('\t');
+                        return {
+                            id: Date.now() + Math.random(),
+                            branch: this.activeTab,
+                            name: cols[0] || '미지정',
+                            url: cols[1] || '',
+                            mid: cols[2] || '-',
+                            keyword: cols[3] || '-',
+                            days: Number(cols[4]) || 0,
+                            startDate: cols[5] || '0',
+                            goal: Number(cols[6]) || 0,
+                            status: '접수'
+                        };
+                    });
+                    this.items = [...this.items, ...newItems];
+                    this.saveData();
+                    this.showPasteModal = false;
+                    this.pasteData = '';
+                },
+
+                handleFileUpload(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    Papa.parse(file, {
+                        header: true, skipEmptyLines: true,
+                        complete: (res) => {
+                            const mapped = res.data.map(r => ({
+                                id: Date.now() + Math.random(),
+                                branch: this.activeTab,
+                                name: r['업체명'] || r['상호'] || '미지정',
+                                mid: r['업체MID번호'] || r['MID'] || '-',
+                                url: r['업체URL'] || r['URL'] || '',
+                                keyword: r['순위키워드'] || r['키워드'] || '-',
+                                days: Number(r['일수']) || 0,
+                                startDate: r['시작일'] || '0',
+                                goal: Number(r['일목표 개수']) || Number(r['일목표']) || 0,
+                                status: '접수'
+                            }));
+                            this.items = [...this.items, ...mapped];
+                            this.saveData();
+                            alert(`${mapped.length}건이 등록되었습니다.`);
+                            event.target.value = ''; // 초기화
+                        }
+                    });
+                },
+
+                removeItem(targetItem) {
+                    if(confirm('데이터를 삭제하시겠습니까?')) {
+                        this.items = this.items.filter(i => i.id !== targetItem.id);
+                        this.selectedIds = this.selectedIds.filter(id => id !== targetItem.id);
+                        this.saveData();
+                    }
                 }
-            });
-        } else {
-            // 로그인 정보 없으면 익명 로그인 시도
-            try {
-                await signInAnonymously(auth);
-            } catch (e) {
-                console.error("Auth Error:", e);
             }
         }
-    });
-
-    function renderCompetitors() {
-        if (!container) return;
-        container.innerHTML = "";
-        
-        competitors.forEach((item, index) => {
-            const wrapper = document.createElement("div");
-            wrapper.className = "competitorWrapper";
-            wrapper.innerHTML = `
-                <div class="drag-handle">
-                    <span class="material-symbols-outlined">drag_indicator</span>
-                </div>
-                <div class="competitor">
-                    <div class="comp-header">
-                        <label contenteditable="true" onblur="updateName(${index}, this.innerText)">${item.name || '이름 없음'}</label>
-                        <div class="deleteBtn" onclick="deleteCompetitor(${index})">
-                            <span class="material-symbols-outlined" style="font-size:18px">delete</span>
-                        </div>
-                    </div>
-                    <input type="text" value="${item.url || ''}" onchange="updateURL(${index}, this.value)" placeholder="URL을 입력하세요">
-                    <button class="copyBtn" onclick="copyAddress(this)">복사하기</button>
-                </div>
-            `;
-            container.appendChild(wrapper);
-        });
-    }
-
-    // 2. 개인화된 경로로 데이터 저장
-    function saveToFirebase() {
-        if (!userId) return;
-        const userDbRef = ref(db, `users/${userId}/links`);
-        set(userDbRef, competitors);
-    }
-
-    window.updateName = (index, newName) => {
-        if (competitors[index]) {
-            competitors[index].name = newName;
-            saveToFirebase();
-        }
-    };
-
-    window.updateURL = (index, newURL) => {
-        if (competitors[index]) {
-            competitors[index].url = newURL;
-            saveToFirebase();
-        }
-    };
-
-    window.deleteCompetitor = (index) => {
-        if(confirm("정말 삭제하시겠습니까?")) {
-            competitors.splice(index, 1);
-            saveToFirebase();
-        }
-    };
-
-    window.copyAddress = (btn) => {
-        const input = btn.previousElementSibling;
-        const urlValue = input.value;
-        if (!urlValue) return;
-
-        navigator.clipboard.writeText(urlValue).then(() => {
-            const originText = btn.innerText;
-            btn.innerText = "✅ 복사 완료!";
-            btn.style.background = "#4a90e2";
-            setTimeout(() => {
-                btn.innerText = originText;
-                btn.style.background = "#2e7d32";
-            }, 1000);
-        });
-    };
-
-    document.getElementById("addBtn").addEventListener("click", () => {
-        competitors.push({ name: "새 항목", url: "" });
-        saveToFirebase();
-        setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
-    });
-
-    if (typeof Sortable !== 'undefined') {
-        new Sortable(container, {
-            animation: 150,
-            handle: '.drag-handle',
-            onEnd: function (evt) {
-                const movedItem = competitors.splice(evt.oldIndex, 1)[0];
-                competitors.splice(evt.newIndex, 0, movedItem);
-                saveToFirebase();
-            }
-        });
-    }
-</script>
+    </script>
 </body>
 </html>
