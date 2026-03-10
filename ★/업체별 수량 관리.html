@@ -191,37 +191,90 @@
         </div>
     </div>
 
-    <script>
-        function managementApp() {
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCRnAMy3PyD0zracrwyo17hEZ-R40pAvt4",
+            authDomain: "higherad-530c4.firebaseapp.com",
+            databaseURL: "https://higherad-530c4-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "higherad-530c4",
+            storageBucket: "higherad-530c4.firebasestorage.app",
+            messagingSenderId: "1028078651420",
+            appId: "1:1028078651420:web:71c8b8c5e69f0772d637d9"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        window.managementApp = () => {
             return {
                 items: [],
-                branches: ['A영업점', 'B영업점', 'C영업점'],
-                activeTab: '', // 초기에는 비워둠 (init에서 첫 번째 탭 할당)
+                // [기능: 영업점 텍스트 고정]
+                branches: ['A영업점', 'B영업점', 'C영업점'], 
+                activeTab: 'A영업점',
                 editingTab: null,
                 tempTabText: '',
                 showPasteModal: false,
                 pasteData: '',
                 selectedIds: [],
-                
-                init() {
-                    const savedItems = localStorage.getItem('higher_ad_items');
-                    const savedBranches = localStorage.getItem('higher_ad_branches');
-                    if (savedItems) this.items = JSON.parse(savedItems);
-                    if (savedBranches) this.branches = JSON.parse(savedBranches);
-                    
-                    // 시작 페이지를 항상 첫 번째 탭으로 설정
-                    if (this.branches.length > 0) {
-                        this.activeTab = this.branches[0];
-                    }
+                currentUser: null,
 
-                    this.items.forEach(item => {
-                        if(!item.id) item.id = Date.now() + Math.random();
+                async init() {
+                    // 1. 저장된 영업점 이름 로드
+                    const savedBranches = localStorage.getItem('higher_ad_branches');
+                    if (savedBranches) this.branches = JSON.parse(savedBranches);
+
+                    // 2. [기능: Firebase 실시간 데이터 연동]
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            this.currentUser = user;
+                            const userItemsRef = ref(db, `users/${user.uid}/management_items`);
+                            
+                            onValue(userItemsRef, (snapshot) => {
+                                const data = snapshot.val();
+                                if (data) {
+                                    this.items = Object.values(data);
+                                } else {
+                                    // 서버에 데이터가 없는 경우 로컬 데이터 마이그레이션
+                                    const localItems = localStorage.getItem('higher_ad_items');
+                                    if (localItems) {
+                                        this.items = JSON.parse(localItems);
+                                        this.saveData();
+                                    }
+                                }
+                            });
+                        }
                     });
                 },
 
-                saveData() {
+                async saveData() {
+                    // 로컬 저장 유지 (백업용)
                     localStorage.setItem('higher_ad_items', JSON.stringify(this.items));
                     localStorage.setItem('higher_ad_branches', JSON.stringify(this.branches));
+
+                    // Firebase 서버 저장
+                    if (this.currentUser) {
+                        const itemsObj = {};
+                        this.items.forEach(item => {
+                            const safeId = item.id.toString().replace(/\./g, '_');
+                            itemsObj[safeId] = item;
+                        });
+                        await set(ref(db, `users/${this.currentUser.uid}/management_items`), itemsObj);
+                    }
+                },
+
+                filteredItems() {
+                    return this.items.filter(item => item.branch === this.activeTab);
+                },
+
+                calculateTotalQuantity() {
+                    return this.filteredItems().reduce((acc, i) => {
+                        return acc + (Number(i.goal || 0) * Number(i.days || 0));
+                    }, 0);
                 },
 
                 resetCurrentTab() {
@@ -236,9 +289,10 @@
                     this.editingTab = tab;
                     this.tempTabText = tab;
                 },
+
                 saveTabName(oldName) {
                     const newName = this.tempTabText.trim();
-                    if (newName && newName !== oldName && !this.branches.includes(newName)) {
+                    if (newName && newName !== oldName) {
                         const idx = this.branches.indexOf(oldName);
                         this.branches[idx] = newName;
                         this.items.forEach(item => { if (item.branch === oldName) item.branch = newName; });
@@ -247,6 +301,7 @@
                     }
                     this.editingTab = null;
                 },
+
                 addBranch() {
                     const name = prompt('새로운 영업점 이름을 입력하세요:');
                     if (name && !this.branches.includes(name)) {
@@ -255,28 +310,14 @@
                         this.saveData();
                     }
                 },
+
                 removeBranch() {
-                    const name = prompt(`현재 영업점 [${this.activeTab}]을 삭제하시겠습니까?\n삭제를 원하시면 영업점 이름을 정확히 입력하세요.`);
-                    if (name === this.activeTab) {
-                        if(confirm(`정말로 [${this.activeTab}]의 모든 데이터와 함께 삭제하시겠습니까?`)) {
-                            this.items = this.items.filter(item => item.branch !== this.activeTab);
-                            this.branches = this.branches.filter(b => b !== this.activeTab);
-                            this.activeTab = this.branches[0] || '';
-                            this.saveData();
-                        }
+                    if (prompt(`현재 영업점을 삭제하려면 [${this.activeTab}]을 입력하세요.`) === this.activeTab) {
+                        this.items = this.items.filter(item => item.branch !== this.activeTab);
+                        this.branches = this.branches.filter(b => b !== this.activeTab);
+                        this.activeTab = this.branches[0] || '';
+                        this.saveData();
                     }
-                },
-
-                filteredItems() {
-                    return this.items.filter(item => item.branch === this.activeTab);
-                },
-
-                calculateTotalQuantity() {
-                    return this.filteredItems().reduce((acc, i) => {
-                        const goal = Number(i.goal) || 0;
-                        const days = Number(i.days) || 0;
-                        return acc + (goal * days);
-                    }, 0);
                 },
 
                 toggleAllSelection(e) {
@@ -287,12 +328,13 @@
                         this.selectedIds = this.selectedIds.filter(id => !currentIds.includes(id));
                     }
                 },
+
                 isAllSelected() {
                     const currentIds = this.filteredItems().map(i => i.id);
                     return currentIds.length > 0 && currentIds.every(id => this.selectedIds.includes(id));
                 },
+
                 bulkUpdateStatus(newStatus) {
-                    if(!confirm(`${this.selectedIds.length}개 항목의 상태를 [${newStatus}]로 변경하시겠습니까?`)) return;
                     this.items.forEach(item => {
                         if(this.selectedIds.includes(item.id)) item.status = newStatus;
                     });
@@ -313,7 +355,7 @@
                             mid: cols[2] || '-',
                             keyword: cols[3] || '-',
                             days: cols[4] || 0,
-                            startDate: cols[5] || '2026-03-09',
+                            startDate: cols[5] || '2026-03-10',
                             goal: cols[6] || 0,
                             status: '접수'
                         };
@@ -338,7 +380,7 @@
                                 url: r['업체URL'] || '',
                                 keyword: r['순위키워드'] || '-',
                                 days: r['일수'] || 0,
-                                startDate: r['시작일'] || '2026-03-09',
+                                startDate: r['시작일'] || '2026-03-10',
                                 goal: r['일목표 개수'] || 0,
                                 status: '접수'
                             }));
@@ -350,8 +392,7 @@
 
                 removeItem(targetItem) {
                     if(confirm('데이터를 삭제하시겠습니까?')) {
-                        this.items = this.items.filter(i => i !== targetItem);
-                        this.selectedIds = this.selectedIds.filter(id => id !== targetItem.id);
+                        this.items = this.items.filter(i => i.id !== targetItem.id);
                         this.saveData();
                     }
                 }
