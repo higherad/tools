@@ -55,7 +55,8 @@
     }
     .date-item:hover { background: rgba(0,0,0,0.05); border-color: var(--border); }
     .date-item.active { background: #e8f5e9; border-color: var(--primary); color: var(--primary); font-weight: 600; }
-    .delete-icon { color: var(--text-muted); font-size: 16px; padding: 4px; }
+    .delete-icon { color: var(--text-muted); font-size: 16px; padding: 4px; opacity: 0.6; }
+    .delete-icon:hover { opacity: 1; color: #d32f2f; }
 
     /* [메인 콘텐츠] */
     #main {
@@ -122,7 +123,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
-  import { getDatabase, ref, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+  import { getDatabase, ref, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCRnAMy3PyD0zracrwyo17hEZ-R40pAvt4",
@@ -150,9 +151,11 @@
   let currentUser = null;
   let allMemoData = {};
 
+  // [개인화 적용] 로그인 상태 감지 및 사용자별 데이터 경로 설정
   onAuthStateChanged(auth, (user) => {
     if (user) {
       currentUser = user;
+      // 사용자별 UID 경로로 데이터 참조
       const memosRef = ref(db, `users/${currentUser.uid}/memos`);
       onValue(memosRef, (snapshot) => {
         allMemoData = snapshot.val() || {};
@@ -167,24 +170,18 @@
   }
 
   function updateUI() {
-    // 현재 날짜 표시 및 텍스트 로드
     todayDateEl.textContent = displayDate(currentDate);
     schedule.value = allMemoData[currentDate] || "";
     
-    // 리스트 갱신
     dateList.innerHTML = "";
     const query = searchInput.value.trim();
     
-    // [수정] Firebase에 실제로 존재하는 키(날짜)들만 가져옵니다.
     const dates = Object.keys(allMemoData)
       .filter(d => d.includes(query))
       .sort().reverse();
 
-    // [삭제] 기존에 강제로 오늘 날짜를 추가하던 if문(if (dates.length === 0...))을 제거했습니다.
-
     dates.forEach(date => {
       const container = document.createElement("div");
-      // 현재 선택된 날짜면 active 클래스 부여
       container.className = `date-item ${date === currentDate ? 'active' : ''}`;
       const dayName = dayNames[new Date(date).getDay()];
       container.innerHTML = `<span>${date} (${dayName})</span><span class="delete-icon">🗑</span>`;
@@ -198,7 +195,7 @@
       container.querySelector(".delete-icon").onclick = (e) => {
         e.stopPropagation();
         if (confirm(`${date} 메모를 삭제할까요?`)) {
-          // 삭제 후 만약 현재 보고있는 날짜였다면, 오늘 날짜로 시점을 이동시키고 UI 갱신
+          // 사용자별 경로에서 삭제
           remove(ref(db, `users/${currentUser.uid}/memos/${date}`)).then(() => {
               if(currentDate === date) {
                   currentDate = new Date().toISOString().slice(0, 10);
@@ -212,20 +209,20 @@
 
   async function saveMemo() {
     if (!currentUser) return;
-    // [추가] 내용이 비어있으면 저장하지 않으려면 여기에 체크 로직을 넣을 수 있습니다.
-    // if (!schedule.value.trim()) return alert("내용을 입력해주세요.");
 
     try {
+      // 사용자별 UID 경로에 데이터 업데이트
       await update(ref(db, `users/${currentUser.uid}/memos`), {
         [currentDate]: schedule.value
       });
       message.style.display = "block";
       setTimeout(() => { message.style.display = "none"; }, 2000);
-      // 저장 직후 UI가 실시간(onValue)으로 업데이트되면서 리스트에 나타납니다.
     } catch (e) { alert("저장 실패"); }
   }
 
   saveBtn.addEventListener("click", saveMemo);
+  
+  // 단축키 저장 (Ctrl+S / Cmd+S)
   document.addEventListener("keydown", (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
       e.preventDefault();
@@ -235,7 +232,7 @@
 
   searchInput.addEventListener("input", updateUI);
 
-  // 특수 기호 변환 로직
+  // 특수 기호 변환 및 불렛포인트 로직
   schedule.addEventListener("keydown", function (e) {
     const cursor = this.selectionStart;
     const value = this.value;
