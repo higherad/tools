@@ -229,27 +229,30 @@
                 selectedIds: [],
                 
                 async init() {
-                    // 데이터 로드 전 로딩 상태 대신 기본 탭 설정
+                    // 1. 기본 탭 설정
                     if (!this.activeTab) this.activeTab = this.branches[0];
 
-                    // Firebase 실시간 리스너
+                    // 2. Firebase에서 최초 데이터 1회 강제 로드 (새로고침 대응)
+                    const firstLoad = await db.ref('higher_ad_v2').once('value');
+                    const initialData = firstLoad.val();
+                    if (initialData) {
+                        this.items = initialData.items || [];
+                        this.branches = initialData.branches || ['A영업점', 'B영업점', 'C영업점'];
+                    }
+
+                    // 3. 실시간 리스너 연결 (다른 기기에서 수정 시 자동 반영)
                     db.ref('higher_ad_v2').on('value', (snapshot) => {
                         const data = snapshot.val();
                         if (data) {
-                            // 데이터가 있을 때만 업데이트
                             this.items = data.items || [];
                             this.branches = data.branches || ['A영업점', 'B영업점', 'C영업점'];
                             
-                            // 현재 활성화된 탭이 목록에 없으면 첫 번째로 이동
                             if (!this.branches.includes(this.activeTab)) {
                                 this.activeTab = this.branches[0];
                             }
-                        } else {
-                            // DB가 완전히 비어있을 때 초기 구조 생성 (강제 저장 방지)
-                            console.log("No data in DB. Ready for first input.");
                         }
-
-                        // ID 누락 방지 (데이터 정합성)
+                        
+                        // ID 누락 방지 처리
                         this.items.forEach(item => {
                             if(!item.id) item.id = Date.now() + Math.random();
                         });
