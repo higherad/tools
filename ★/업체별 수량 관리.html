@@ -207,16 +207,23 @@
     </div>
 
     <script>
-        function managementApp() {
-            // Firebase 초기화
+        // 1. 전체 설정값을 상단에 정의 (한 번만)
             const firebaseConfig = {
-                databaseURL: "https://higherad-530c4-default-rtdb.asia-southeast1.firebasedatabase.app/"
+                apiKey: "AIzaSyCRnAMy3PyD0zracrwyo17hEZ-R40pAvt4",
+                authDomain: "higherad-530c4.firebaseapp.com",
+                databaseURL: "https://higherad-530c4-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "higherad-530c4",
+                storageBucket: "higherad-530c4.firebasestorage.app",
+                messagingSenderId: "1028078651420",
+                appId: "1:1028078651420:web:71c8b8c5e69f0772d637d9"
             };
-            
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-            }
-            const db = firebase.database();
+
+            function managementApp() {
+                // 2. Firebase 초기화 (상단에 정의된 firebaseConfig를 그대로 사용)
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                const db = firebase.database();
 
             return {
                 items: [],
@@ -228,7 +235,7 @@
                 pasteData: '',
                 selectedIds: [],
                 
-async init() {
+                async init() {
                     // 1. 기본 탭 설정
                     if (!this.activeTab) this.activeTab = this.branches[0];
 
