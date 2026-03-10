@@ -17,9 +17,31 @@
     h1 {
         text-align: center;
         color: #333;
-        margin: 10px 0 20px 0;
+        margin: 10px 0 10px 0;
         font-size: 1.5rem;
     }
+
+    /* 공용 안내 문구 스타일 추가 */
+    .shared-notice {
+        background-color: #eef6ff;
+        border: 1px solid #d0e3ff;
+        border-radius: 10px;
+        padding: 12px 15px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        color: #444;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+    .shared-notice .material-symbols-outlined {
+        color: #2b7de9;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+    .shared-notice b { color: #d32f2f; }
+
     #competitorContainer {
         display: flex;
         flex-direction: column;
@@ -130,6 +152,14 @@
 
 <h1>업무 관련 URL</h1>
 
+<div class="shared-notice">
+    <span class="material-symbols-outlined">info</span>
+    <div>
+        이 페이지는 <b>전 직원이 공통으로 사용하는 목록</b>입니다.<br>
+        항목을 수정, 삭제하거나 순서를 변경하면 실시간으로 모든 사용자에게 동일하게 반영되니 주의해 주세요.
+    </div>
+</div>
+
 <div id="competitorContainer"></div>
 
 <div class="action-group">
@@ -158,28 +188,18 @@
     let competitors = [];
     const container = document.getElementById("competitorContainer");
 
-    // [설정] 초기 예시 데이터
     const defaultData = [
         { name: "하이어애드 도구 모음", url: "https://higheradtool.kro.kr/" }
     ];
 
-    // 실시간 감시 및 초기화 로직
     onValue(dbRef, (snapshot) => {
         const data = snapshot.val();
-        
-        // 데이터가 없거나 비어있는 배열인 경우 강제 초기화
         if (data === null || (Array.isArray(data) && data.length === 0)) {
-            console.log("데이터가 없어 초기 데이터를 생성합니다.");
             set(dbRef, defaultData); 
-            // set 이후 onValue가 다시 실행되면서 화면이 그려집니다.
         } else {
-            // Firebase의 데이터가 배열 형태가 아닐 경우를 대비한 안전장치
             competitors = Array.isArray(data) ? data : Object.values(data);
             renderCompetitors();
         }
-    }, (error) => {
-        console.error("Firebase 로드 에러:", error);
-        alert("데이터를 불러오는 중 오류가 발생했습니다. 권한 설정을 확인해 주세요.");
     });
 
     function renderCompetitors() {
@@ -208,7 +228,6 @@
         });
     }
 
-    // 전역 함수 등록
     window.updateName = (index, newName) => {
         if (competitors[index]) {
             competitors[index].name = newName;
@@ -248,12 +267,11 @@
     }
 
     document.getElementById("addBtn").addEventListener("click", () => {
-        competitors.push({ name: "새 경쟁사", url: "" });
+        competitors.push({ name: "새 항목", url: "" });
         saveToFirebase();
         setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
     });
 
-    // 드래그 앤 드롭
     if (typeof Sortable !== 'undefined') {
         new Sortable(container, {
             animation: 150,
