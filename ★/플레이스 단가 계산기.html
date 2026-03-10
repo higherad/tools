@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>트래픽/길찾기 통합 계산기</title>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
 <link rel="icon" href="data:image/svg+xml,
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
   <text y='.9em' font-size='90'>💵</text>
@@ -26,7 +30,6 @@
   .hr{height:1px;background:var(--line);margin:14px 0 0}
   label{display:block;font-weight:600;margin-bottom:6px;font-size:14px}
   
-  /* 입력창 크기 및 높이 고정 (흔들림 방지 핵심) */
   input[type="number"], input[type="date"], input[type="text"]{
     width:100%; height: 46px; padding:0 14px; border:1px solid var(--line);
     border-radius:12px; font-size:16px; background:#fff;
@@ -73,7 +76,6 @@
   .grp h3{margin:0 0 8px;font-size:13px;color:#374151}
   .mini{font-size:13px;color:var(--muted);margin-top:10px}
 
-  /* 안내 텍스트 영역 고정 */
   #ref_date_info {
     min-width: 90px;
     margin-bottom: 12px; 
@@ -218,16 +220,52 @@
 
 <script>
 (() => {  
+  // --- [Firebase 설정] ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyCRnAMy3PyD0zracrwyo17hEZ-R40pAvt4",
+    authDomain: "higherad-530c4.firebaseapp.com",
+    databaseURL: "https://higherad-530c4-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "higherad-530c4",
+    storageBucket: "higherad-530c4.firebasestorage.app",
+    messagingSenderId: "1028078651420",
+    appId: "1:1028078651420:web:71c8b8c5e69f0772d637d9"
+  };
+
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  let userPath = "";
+  let clients = []; // 로컬 캐시 초기화 제거
+
   const $  = (s, r=document)=>r.querySelector(s);
   const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
   const num = v => Number((v??"").toString().replace(/[^0-9.-]/g,"")) || 0;
   const fmtInt = n => n.toLocaleString();
   const fmtWon = n => n.toLocaleString() + "원";
 
-  let clients = JSON.parse(localStorage.getItem('higherad_clients') || '[]');
-  let editIndex = -1;
+  // 인증 상태 감시 및 데이터 로드 (로컬 저장 없이 서버 데이터만 기준)
+  firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+      userPath = `users/${user.uid}/clients`;
+      // 서버 데이터 실시간 리스너 연결
+      db.ref(userPath).on('value', (snapshot) => {
+        const data = snapshot.val();
+        clients = data || [];
+        renderClientList($("#clientSearch").value);
+      });
+    } else {
+        clients = [];
+        renderClientList();
+    }
+  });
 
-  // 업체 관리 로직 (기존과 동일)
+  function saveClients() {
+    if (!userPath) return;
+    // 서버에 저장 (로컬 저장은 수행하지 않음)
+    db.ref(userPath).set(clients).then(() => {
+        console.log("서버 저장 완료");
+    }).catch(err => console.error("서버 저장 실패:", err));
+  }
+
   $("#uploadCsvBtn").onclick = () => $("#csvFileInput").click();
   $("#csvFileInput").onchange = (e) => {
     const file = e.target.files[0];
@@ -265,11 +303,6 @@
       else result += str.charAt(i);
     }
     return result;
-  }
-
-  function saveClients() {
-    localStorage.setItem('higherad_clients', JSON.stringify(clients));
-    renderClientList($("#clientSearch").value);
   }
 
   function renderClientList(filter = "") {
@@ -322,7 +355,6 @@
   $("#openClientModal").onclick = () => { $("#modalOverlay").style.display = "flex"; $("#clientSearch").value=""; renderClientList(); };
   $("#closeModal").onclick = () => { $("#modalOverlay").style.display = "none"; };
 
-  // 날짜 계산 함수
   function getDiffDays() {
     const d1 = $("#ref_today").value;
     const d2 = $("#ref_endDate").value;
@@ -385,7 +417,6 @@
     $("#blockCount").textContent = $$("#blocks .blk").length;
   }
 
-  // 환불 금액 실시간 재계산 함수
   function recalcRefund() {
     const tp=num($("#trafficPrice").value), rp=num($("#routePrice").value);
     let T=0, R=0, A=0;
@@ -413,7 +444,6 @@
   $("#addBlock").onclick=()=>{ const b=createBlock(false); $("#blocks").prepend(b); bindBlock(b,false); recalc(); };
   $("#resetAll").onclick=()=>{ $("#blocks").innerHTML=""; const b=createBlock(false); $("#blocks").prepend(b); bindBlock(b,false); recalc(); };
   
-  // 환불 항목 추가
   $("#addRefundBlock").onclick=()=>{ 
     const b=createBlock(true); 
     const diff = getDiffDays();
@@ -426,25 +456,18 @@
 
   $("#resetRefund").onclick=()=>{ $("#refundBlocks").innerHTML=""; recalcRefund(); };
   
-  // 초기 세팅
   const todayStr = new Date().toISOString().split('T')[0];
   $("#ref_today").value = todayStr;
   $("#ref_endDate").value = todayStr;
 
-  // 날짜 변경 시 '일수 문구'만 업데이트하고 리스트 수치는 안 건드림
   $("#ref_today").onchange = updateDateLabelOnly;
   $("#ref_endDate").onchange = updateDateLabelOnly;
 
-  // [수정] 단가가 바뀌면 상단 견적서와 하단 환불액 모두 실시간 반영
   ["trafficPrice","routePrice"].forEach(id => {
     const el = $("#" + id);
-    el.oninput = () => {
-      recalc();
-      recalcRefund();
-    };
+    el.oninput = () => { recalc(); recalcRefund(); };
   });
 
-  // 기타 옵션 변경 시 재계산
   ["showTraffic1","showRoute1","combine1","showTraffic2","showRoute2","combine2","isNextDay"].forEach(id=>{
     if($( "#"+id )) { $( "#"+id ).onchange=recalc; }
   });
