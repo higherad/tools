@@ -21,26 +21,26 @@
         font-size: 1.5rem;
     }
 
-    /* 공용 안내 문구 스타일 추가 */
+    /* 개인화 안내 문구로 수정 */
     .shared-notice {
-        background-color: #eef6ff;
-        border: 1px solid #d0e3ff;
+        background-color: #fdfae6; /* 주의보단 안내 느낌의 연한 노란색 계열로 변경 가능 */
+        border: 1px solid #ede0a6;
         border-radius: 10px;
         padding: 12px 15px;
         margin-bottom: 20px;
         display: flex;
         align-items: flex-start;
         gap: 10px;
-        color: #444;
+        color: #555;
         font-size: 13px;
         line-height: 1.5;
     }
     .shared-notice .material-symbols-outlined {
-        color: #2b7de9;
+        color: #f59e0b;
         font-size: 20px;
         flex-shrink: 0;
     }
-    .shared-notice b { color: #d32f2f; }
+    .shared-notice b { color: #2563eb; }
 
     #competitorContainer {
         display: flex;
@@ -155,8 +155,8 @@
 <div class="shared-notice">
     <span class="material-symbols-outlined">info</span>
     <div>
-        이 페이지는 <b>전 직원이 공통으로 사용하는 목록</b>입니다.<br>
-        항목을 수정, 삭제하거나 순서를 변경하면 실시간으로 모든 사용자에게 동일하게 반영되니 주의해 주세요.
+        이 페이지는 <b>사용자 본인만 확인 가능한 개인 리스트</b>입니다.<br>
+        자주 사용하는 업무 링크를 자유롭게 추가하고 순서를 관리해 보세요.
     </div>
 </div>
 
@@ -169,7 +169,8 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCRnAMy3PyD0zracrwyo17hEZ-R40pAvt4",
@@ -183,8 +184,9 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const dbRef = ref(db, 'competitors_links');
+    const auth = getAuth(app);
 
+    let userId = null;
     let competitors = [];
     const container = document.getElementById("competitorContainer");
 
@@ -192,13 +194,29 @@
         { name: "하이어애드 도구 모음", url: "https://higheradtool.kro.kr/" }
     ];
 
-    onValue(dbRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data === null || (Array.isArray(data) && data.length === 0)) {
-            set(dbRef, defaultData); 
+    // 1. 인증 상태 감지 및 개인 데이터 로드
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            userId = user.uid;
+            const userDbRef = ref(db, `users/${userId}/links`);
+            
+            onValue(userDbRef, (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    // 데이터가 전혀 없는 신규 유저에게만 기본값 생성
+                    set(userDbRef, defaultData);
+                } else {
+                    competitors = Array.isArray(data) ? data : Object.values(data);
+                    renderCompetitors();
+                }
+            });
         } else {
-            competitors = Array.isArray(data) ? data : Object.values(data);
-            renderCompetitors();
+            // 로그인 정보 없으면 익명 로그인 시도
+            try {
+                await signInAnonymously(auth);
+            } catch (e) {
+                console.error("Auth Error:", e);
+            }
         }
     });
 
@@ -228,6 +246,13 @@
         });
     }
 
+    // 2. 개인화된 경로로 데이터 저장
+    function saveToFirebase() {
+        if (!userId) return;
+        const userDbRef = ref(db, `users/${userId}/links`);
+        set(userDbRef, competitors);
+    }
+
     window.updateName = (index, newName) => {
         if (competitors[index]) {
             competitors[index].name = newName;
@@ -251,7 +276,10 @@
 
     window.copyAddress = (btn) => {
         const input = btn.previousElementSibling;
-        navigator.clipboard.writeText(input.value).then(() => {
+        const urlValue = input.value;
+        if (!urlValue) return;
+
+        navigator.clipboard.writeText(urlValue).then(() => {
             const originText = btn.innerText;
             btn.innerText = "✅ 복사 완료!";
             btn.style.background = "#4a90e2";
@@ -261,10 +289,6 @@
             }, 1000);
         });
     };
-
-    function saveToFirebase() {
-        set(dbRef, competitors);
-    }
 
     document.getElementById("addBtn").addEventListener("click", () => {
         competitors.push({ name: "새 항목", url: "" });
