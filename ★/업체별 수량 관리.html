@@ -229,41 +229,59 @@
                 selectedIds: [],
                 
                 async init() {
-                    // 1. 기본 탭 설정
+                    // 1. 초기 탭 설정
                     if (!this.activeTab) this.activeTab = this.branches[0];
 
-                    // 2. Firebase에서 최초 데이터 1회 강제 로드 (새로고침 대응)
-                    const firstLoad = await db.ref('higher_ad_v2').once('value');
-                    const initialData = firstLoad.val();
-                    if (initialData) {
-                        this.items = initialData.items || [];
-                        this.branches = initialData.branches || ['A영업점', 'B영업점', 'C영업점'];
+                    // 2. [보완] 로컬 캐시에서 먼저 불러오기 (초고속 로딩)
+                    const localItems = localStorage.getItem('higher_ad_items');
+                    const localBranches = localStorage.getItem('higher_ad_branches');
+                    if (localItems) this.items = JSON.parse(localItems);
+                    if (localBranches) this.branches = JSON.parse(localBranches);
+
+                    try {
+                        // 3. [핵심] Firebase에서 최신 데이터 강제 동기화
+                        const snapshot = await db.ref('higher_ad_v2').once('value');
+                        const data = snapshot.val();
+                        
+                        if (data) {
+                            this.items = data.items || [];
+                            this.branches = data.branches || ['A영업점', 'B영업점', 'C영업점'];
+                            // 로컬 캐시 업데이트
+                            this.updateLocalCache();
+                        }
+                    } catch (e) {
+                        console.error("데이터 로드 실패:", e);
                     }
 
-                    // 3. 실시간 리스너 연결 (다른 기기에서 수정 시 자동 반영)
+                    // 4. 실시간 리스너 (다른 기기 수정 반영)
                     db.ref('higher_ad_v2').on('value', (snapshot) => {
                         const data = snapshot.val();
                         if (data) {
                             this.items = data.items || [];
                             this.branches = data.branches || ['A영업점', 'B영업점', 'C영업점'];
-                            
-                            if (!this.branches.includes(this.activeTab)) {
-                                this.activeTab = this.branches[0];
-                            }
+                            this.updateLocalCache();
                         }
-                        
-                        // ID 누락 방지 처리
-                        this.items.forEach(item => {
-                            if(!item.id) item.id = Date.now() + Math.random();
-                        });
                     });
                 },
 
+                // [추가] 로컬 저장소 업데이트 함수
+                updateLocalCache() {
+                    localStorage.setItem('higher_ad_items', JSON.stringify(this.items));
+                    localStorage.setItem('higher_ad_branches', JSON.stringify(this.branches));
+                },
+
                 saveData() {
-                    // Firebase 쓰기
-                    db.ref('higher_ad_v2').set({
+                    // 1. Firebase 서버 저장
+                    const dataToSave = {
                         items: JSON.parse(JSON.stringify(this.items)),
                         branches: this.branches
+                    };
+                    
+                    db.ref('higher_ad_v2').set(dataToSave).then(() => {
+                        // 2. 성공 시 로컬 캐시도 즉시 갱신
+                        this.updateLocalCache();
+                    }).catch(err => {
+                        alert("저장에 실패했습니다. 인터넷 연결을 확인해주세요.");
                     });
                 },
 
