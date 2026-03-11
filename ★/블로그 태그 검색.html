@@ -51,7 +51,7 @@
 
         .btn-extract {
             padding: 14px 28px;
-            background: #03cf5d; /* Higher Ad 포인트 컬러 */
+            background: #03cf5d;
             color: white;
             border: none;
             border-radius: 10px;
@@ -83,10 +83,12 @@
             box-shadow: 0 4px 12px rgba(3, 207, 93, 0.08);
         }
 
+        /* [요청하신 순서: 1. 블로그명] */
         .card-top {
             display: flex;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
+            gap: 10px;
         }
 
         .rank-badge {
@@ -99,26 +101,42 @@
             flex-shrink: 0;
         }
 
-        .blog-link {
-            font-size: 13px;
-            color: #999;
-            text-decoration: none;
-            margin-left: 12px;
+        .blog-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        /* [태그 구분 스타일: # 개별 노출] */
+        /* [요청하신 순서: 2. URL] */
+        .url-section {
+            margin-bottom: 12px;
+        }
+
+        .blog-link {
+            font-size: 13px;
+            color: #0066ff;
+            text-decoration: none;
+            word-break: break-all;
+            opacity: 0.8;
+        }
+
+        .blog-link:hover { text-decoration: underline; opacity: 1; }
+
+        /* [요청하신 순서: 3. 태그] */
         .tag-wrapper {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px 12px; /* 태그 사이 간격 */
+            gap: 6px 10px;
+            padding-top: 8px;
+            border-top: 1px dashed #f0f2f5;
         }
 
         .tag-item {
             font-size: 14px;
-            color: #0066ff; /* 가독성 높은 파란색 */
+            color: #3b18ff;
             font-weight: 600;
             letter-spacing: -0.3px;
         }
@@ -155,8 +173,8 @@
         const loader = document.getElementById('loader');
         const container = document.getElementById('result-container');
         
-        // 현재 사용 중인 GAS URL
-        const API_URL = "https://script.google.com/macros/s/AKfycbwkkoM13uMPWRrDGKBje248KkDcAt0lp2iAdBbVlRbmADFlvYIMut4tdISf56YQ5VRyDQ/exec";
+        // [중요] 새로 배포하신 GAS 웹 앱 URL을 여기에 입력하세요
+        const API_URL = "https://script.google.com/macros/s/AKfycbw9wJYoLPptWyULFwROxr5UYs-nylHJMfzPb7t5xjwHDUusJGtHrh0XS01dLMfKG9NB0A/exec";
 
         if (!keyword) return alert("키워드를 입력해 주세요.");
 
@@ -165,28 +183,30 @@
         container.innerHTML = "";
 
         try {
-            // [개선] 호출 시 타임아웃 방지를 위해 캐시 방지 파라미터 추가
             const response = await fetch(`${API_URL}?keyword=${encodeURIComponent(keyword)}&_t=${Date.now()}`);
             const result = await response.json();
 
-            // 데이터가 1개만 올 경우를 대비해 배열 길이를 다시 체크하여 렌더링
             if (result.items && result.items.length > 0) {
                 result.items.forEach(item => {
                     const card = document.createElement('div');
                     card.className = 'result-card';
                     
-                    let tagHtml = `<span class="no-tag">태그 없음</span>`;
+                    // 태그 레이아웃 생성
+                    let tagHtml = `<div class="tag-wrapper"><span class="no-tag">태그 없음</span></div>`;
                     if (item.tags && item.tags !== "태그 없음") {
-                        // 쉼표와 공백 모두 대응하여 # 태그 생성
                         const tagArray = item.tags.split(/[, ]+/).filter(t => t.trim() !== "");
                         tagHtml = `<div class="tag-wrapper">` + 
                                   tagArray.map(t => `<span class="tag-item">#${t.replace(/^#/, '')}</span>`).join('') + 
                                   `</div>`;
                     }
 
+                    // 요청하신 순서 반영: 블로그명 -> URL -> 태그
                     card.innerHTML = `
                         <div class="card-top">
                             <span class="rank-badge">${item.rank}위</span>
+                            <span class="blog-name">${item.blogName}</span>
+                        </div>
+                        <div class="url-section">
                             <a href="${item.url}" target="_blank" class="blog-link">${item.url}</a>
                         </div>
                         ${tagHtml}
@@ -195,11 +215,11 @@
                 });
                 container.style.display = "flex";
             } else {
-                alert("현재 네이버에서 검색 결과를 1개만 응답하고 있습니다. 잠시 후 다시 시도해 주세요.");
+                alert("검색 결과를 가져오지 못했습니다. 키워드를 확인해 주세요.");
             }
         } catch (error) {
             console.error(error);
-            alert("연결 상태가 불안정합니다.");
+            alert("연결 상태가 불안정하거나 GAS URL 설정이 잘못되었습니다.");
         } finally {
             loader.style.display = "none";
         }
