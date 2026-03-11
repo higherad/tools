@@ -15,7 +15,6 @@
         margin: 0;
     }
 
-    /* 제목 및 툴팁 레이아웃 */
     h1 {
         display: flex;
         align-items: center;
@@ -35,18 +34,12 @@
         cursor: help;
     }
 
-    /* 아이콘 색상 설정 */
     .info-icon {
         font-size: 22px;
-        color: #f59e0b; /* 요청하신 노란색 계열 */
+        color: #f59e0b;
         transition: opacity 0.2s;
     }
 
-    .info-icon:hover {
-        opacity: 0.8;
-    }
-
-    /* 하단으로 나타나는 툴팁 본문 스타일 */
     .tooltip-text {
         visibility: hidden;
         width: 240px;
@@ -57,7 +50,7 @@
         padding: 12px;
         position: absolute;
         z-index: 100;
-        top: 140%; /* 아이콘 하단으로 배치 */
+        top: 140%;
         left: 50%;
         transform: translateX(-50%);
         opacity: 0;
@@ -69,11 +62,10 @@
         pointer-events: none;
     }
 
-    /* 툴팁 상단 화살표 (아이콘을 가리킴) */
     .tooltip-text::after {
         content: "";
         position: absolute;
-        bottom: 100%; /* 툴팁 위쪽에 위치 */
+        bottom: 100%;
         left: 50%;
         margin-left: -5px;
         border-width: 5px;
@@ -81,7 +73,6 @@
         border-color: transparent transparent #333 transparent;
     }
 
-    /* 마우스 오버 시 표시 */
     .tooltip-container:hover .tooltip-text {
         visibility: visible;
         opacity: 1;
@@ -152,17 +143,24 @@
         font-size: 13px;
         background-color: #fafafa;
     }
-    .copyBtn {
+    /* 이동하기 버튼 스타일 수정 */
+    .goBtn {
         padding: 10px;
         border: none;
         border-radius: 8px;
-        background: #2e7d32;
+        background: #1a73e8; /* 파란색 계열로 변경 */
         color: #fff;
         font-weight: 600;
         cursor: pointer;
         width: 100%;
         font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
     }
+    .goBtn:hover { background: #1557b0; }
+
     .action-group {
         display: grid;
         grid-template-columns: 1fr;
@@ -183,17 +181,15 @@
         color: #fff;
     }
 
-    /* 태블릿 및 PC 스타일 */
     @media (min-width: 768px) {
         body { padding: 30px; max-width: 800px; margin: 0 auto; }
         .competitor { flex-direction: row; align-items: center; }
         .competitor label { min-width: 150px; max-width: 200px; }
-        .copyBtn { width: auto; min-width: 80px; }
+        .goBtn { width: auto; min-width: 100px; }
         .action-group { display: flex; justify-content: center; position: static; }
         #addBtn { width: 150px; }
     }
 
-    /* 모바일 툴팁 위치 조정 */
     @media (max-width: 480px) {
         .tooltip-text {
             width: 200px;
@@ -294,8 +290,10 @@
                             <span class="material-symbols-outlined" style="font-size:18px">delete</span>
                         </div>
                     </div>
-                    <input type="text" value="${item.url || ''}" onchange="updateURL(${index}, this.value)" placeholder="URL을 입력하세요">
-                    <button class="copyBtn" onclick="copyAddress(this)">복사하기</button>
+                    <input type="text" value="${item.url || ''}" onchange="updateURL(${index}, this.value)" placeholder="https://">
+                    <button class="goBtn" onclick="goToURL(${index})">
+                        <span class="material-symbols-outlined" style="font-size:18px">open_in_new</span> 바로가기
+                    </button>
                 </div>
             `;
             container.appendChild(wrapper);
@@ -307,6 +305,22 @@
         const userDbRef = ref(db, `users/${userId}/links`);
         set(userDbRef, competitors);
     }
+
+    // URL 이동 함수 (보정 로직 포함)
+    window.goToURL = (index) => {
+        let url = competitors[index].url;
+        if (!url) {
+            alert("URL을 먼저 입력해주세요.");
+            return;
+        }
+        
+        // http나 https가 없으면 자동으로 붙여줌
+        if (!/^https?:\/\//i.test(url)) {
+            url = 'https://' + url;
+        }
+        
+        window.open(url, '_blank');
+    };
 
     window.updateName = (index, newName) => {
         if (competitors[index]) {
@@ -327,22 +341,6 @@
             competitors.splice(index, 1);
             saveToFirebase();
         }
-    };
-
-    window.copyAddress = (btn) => {
-        const input = btn.previousElementSibling;
-        const urlValue = input.value;
-        if (!urlValue) return;
-
-        navigator.clipboard.writeText(urlValue).then(() => {
-            const originText = btn.innerText;
-            btn.innerText = "✅ 복사 완료!";
-            btn.style.background = "#4a90e2";
-            setTimeout(() => {
-                btn.innerText = originText;
-                btn.style.background = "#2e7d32";
-            }, 1000);
-        });
     };
 
     document.getElementById("addBtn").addEventListener("click", () => {
