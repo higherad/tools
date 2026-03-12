@@ -268,26 +268,35 @@
         const resultArea = document.getElementById('searchResultArea');
         const resultBody = document.getElementById('searchResultBody');
         const searchHeader = document.getElementById('searchHeader');
+        
         const queries = input.split('\n').map(s => s.trim()).filter(s => s !== "");
         if(queries.length === 0) return alert("검색할 MID를 입력하세요.");
+
         let foundRows = [];
         queries.forEach(query => {
-            const matchA = window.dbA.filter(item => item.mid.includes(query)).map(d => ({...d, listType: 'A'}));
-            const matchB = window.dbB.filter(item => item.mid.includes(query)).map(d => ({...d, listType: 'B'}));
+            const matchA = window.dbA.filter(item => item.mid.includes(query)).map(d => ({...d, listType: 'A', headers: headersA}));
+            const matchB = window.dbB.filter(item => item.mid.includes(query)).map(d => ({...d, listType: 'B', headers: headersB}));
             foundRows = [...foundRows, ...matchA, ...matchB];
         });
+
         if(foundRows.length > 0) {
             resultArea.style.display = 'block';
+            // 기준 헤더는 더 긴 B 리스트 헤더를 사용하여 틀을 잡습니다.
             searchHeader.innerHTML = `<tr><th style="width:80px; background:#eee">구분</th>${headersB.map(h => `<th>${h}</th>`).join('')}</tr>`;
+            
             resultBody.innerHTML = foundRows.map(item => {
-                const vals = Object.values(item.data);
+                // 해당 아이템이 원래 가지고 있던 헤더 순서대로 데이터를 추출
                 return `<tr>
                     <td style="background:#f9f9f9; font-weight:bold; color:var(--dark-blue)">${item.listType} 리스트</td>
-                    ${vals.map((v, idx) => {
-                        let style = idx === 3 ? "color:red; font-weight:bold;" : "";
-                        if (v && v.includes('▲')) style += "color: #ff4d4d; font-weight:bold;";
-                        else if (v && v.includes('▼')) style += "color: #4e46e5; font-weight:bold;";
-                        return `<td class="result-td" style="${style}">${v || '-'}</td>`;
+                    ${headersB.map((h) => {
+                        // 현재 출력하려는 헤더(h)가 해당 데이터의 헤더에 존재하는지 확인
+                        const v = item.data[h] || '-'; 
+                        let style = (h === "MID") ? "color:red; font-weight:bold;" : "";
+                        
+                        if (String(v).includes('▲')) style += "color: #ff4d4d; font-weight:bold;";
+                        else if (String(v).includes('▼')) style += "color: #4e46e5; font-weight:bold;";
+                        
+                        return `<td class="result-td" style="${style}">${v}</td>`;
                     }).join('')}
                 </tr>`;
             }).join('');
