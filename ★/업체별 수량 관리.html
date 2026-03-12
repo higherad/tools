@@ -215,8 +215,12 @@
                 gridData: Array.from({ length: 30 }, () => Array(7).fill('')),
 
                 async init() {
+                    // 알림창이 중복으로 뜨지 않게 방지하는 플래그
+                    let isAlerted = false;
+
                     firebase.auth().onAuthStateChanged(async (user) => {
                         if (user) {
+                            // 로그인 성공 시
                             this.userPath = `users/${user.uid}/higher_ad_v2`;
                             db.ref(this.userPath).on('value', (snapshot) => {
                                 const data = snapshot.val();
@@ -226,7 +230,15 @@
                                     if (!this.branches.includes(this.activeTab)) this.activeTab = this.branches[0];
                                 }
                             });
-                        } else { alert("로그인이 필요합니다."); }
+                        } else {
+                            // 로그인이 안 되어 있을 때 (한 번만 띄움)
+                            if (!isAlerted) {
+                                isAlerted = true; 
+                                alert("로그인이 필요합니다.");
+                                // 필요하다면 로그인 페이지로 리다이렉트
+                                // window.location.href = 'login.html'; 
+                            }
+                        }
                     });
                 },
 
