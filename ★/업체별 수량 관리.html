@@ -118,8 +118,8 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 font-medium text-center">
                     <template x-for="(item, index) in filteredItems()" :key="item.id">
-                        <tr class="hover:bg-indigo-50/30 transition duration-150" :class="selectedIds.includes(item.id) ? 'bg-indigo-50/60' : ''">
-                            <td class="p-4 text-center"><input type="checkbox" :value="item.id" x-model="selectedIds" class="w-4 h-4"></td>
+                        <tr class="hover:bg-indigo-50/30 transition duration-150" :class="selectedIds.includes(String(item.id)) ? 'bg-indigo-50/60' : ''">
+                            <td class="p-4 text-center"><input type="checkbox" :value="String(item.id)" x-model="selectedIds" class="w-4 h-4"></td>
                             <td class="p-4">
                                 <div class="flex items-center justify-center gap-2">
                                     <span class="font-bold text-gray-900 leading-tight" x-text="item.name"></span>
@@ -211,7 +211,7 @@
                 editingTab: null,
                 tempTabText: '',
                 showPasteModal: false,
-                selectedIds: [],
+                selectedIds: [], // 여기에 저장되는 ID는 모두 문자열로 통일됨
                 gridData: Array.from({ length: 30 }, () => Array(7).fill('')),
 
                 async init() {
@@ -238,24 +238,26 @@
                     });
                 },
 
-                // 일괄 변경 함수
+                // 일괄 변경 함수 (String 변환 비교 적용)
                 updateSelectedStatus(newStatus) {
                     if (this.selectedIds.length === 0) return;
                     this.items = this.items.map(item => {
-                        if (this.selectedIds.includes(item.id)) {
+                        if (this.selectedIds.includes(String(item.id))) {
                             return { ...item, status: newStatus };
                         }
                         return item;
                     });
                     this.saveData();
-                    alert(`${this.selectedIds.length}건의 상태가 [${newStatus}](으)로 변경되었습니다.`);
+                    const count = this.selectedIds.length;
+                    this.selectedIds = []; // 변경 완료 후 선택 해제
+                    alert(`${count}건의 상태가 [${newStatus}](으)로 변경되었습니다.`);
                 },
 
-                // 일괄 삭제 함수
+                // 일괄 삭제 함수 (String 변환 비교 적용)
                 removeSelectedItems() {
                     if (this.selectedIds.length === 0) return;
                     if (confirm(`선택한 ${this.selectedIds.length}건을 정말 삭제하시겠습니까?`)) {
-                        this.items = this.items.filter(item => !this.selectedIds.includes(item.id));
+                        this.items = this.items.filter(item => !this.selectedIds.includes(String(item.id)));
                         this.selectedIds = [];
                         this.saveData();
                     }
@@ -303,17 +305,21 @@
                 clearGrid() { this.gridData = Array.from({ length: 30 }, () => Array(7).fill('')); },
                 filteredItems() { return this.items.filter(item => item.branch === this.activeTab); },
                 calculateTotalQuantity() { return this.filteredItems().reduce((acc, i) => acc + (Number(i.goal) * Number(i.days)), 0); },
+                
+                // 전체 선택 로직 (ID를 String으로 변환하여 저장)
                 toggleAllSelection(e) { 
-                    const currentIds = this.filteredItems().map(i => i.id);
-                    this.selectedIds = e.target.checked ? [...new Set([...this.selectedIds, ...currentIds])] : this.selectedIds.filter(id => !currentIds.includes(id));
+                    const currentIds = this.filteredItems().map(i => String(i.id));
+                    this.selectedIds = e.target.checked 
+                        ? [...new Set([...this.selectedIds, ...currentIds])] 
+                        : this.selectedIds.filter(id => !currentIds.includes(id));
                 },
                 isAllSelected() { 
-                    const currentIds = this.filteredItems().map(i => i.id);
+                    const currentIds = this.filteredItems().map(i => String(i.id));
                     return currentIds.length > 0 && currentIds.every(id => this.selectedIds.includes(id));
                 },
                 removeItem(targetItem) {
                     if(confirm('삭제하시겠습니까?')) {
-                        this.items = this.items.filter(i => i.id !== targetItem.id);
+                        this.items = this.items.filter(i => String(i.id) !== String(targetItem.id));
                         this.saveData();
                     }
                 },
