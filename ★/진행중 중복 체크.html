@@ -104,7 +104,7 @@
 
     <div id="sectionA" class="master-section active">
         <div class="table-title">
-            📂 A 리스트 등록 현황 
+            📂 블랙/올리브 등록 현황
             <span id="countA" class="count-badge">0건</span>
             <button class="btn-trash" onclick="clearDb('A')" title="A 리스트 비우기">
                 <svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -120,7 +120,7 @@
 
     <div id="sectionB" class="master-section">
         <div class="table-title">
-            📂 B 리스트 등록 현황 
+            📂 기타등급 등록 현황
             <span id="countB" class="count-badge">0건</span>
             <button class="btn-trash" onclick="clearDb('B')" title="B 리스트 비우기">
                 <svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -279,8 +279,8 @@
         if(queries.length === 0) return alert("검색할 MID를 입력하세요.");
         let foundRows = [];
         queries.forEach(query => {
-            const matchA = window.dbA.filter(item => item.mid.includes(query)).map(d => ({...d, listType: 'A'}));
-            const matchB = window.dbB.filter(item => item.mid.includes(query)).map(d => ({...d, listType: 'B'}));
+            const matchA = window.dbA.filter(item => item.mid.includes(query)).map(d => ({...d, listType: '블랙/올리브'}));
+            const matchB = window.dbB.filter(item => item.mid.includes(query)).map(d => ({...d, listType: '기타등급'}));
             foundRows = [...foundRows, ...matchA, ...matchB];
         });
         if(foundRows.length > 0) {
