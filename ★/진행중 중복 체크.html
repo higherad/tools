@@ -244,17 +244,23 @@
     }
 
     function renderMaster() {
-        const draw = (db) => db.map(item => {
-            const vals = Object.values(item.data);
-            return `<tr>${vals.map((v, idx) => {
-                let style = idx === 3 ? "color:var(--main-green); font-weight:bold;" : "";
-                if (v && v.includes('▲')) style = "color: #ff4d4d; font-weight:bold;";
-                else if (v && v.includes('▼')) style = "color: #4e46e5; font-weight:bold;";
-                return `<td class="result-td" style="${style}">${v || '-'}</td>`;
-            }).join('')}</tr>`;
-        }).join('');
-        document.getElementById('masterBodyA').innerHTML = draw(window.dbA);
-        document.getElementById('masterBodyB').innerHTML = draw(window.dbB);
+    const draw = (db, headers) => db.map(item => {
+        // 필드명(Header)을 기준으로 데이터를 순서대로 추출하여 매핑 오류 방지
+        return `<tr>${headers.map((h, idx) => {
+            const v = item.data[h] || '-'; // 헤더 이름으로 직접 접근
+            let style = (h === "MID") ? "color:var(--main-green); font-weight:bold;" : "";
+            
+            // 등락 표시 색상 로직
+            if (String(v).includes('▲')) style = "color: #ff4d4d; font-weight:bold;";
+            else if (String(v).includes('▼')) style = "color: #4e46e5; font-weight:bold;";
+            
+            return `<td class="result-td" style="${style}">${v}</td>`;
+        }).join('')}</tr>`;
+    }).join('');
+
+    // 각각의 헤더 배열을 인자로 전달
+    document.getElementById('masterBodyA').innerHTML = draw(window.dbA, headersA);
+    document.getElementById('masterBodyB').innerHTML = draw(window.dbB, headersB);
     }
 
     function searchMID() {
