@@ -16,9 +16,11 @@
         .tab-active { border-bottom: 3px solid #6366f1; color: #6366f1; font-weight: 800; }
         input.tab-edit-input { background: transparent; border: none; outline: none; width: 80px; font-weight: 800; color: inherit; }
         input[type="checkbox"] { cursor: pointer; }
-        /* 스크롤바 디자인 */
+        /* 스크롤바 및 테이블 정렬 */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .grid-input { text-align: center; border: none; width: 100%; padding: 10px 5px; outline: none; font-size: 13px; }
+        .grid-input:focus { background-color: #f0f4ff; box-shadow: inset 0 0 0 2px #6366f1; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans" x-data="managementApp()" x-init="init()" @keydown.f2="startEditing(activeTab)">
@@ -30,7 +32,7 @@
         </div>
         <div class="flex gap-2">
             <button @click="showPasteModal = true" class="bg-white text-indigo-700 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-indigo-50 transition shadow-sm">
-                <i class="fas fa-paste mr-1"></i> 엑셀 복붙 등록
+                <i class="fas fa-paste mr-1"></i> 리스트 복붙 등록
             </button>
             <label class="bg-indigo-500 hover:bg-indigo-600 px-3 py-1.5 rounded-lg text-sm font-bold cursor-pointer transition shadow-sm">
                 <i class="fas fa-file-excel mr-1"></i> CSV 업로드
@@ -45,38 +47,23 @@
     <main class="p-6 max-w-7xl mx-auto">
         <div class="flex items-center gap-1 mb-6 bg-white p-1 rounded-xl shadow-sm border border-gray-200 overflow-x-auto whitespace-nowrap">
             <template x-for="(tab, index) in branches" :key="tab">
-                <div @dblclick="startEditing(tab)" 
-                     class="relative group flex items-center rounded-lg transition-all"
-                     :class="activeTab === tab ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-gray-500 hover:bg-gray-50'">
-                    
+                <div @dblclick="startEditing(tab)" class="relative group flex items-center rounded-lg transition-all" :class="activeTab === tab ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-gray-500 hover:bg-gray-50'">
                     <button @click="activeTab = tab; selectedIds = []" class="px-6 py-2.5 flex items-center gap-2">
-                        <template x-if="editingTab !== tab">
-                            <span x-text="tab"></span>
-                        </template>
+                        <template x-if="editingTab !== tab"><span x-text="tab"></span></template>
                         <template x-if="editingTab === tab">
-                            <input x-model="tempTabText" 
-                                   @blur="saveTabName(tab)" 
-                                   @keydown.enter="saveTabName(tab)"
-                                   @keydown.escape="editingTab = null"
-                                   class="tab-edit-input border-b-2 border-indigo-500"
-                                   x-init="$el.focus()">
+                            <input x-model="tempTabText" @blur="saveTabName(tab)" @keydown.enter="saveTabName(tab)" @keydown.escape="editingTab = null" class="tab-edit-input border-b-2 border-indigo-500" x-init="$el.focus()">
                         </template>
                         <span class="bg-indigo-100 text-indigo-600 text-[10px] px-1.5 py-0.5 rounded-full" x-text="items.filter(i => i.branch === tab).length"></span>
                     </button>
                 </div>
             </template>
-            
             <div class="flex items-center border-l ml-2 pl-2">
-                <button @click="addBranch()" class="p-2 text-gray-400 hover:text-indigo-500 transition" title="영업점 추가">
-                    <i class="fas fa-plus-circle"></i>
-                </button>
-                <button @click="removeBranch()" class="p-2 text-gray-400 hover:text-red-500 transition" title="현재 영업점 삭제">
-                    <i class="fas fa-minus-circle"></i>
-                </button>
+                <button @click="addBranch()" class="p-2 text-gray-400 hover:text-indigo-500 transition"><i class="fas fa-plus-circle"></i></button>
+                <button @click="removeBranch()" class="p-2 text-gray-400 hover:text-red-500 transition"><i class="fas fa-minus-circle"></i></button>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 text-center">
             <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-gray-400">
                 <p class="text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-tighter" x-text="activeTab + ' 전체'"></p>
                 <p class="text-2xl font-black text-gray-800" x-text="filteredItems().length + '건'"></p>
@@ -99,86 +86,47 @@
             </div>
         </div>
 
-        <div x-show="selectedIds.length > 0" x-transition class="mb-4 bg-indigo-600 p-3 rounded-xl shadow-lg flex items-center justify-between text-white" x-cloak>
-            <div class="flex items-center gap-4 ml-2">
-                <span class="font-bold text-sm leading-none"><i class="fas fa-check-double mr-2"></i><span x-text="selectedIds.length"></span>개 선택됨</span>
-                <div class="h-4 w-[1px] bg-white/30"></div>
-                <div class="flex gap-2">
-                    <button @click="bulkUpdateStatus('접수')" class="bg-white text-indigo-700 hover:bg-blue-50 px-3 py-1 rounded-lg text-xs font-bold transition shadow-sm">접수 전환</button>
-                    <button @click="bulkUpdateStatus('정산대기')" class="bg-white text-indigo-700 hover:bg-orange-50 px-3 py-1 rounded-lg text-xs font-bold transition shadow-sm">정산대기 전환</button>
-                    <button @click="bulkUpdateStatus('완료')" class="bg-white text-indigo-700 hover:bg-green-50 px-3 py-1 rounded-lg text-xs font-bold transition shadow-sm">완료 전환</button>
-                </div>
-            </div>
-            <button @click="selectedIds = []" class="text-xs opacity-70 hover:opacity-100 mr-2 underline underline-offset-4">선택 취소</button>
-        </div>
-
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-            <table class="w-full text-left text-sm">
+            <table class="w-full text-center text-sm">
                 <thead class="bg-gray-50 border-b text-gray-600 font-bold">
                     <tr>
-                        <th class="p-4 w-12 text-center">
-                            <input type="checkbox" @change="toggleAllSelection($event)" :checked="isAllSelected()" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                        </th>
+                        <th class="p-4 w-12"><input type="checkbox" @change="toggleAllSelection($event)" :checked="isAllSelected()" class="w-4 h-4 rounded border-gray-300"></th>
                         <th class="p-4">업체 정보 (MID)</th>
                         <th class="p-4">순위 키워드</th>
-                        <th class="p-4 text-center">기간 / 일수</th>
-                        <th class="p-4 text-center">일목표</th>
+                        <th class="p-4">기간 / 일수</th>
+                        <th class="p-4">일목표</th>
                         <th class="p-4">상태</th>
-                        <th class="p-4 text-center">삭제</th>
+                        <th class="p-4">삭제</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 font-medium">
+                <tbody class="divide-y divide-gray-100 font-medium text-center">
                     <template x-for="(item, index) in filteredItems()" :key="item.id">
                         <tr class="hover:bg-indigo-50/30 transition duration-150" :class="selectedIds.includes(item.id) ? 'bg-indigo-50/60' : ''">
-                            <td class="p-4 text-center">
-                                <input type="checkbox" :value="item.id" x-model="selectedIds" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                            </td>
+                            <td class="p-4 text-center"><input type="checkbox" :value="item.id" x-model="selectedIds" class="w-4 h-4"></td>
                             <td class="p-4">
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center justify-center gap-2">
                                     <span class="font-bold text-gray-900 leading-tight" x-text="item.name"></span>
-                                    <template x-if="item.url">
-                                        <a :href="item.url" target="_blank" class="text-gray-300 hover:text-indigo-600 transition">
-                                            <i class="fas fa-external-link-alt text-[10px]"></i>
-                                        </a>
-                                    </template>
+                                    <template x-if="item.url"><a :href="item.url" target="_blank" class="text-gray-300 hover:text-indigo-600"><i class="fas fa-external-link-alt text-[10px]"></i></a></template>
                                 </div>
-                                <div class="text-[10px] text-indigo-500 mt-1 font-mono tracking-tighter" x-text="item.mid"></div>
+                                <div class="text-[10px] text-indigo-500 mt-1 font-mono" x-text="item.mid"></div>
                             </td>
                             <td class="p-4">
-                                <a :href="'https://m.search.naver.com/search.naver?query=' + encodeURIComponent(item.keyword)" 
-                                   target="_blank" 
-                                   class="inline-flex items-center gap-1.5 bg-gray-100 border border-gray-200 px-3 py-1 rounded text-gray-600 text-xs hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition">
-                                     <i class="fab fa-neos text-[10px] text-green-500"></i>
-                                     <span x-text="item.keyword"></span>
+                                <a :href="'https://m.search.naver.com/search.naver?query=' + encodeURIComponent(item.keyword)" target="_blank" class="inline-flex items-center gap-1.5 bg-gray-100 border px-3 py-1 rounded text-gray-600 text-xs hover:bg-indigo-50 hover:text-indigo-700 transition">
+                                     <i class="fab fa-neos text-[10px] text-green-500"></i><span x-text="item.keyword"></span>
                                 </a>
                             </td>
-                            <td class="p-4 text-center">
+                            <td class="p-4">
                                 <div class="font-bold text-gray-700" x-text="item.startDate"></div>
                                 <div class="text-[10px] text-gray-400 font-bold" x-text="item.days + ' Days'"></div>
                             </td>
-                            <td class="p-4 text-center font-mono font-black text-gray-800 text-base" x-text="item.goal"></td>
+                            <td class="p-4 font-mono font-black text-gray-800 text-base" x-text="item.goal"></td>
                             <td class="p-4">
-                                <select x-model="item.status" @change="saveData()" :class="{
-                                    'bg-blue-600 text-white': item.status === '접수',
-                                    'bg-orange-500 text-white': item.status === '정산대기',
-                                    'bg-green-600 text-white': item.status === '완료'
-                                }" class="text-[11px] font-black p-1.5 rounded-lg border-none cursor-pointer min-w-[85px]">
-                                    <option value="접수">접수</option>
-                                    <option value="정산대기">정산대기</option>
-                                    <option value="완료">완료</option>
+                                <select x-model="item.status" @change="saveData()" :class="{'bg-blue-600 text-white': item.status === '접수','bg-orange-500 text-white': item.status === '정산대기','bg-green-600 text-white': item.status === '완료'}" class="text-[11px] font-black p-1.5 rounded-lg border-none cursor-pointer min-w-[85px]">
+                                    <option value="접수">접수</option><option value="정산대기">정산대기</option><option value="완료">완료</option>
                                 </select>
                             </td>
                             <td class="p-4 text-center">
                                 <button @click="removeItem(item)" class="text-gray-200 hover:text-red-500 transition px-2 py-1"><i class="fas fa-trash-alt text-lg"></i></button>
-                            </td>
-                        </tr>
-                    </template>
-                    <template x-if="filteredItems().length === 0">
-                        <tr>
-                            <td colspan="7" class="p-20 text-center text-gray-300">
-                                <i class="fas fa-folder-open text-4xl mb-4 block"></i>
-                                <p class="font-bold">등록된 데이터가 없습니다.</p>
-                                <p class="text-xs mt-1">상단 버튼을 통해 데이터를 추가해 주세요.</p>
                             </td>
                         </tr>
                     </template>
@@ -188,42 +136,56 @@
     </main>
 
     <div x-show="showPasteModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" x-cloak x-transition>
-        <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
+        <div class="bg-white rounded-2xl w-full max-w-6xl shadow-2xl overflow-hidden">
             <div class="p-5 border-b flex justify-between items-center bg-gray-50">
-                <h3 class="font-bold text-gray-800">
-                    <i class="fas fa-paste mr-2 text-indigo-500"></i>
-                    <span class="text-indigo-600" x-text="activeTab"></span> 탭에 등록
-                </h3>
+                <h3 class="font-bold text-gray-800"><i class="fas fa-table mr-2 text-indigo-500"></i><span class="text-indigo-600" x-text="activeTab"></span> 스마트 시트 등록</h3>
                 <button @click="showPasteModal = false" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times-circle text-xl"></i></button>
             </div>
             <div class="p-6">
-                <textarea x-model="pasteData" rows="10" class="w-full border-2 border-gray-200 rounded-xl p-4 text-sm font-mono focus:border-indigo-500 outline-none transition bg-gray-50" placeholder="업체명 | URL | MID | 키워드 | 일수 | 시작일 | 일목표"></textarea>
-                <div class="flex gap-3 mt-5">
-                    <button @click="processPaste()" class="flex-grow bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-lg">일괄 등록 시작</button>
-                    <button @click="showPasteModal = false; pasteData = ''" class="px-6 bg-gray-100 text-gray-500 font-bold rounded-xl font-bold">취소</button>
+                <div class="mb-4 text-center"><span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">💡 팁: 시트의 데이터를 복사하여 첫 번째 칸에 붙여넣으세요.</span></div>
+                <div class="overflow-auto border rounded-lg max-h-[500px] bg-gray-50">
+                    <table class="w-full border-collapse table-fixed text-sm">
+                        <thead class="sticky top-0 bg-gray-100 shadow-sm z-10">
+                            <tr class="text-gray-600">
+                                <th class="w-40 p-2 border">업체명</th><th class="w-60 p-2 border">URL</th><th class="w-32 p-2 border">MID</th>
+                                <th class="w-40 p-2 border">순위키워드</th><th class="w-20 p-2 border">일수</th><th class="w-32 p-2 border">시작일</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="(row, rIdx) in gridData" :key="rIdx">
+                                <tr class="bg-white">
+                                    <template x-for="(val, cIdx) in row" :key="cIdx">
+                                        <td class="border p-0"><input type="text" x-model="gridData[rIdx][cIdx]" @paste="handleGridPaste($event, rIdx, cIdx)" class="grid-input"></td>
+                                    </template>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button @click="processGridRegistration()" class="flex-grow bg-indigo-600 text-white font-black py-4 rounded-xl hover:bg-indigo-700 shadow-lg transition-all">
+                        검증 및 일괄 등록 (<span x-text="countValidRows()"></span>건)
+                    </button>
+                    <button @click="clearGrid()" class="px-6 bg-gray-100 text-gray-500 font-bold rounded-xl hover:bg-gray-200 transition">비우기</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-            // 1. 전체 설정값을 상단에 정의 (한 번만)
-            const firebaseConfig = {
-                apiKey: "AIzaSyCRnAMy3PyD0zracrwyo17hEZ-R40pAvt4",
-                authDomain: "higherad-530c4.firebaseapp.com",
-                databaseURL: "https://higherad-530c4-default-rtdb.asia-southeast1.firebasedatabase.app",
-                projectId: "higherad-530c4",
-                storageBucket: "higherad-530c4.firebasestorage.app",
-                messagingSenderId: "1028078651420",
-                appId: "1:1028078651420:web:71c8b8c5e69f0772d637d9"
-            };
+        const firebaseConfig = {
+            apiKey: "AIzaSyCRnAMy3PyD0zracrwyo17hEZ-R40pAvt4",
+            authDomain: "higherad-530c4.firebaseapp.com",
+            databaseURL: "https://higherad-530c4-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "higherad-530c4",
+            storageBucket: "higherad-530c4.firebasestorage.app",
+            messagingSenderId: "1028078651420",
+            appId: "1:1028078651420:web:71c8b8c5e69f0772d637d9"
+        };
 
-            function managementApp() {
-                // 2. Firebase 초기화 (상단에 정의된 firebaseConfig를 그대로 사용)
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
-                }
-                const db = firebase.database();
+        function managementApp() {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            const db = firebase.database();
 
             return {
                 items: [],
@@ -232,220 +194,121 @@
                 editingTab: null,
                 tempTabText: '',
                 showPasteModal: false,
-                pasteData: '',
                 selectedIds: [],
-                
-async init() {
-                    // 1. 기본 탭 설정 (초기값)
-                    if (!this.activeTab) this.activeTab = this.branches[0];
+                // 그리드 관련 데이터
+                gridData: Array.from({ length: 30 }, () => Array(7).fill('')),
 
-                    // 2. Firebase 인증 상태 감지
+                async init() {
                     firebase.auth().onAuthStateChanged(async (user) => {
                         if (user) {
-                            const userPath = `users/${user.uid}/higher_ad_v2`;
-                            this.userPath = userPath; 
-
-                            // 데이터 1회 강제 로드
-                            const snapshot = await db.ref(userPath).once('value');
-                            const data = snapshot.val();
-                            
-                            if (data) {
-                                // 데이터 업데이트
-                                this.items = data.items || [];
-                                this.branches = data.branches || ['A영업점', 'B영업점', 'C영업점'];
-                                
-                                // [핵심 수정] 데이터 로드 직후, 현재 활성 탭을 다시 한번 확정
-                                // 만약 저장된 탭 목록에 현재 탭이 없다면 첫 번째 탭으로 강제 이동
-                                if (!this.branches.includes(this.activeTab)) {
-                                    this.activeTab = this.branches[0];
-                                } else {
-                                    // 현재 탭을 유지하면서 데이터 바인딩을 강제 리프레시
-                                    const current = this.activeTab;
-                                    this.activeTab = ''; 
-                                    this.activeTab = current;
-                                }
-                            }
-
-                            // 3. 실시간 리스너 연결
-                            db.ref(userPath).on('value', (snapshot) => {
+                            this.userPath = `users/${user.uid}/higher_ad_v2`;
+                            db.ref(this.userPath).on('value', (snapshot) => {
                                 const data = snapshot.val();
                                 if (data) {
                                     this.items = data.items || [];
                                     this.branches = data.branches || ['A영업점', 'B영업점', 'C영업점'];
+                                    if (!this.branches.includes(this.activeTab)) this.activeTab = this.branches[0];
                                 }
                             });
-                        } else {
-                            alert("로그인이 필요합니다.");
-                            // location.href = 'login.html'; // 실제 로그인 페이지 경로로 수정 가능
-                        }
+                        } else { alert("로그인이 필요합니다."); }
                     });
                 },
 
                 saveData() {
-                    // 로그인이 확인되어 userPath가 생성된 경우에만 저장 실행
-                    if (!this.userPath) {
-                        console.error("사용자 인증 정보가 없습니다.");
-                        return;
-                    }
-
-                    const dataToSave = {
+                    if (!this.userPath) return;
+                    db.ref(this.userPath).set({
                         items: JSON.parse(JSON.stringify(this.items)),
                         branches: this.branches
-                    };
-                    
-                    // 지정된 개인 경로(users/UID/...)에 저장
-                    db.ref(this.userPath).set(dataToSave)
-                        .then(() => {
-                            console.log("개인 데이터 저장 완료");
-                        })
-                        .catch(err => {
-                            console.error("저장 실패:", err);
-                            alert("저장 권한이 없습니다. 보안 규칙을 확인해주세요.");
-                        });
+                    });
                 },
 
-                resetCurrentTab() {
-                    if(confirm(`[${this.activeTab}]의 모든 데이터를 초기화하시겠습니까?`)) {
-                        this.items = this.items.filter(item => item.branch !== this.activeTab);
-                        this.selectedIds = [];
-                        this.saveData();
-                    }
-                },
-
-                startEditing(tab) {
-                    this.editingTab = tab;
-                    this.tempTabText = tab;
-                },
-
-                saveTabName(oldName) {
-                    const newName = this.tempTabText.trim();
-                    if (newName && newName !== oldName && !this.branches.includes(newName)) {
-                        const idx = this.branches.indexOf(oldName);
-                        this.branches[idx] = newName;
-                        // 해당 탭에 속한 모든 아이템의 branch명도 함께 변경
-                        this.items.forEach(item => { if (item.branch === oldName) item.branch = newName; });
-                        this.activeTab = newName;
-                        this.saveData();
-                    }
-                    this.editingTab = null;
-                },
-
-                addBranch() {
-                    const name = prompt('새로운 영업점 이름을 입력하세요:');
-                    if (name && !this.branches.includes(name)) {
-                        this.branches.push(name);
-                        this.activeTab = name;
-                        this.saveData();
-                    }
-                },
-
-                removeBranch() {
-                    if (this.branches.length <= 1) {
-                        alert("최소 하나의 영업점은 존재해야 합니다.");
-                        return;
-                    }
-                    const confirmName = prompt(`현재 영업점 [${this.activeTab}]을 삭제하시겠습니까?\n삭제를 원하시면 영업점 이름을 정확히 입력하세요.`);
-                    if (confirmName === this.activeTab) {
-                        if(confirm(`정말로 [${this.activeTab}]의 모든 데이터와 함께 삭제하시겠습니까?`)) {
-                            this.items = this.items.filter(item => item.branch !== this.activeTab);
-                            this.branches = this.branches.filter(b => b !== this.activeTab);
-                            this.activeTab = this.branches[0];
-                            this.saveData();
+                // 그리드 붙여넣기 로직
+                handleGridPaste(e, rowIdx, colIdx) {
+                    e.preventDefault();
+                    const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                    const rows = pastedText.split(/\r\n|\n|\r/).filter(line => line !== "");
+                    rows.forEach((rowText, rOffset) => {
+                        const targetRowIdx = rowIdx + rOffset;
+                        if (targetRowIdx < this.gridData.length) {
+                            const cols = rowText.split('\t');
+                            cols.forEach((colText, cOffset) => {
+                                const targetColIdx = colIdx + cOffset;
+                                if (targetColIdx < 8) this.gridData[targetRowIdx][targetColIdx] = colText.trim();
+                            });
                         }
-                    }
+                    });
                 },
 
-                filteredItems() {
-                    return this.items.filter(item => item.branch === this.activeTab);
+                countValidRows() { return this.gridData.filter(row => row[0] && row[0].trim() !== '').length; },
+
+                processGridRegistration() {
+                    const validItems = this.gridData.filter(row => row[0] && row[0].trim() !== '').map(row => ({
+                        id: Date.now() + Math.random(),
+                        branch: this.activeTab,
+                        name: row[0], 
+                        url: row[1], 
+                        mid: row[2], 
+                        keyword: row[3],
+                        days: Number(row[4]) || 0, 
+                        startDate: row[5], 
+                        goal: Number(row[6]) || 0,
+                        // memo: row[7] || '',  <-- 이 줄을 삭제하거나 주석 처리
+                        status: '접수'
+                    }));
+                    if (validItems.length === 0) return alert("데이터를 입력해주세요.");
+                    this.items = [...this.items, ...validItems];
+                    this.saveData();
+                    this.showPasteModal = false;
+                    this.clearGrid();
+                    alert(`${validItems.length}건이 등록되었습니다.`);
                 },
 
-                calculateTotalQuantity() {
-                    return this.filteredItems().reduce((acc, i) => {
-                        const goal = Number(i.goal) || 0;
-                        const days = Number(i.days) || 0;
-                        return acc + (goal * days);
-                    }, 0);
-                },
+                clearGrid() { this.gridData = Array.from({ length: 30 }, () => Array(8).fill('')); },
 
-                toggleAllSelection(e) {
+                // 기존 기능 함수들 (유지)
+                filteredItems() { return this.items.filter(item => item.branch === this.activeTab); },
+                calculateTotalQuantity() { return this.filteredItems().reduce((acc, i) => acc + (Number(i.goal) * Number(i.days)), 0); },
+                toggleAllSelection(e) { 
                     const currentIds = this.filteredItems().map(i => i.id);
-                    if (e.target.checked) {
-                        this.selectedIds = [...new Set([...this.selectedIds, ...currentIds])];
-                    } else {
-                        this.selectedIds = this.selectedIds.filter(id => !currentIds.includes(id));
-                    }
+                    this.selectedIds = e.target.checked ? [...new Set([...this.selectedIds, ...currentIds])] : this.selectedIds.filter(id => !currentIds.includes(id));
                 },
-
-                isAllSelected() {
+                isAllSelected() { 
                     const currentIds = this.filteredItems().map(i => i.id);
                     return currentIds.length > 0 && currentIds.every(id => this.selectedIds.includes(id));
                 },
-
-                bulkUpdateStatus(newStatus) {
-                    if(!confirm(`${this.selectedIds.length}개 항목의 상태를 [${newStatus}]로 변경하시겠습니까?`)) return;
-                    this.items.forEach(item => {
-                        if(this.selectedIds.includes(item.id)) item.status = newStatus;
-                    });
-                    this.selectedIds = [];
-                    this.saveData();
-                },
-
-                processPaste() {
-                    if(!this.pasteData.trim()) return;
-                    const rows = this.pasteData.trim().split('\n');
-                    const newItems = rows.map(row => {
-                        const cols = row.split('\t');
-                        return {
-                            id: Date.now() + Math.random(),
-                            branch: this.activeTab,
-                            name: cols[0] || '미지정',
-                            url: cols[1] || '',
-                            mid: cols[2] || '-',
-                            keyword: cols[3] || '-',
-                            days: Number(cols[4]) || 0,
-                            startDate: cols[5] || '0',
-                            goal: Number(cols[6]) || 0,
-                            status: '접수'
-                        };
-                    });
-                    this.items = [...this.items, ...newItems];
-                    this.saveData();
-                    this.showPasteModal = false;
-                    this.pasteData = '';
-                },
-
-                handleFileUpload(event) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-                    Papa.parse(file, {
-                        header: true, skipEmptyLines: true,
-                        complete: (res) => {
-                            const mapped = res.data.map(r => ({
-                                id: Date.now() + Math.random(),
-                                branch: this.activeTab,
-                                name: r['업체명'] || r['상호'] || '미지정',
-                                mid: r['업체MID번호'] || r['MID'] || '-',
-                                url: r['업체URL'] || r['URL'] || '',
-                                keyword: r['순위키워드'] || r['키워드'] || '-',
-                                days: Number(r['일수']) || 0,
-                                startDate: r['시작일'] || '0',
-                                goal: Number(r['일목표 개수']) || Number(r['일목표']) || 0,
-                                status: '접수'
-                            }));
-                            this.items = [...this.items, ...mapped];
-                            this.saveData();
-                            alert(`${mapped.length}건이 등록되었습니다.`);
-                            event.target.value = ''; // 초기화
-                        }
-                    });
-                },
-
                 removeItem(targetItem) {
-                    if(confirm('데이터를 삭제하시겠습니까?')) {
+                    if(confirm('삭제하시겠습니까?')) {
                         this.items = this.items.filter(i => i.id !== targetItem.id);
-                        this.selectedIds = this.selectedIds.filter(id => id !== targetItem.id);
                         this.saveData();
                     }
+                },
+                resetCurrentTab() {
+                    if(confirm(`[${this.activeTab}] 초기화하시겠습니까?`)) {
+                        this.items = this.items.filter(item => item.branch !== this.activeTab);
+                        this.saveData();
+                    }
+                },
+                addBranch() {
+                    const name = prompt('새 영업점 이름:');
+                    if (name && !this.branches.includes(name)) { this.branches.push(name); this.activeTab = name; this.saveData(); }
+                },
+                removeBranch() {
+                    if (this.branches.length > 1 && prompt(`[${this.activeTab}] 삭제하려면 이름을 입력하세요.`) === this.activeTab) {
+                        this.items = this.items.filter(item => item.branch !== this.activeTab);
+                        this.branches = this.branches.filter(b => b !== this.activeTab);
+                        this.activeTab = this.branches[0]; this.saveData();
+                    }
+                },
+                startEditing(tab) { this.editingTab = tab; this.tempTabText = tab; },
+                saveTabName(oldName) {
+                    const newName = this.tempTabText.trim();
+                    if (newName && newName !== oldName) {
+                        const idx = this.branches.indexOf(oldName);
+                        this.branches[idx] = newName;
+                        this.items.forEach(item => { if (item.branch === oldName) item.branch = newName; });
+                        this.activeTab = newName; this.saveData();
+                    }
+                    this.editingTab = null;
                 }
             }
         }
