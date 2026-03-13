@@ -126,7 +126,9 @@
                                         <span class="font-bold text-gray-900 leading-tight" x-text="item.name"></span>
                                         <template x-if="item.url"><a :href="item.url" target="_blank" class="text-gray-300 hover:text-indigo-600"><i class="fas fa-external-link-alt text-[10px]"></i></a></template>
                                     </div>
-                                    <div class="text-[10px] text-indigo-500 mt-1 font-mono" x-text="item.mid"></div>
+                                    <div class="text-[10px] mt-1 font-mono" 
+                                         :class="isDuplicateMid(item.mid) ? 'text-red-500 font-black' : 'text-indigo-500'" 
+                                         x-text="item.mid"></div>
                                 </td>
                                 <td class="p-4">
                                     <a :href="'https://m.search.naver.com/search.naver?query=' + encodeURIComponent(item.keyword)" target="_blank" class="inline-flex items-center gap-1.5 bg-gray-100 border px-3 py-1 rounded text-gray-600 text-xs hover:bg-indigo-50 hover:text-indigo-700 transition">
@@ -202,7 +204,6 @@
             appId: "1:1028078651420:web:71c8b8c5e69f0772d637d9"
         };
 
-        // [중요] 알림 중복 방지 플래그를 함수 외부(전역)로 이동합니다.
         let isAlerted = false; 
 
         function managementApp() {
@@ -221,8 +222,6 @@
                 gridData: Array.from({ length: 30 }, () => Array(7).fill('')),
 
                 async init() {
-                    // 기존에 여기에 있던 let isAlerted = false; 는 지웠습니다.
-
                     firebase.auth().onAuthStateChanged(async (user) => {
                         if (user) {
                             this.userPath = `users/${user.uid}/higher_ad_v2`;
@@ -237,17 +236,20 @@
                             });
                         } else {
                             this.isAuthorized = false;
-                            
-                            // 전역 플래그를 확인하여 딱 한 번만 실행
                             if (!isAlerted) {
                                 isAlerted = true; 
                                 alert("로그인이 필요합니다.");
-                                // window.location.href = 'login.html'; 
                             }
                         }
                     });
                 },
-                // ... 나머지 함수들(saveData, updateSelectedStatus 등)은 그대로 두시면 됩니다.
+
+                // [추가] MID 중복 체크 함수 (전체 데이터 기준)
+                isDuplicateMid(mid) {
+                    if (!mid) return false;
+                    return this.items.filter(item => String(item.mid) === String(mid)).length > 1;
+                },
+
                 saveData() {
                     if (!this.userPath) return;
                     db.ref(this.userPath).set({
