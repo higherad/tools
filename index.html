@@ -446,9 +446,10 @@
       btn.draggable = true;
       btn.dataset.file = tool.file;
       
-      // 첫 2글자(이모지)와 나머지 텍스트 분리
-      const iconPart = tool.label.substring(0, 2).trim();
-      const textPart = tool.label.substring(2).trim();
+      // [중요] 이모지 깨짐 방지: 문자열을 배열로 변환하여 첫 글자만 추출
+      const labelArray = [...tool.label]; 
+      const iconPart = labelArray[0]; // 첫 번째 요소(이모지) 추출
+      const textPart = labelArray.slice(1).join('').trim(); // 나머지 텍스트 합치기
 
       btn.innerHTML = `
         <span class="tool-icon">${iconPart}</span>
