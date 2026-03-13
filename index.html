@@ -109,10 +109,8 @@
       display: inline-flex; align-items: center; padding: 8px 15px; background: #e0e0e0;
       border: 1px solid #ccc; border-bottom: none; border-radius: 8px 8px 0 0;
       font-size: 13px; cursor: pointer; max-width: 180px; transition: all 0.2s; color: #666;
-      user-select: none;
     }
     .tab.active { background: #fff; font-weight: bold; border-bottom: 2px solid var(--primary-color); color: var(--text-main); }
-    .tab.dragging { opacity: 0.5; border: 2px dashed var(--primary-color); background: #fff; }
     .tab .close-tab { margin-left: 8px; font-size: 16px; color: #999; border-radius: 50%; }
     .tab .close-tab:hover { background: #ff4d4d; color: white; }
 
@@ -314,7 +312,6 @@
         updateClock();
         setInterval(updateClock, 1000);
         setupDragAndDrop();
-        setupTabDragAndDrop(); // 탭 드래그 초기화 추가
       } else {
         location.replace("login.html");
       }
@@ -363,7 +360,6 @@
     const tabBar = document.getElementById('tabBar');
     const iframeContainer = document.getElementById('iframeContainer');
     let dragged = null;
-    let draggedTab = null; // 탭 드래그용 변수 추가
     let tabs = [];
 
     const defaultTools = [
@@ -422,9 +418,10 @@
       return btn;
     }
 
-    // --- 탭 시스템 및 드래그 앤 드롭 ---
+    // --- 핵심: 탭 및 모바일 대응 시스템 ---
     function openTab(tool) {
       if (isMobile()) {
+        // 모바일 모드: 단일 프레임
         document.querySelectorAll('.tool-button').forEach(b => b.classList.remove('active'));
         const activeBtn = document.querySelector(`.tool-button[data-file="${tool.file}"]`);
         if(activeBtn) activeBtn.classList.add('active');
@@ -446,6 +443,7 @@
         return;
       }
 
+      // PC 모드: 탭 시스템
       let existingTab = tabs.find(t => t.file === tool.file);
       if (existingTab) {
         activateTab(tool.file);
@@ -458,23 +456,7 @@
       const tabEl = document.createElement('div');
       tabEl.className = 'tab';
       tabEl.id = 'tab_' + tabId;
-      tabEl.dataset.file = tool.file;
-      tabEl.draggable = true; // 드래그 가능하게 설정
       tabEl.innerHTML = `<span>${tool.label}</span><span class="material-symbols-outlined close-tab" onclick="closeTab(event, '${tool.file}')">close</span>`;
-      
-      // 탭 드래그 이벤트 리스너
-      tabEl.addEventListener('dragstart', (e) => {
-        draggedTab = tabEl;
-        tabEl.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-      });
-
-      tabEl.addEventListener('dragend', () => {
-        draggedTab = null;
-        tabEl.classList.remove('dragging');
-        updateTabsArrayOrder();
-      });
-
       tabEl.onclick = () => activateTab(tool.file);
       tabBar.appendChild(tabEl);
 
@@ -484,35 +466,6 @@
       iframeContainer.appendChild(ifrm);
 
       activateTab(tool.file);
-    }
-
-    // 탭 바 드래그 오버 로직
-    function setupTabDragAndDrop() {
-      tabBar.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        if (!draggedTab) return;
-        const afterElement = getTabDragAfterElement(tabBar, e.clientX);
-        if (afterElement == null) {
-          tabBar.appendChild(draggedTab);
-        } else {
-          tabBar.insertBefore(draggedTab, afterElement);
-        }
-      });
-    }
-
-    function getTabDragAfterElement(container, x) {
-      const draggableElements = [...container.querySelectorAll('.tab:not(.dragging)')];
-      return draggableElements.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = x - box.left - box.width / 2;
-        if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
-        else return closest;
-      }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
-    function updateTabsArrayOrder() {
-      const currentTabElements = [...tabBar.querySelectorAll('.tab')];
-      tabs = currentTabElements.map(el => tabs.find(t => t.file === el.dataset.file));
     }
 
     function activateTab(file) {
@@ -562,7 +515,6 @@
             inactive: Array.from(sections[2].children).map(b => b.dataset.file)
           };
           if(window.saveStateToServer) window.saveStateToServer(state);
-          dragged = null; // 드래그 종료 후 초기화
         };
       });
     }
