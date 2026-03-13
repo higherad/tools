@@ -240,13 +240,27 @@
       border-radius: 12px; text-decoration: none; color: var(--text-sub);
       transition: all 0.2s ease; box-shadow: var(--shadow);
       aspect-ratio: 2 / 1.1; gap: 7px; font-size: 13px; font-weight: 600;
+      position: relative;
     }
     .link-card:hover {
-      transform: translateY(-3px); border-color: var(--green-border);
-      box-shadow: 0 6px 18px rgba(46,125,50,0.1); color: var(--primary-color);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
       background: var(--green-light);
     }
-    .link-card .material-symbols-outlined { font-size: 22px; color: var(--primary-color); }
+    .link-card .material-symbols-outlined { font-size: 22px; }
+
+    /* 개별 색상 분류 (상단 테두리 포인트) */
+    .link-card.notion { border-top: 4px solid #37352f; }
+    .link-card.notion .material-symbols-outlined { color: #37352f; }
+    
+    .link-card.sheet { border-top: 4px solid #1d8045; }
+    .link-card.sheet .material-symbols-outlined { color: #1d8045; }
+    
+    .link-card.admin { border-top: 4px solid #1a73e8; }
+    .link-card.admin .material-symbols-outlined { color: #1a73e8; }
+    
+    .link-card.partner { border-top: 4px solid #f29900; }
+    .link-card.partner .material-symbols-outlined { color: #f29900; }
 
     /* ── 사이드바 푸터 ── */
     .sidebar-footer {
@@ -346,22 +360,22 @@
         <p id="todayDisplay" style="margin-top:0; color:var(--text-sub); font-size:14px;"></p>
         <div id="naverClock">00:00:00</div>
         <div class="quick-links">
-          <a href="https://www.notion.so/HigherAd-Lab-24d5c6b1d0d68034a68afd3e96f80255" target="_blank" rel="noopener noreferrer" class="link-card">
+          <a href="https://www.notion.so/HigherAd-Lab-24d5c6b1d0d68034a68afd3e96f80255" target="_blank" rel="noopener noreferrer" class="link-card notion">
             <span class="material-symbols-outlined">description</span><span>하이어애드 노션</span>
           </a>
-          <a href="https://docs.google.com/spreadsheets/d/1sHZCaJTA9icEf2S4Ad9zLWdo8oAvoK1hTfA1EONmzS8/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card">
+          <a href="https://docs.google.com/spreadsheets/d/1sHZCaJTA9icEf2S4Ad9zLWdo8oAvoK1hTfA1EONmzS8/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet">
             <span class="material-symbols-outlined">table_chart</span><span>⭐순위표</span>
           </a>
-          <a href="https://docs.google.com/spreadsheets/d/1Ia3CcylXPF-Y4f2V6qBiVHmRf85vSPiJ43v9GnQPB2c/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card">
+          <a href="https://docs.google.com/spreadsheets/d/1Ia3CcylXPF-Y4f2V6qBiVHmRf85vSPiJ43v9GnQPB2c/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet">
             <span class="material-symbols-outlined">table_chart</span><span>♠️단독 상품성 분류</span>
           </a>
-          <a href="https://admin.bizfit.kr/v1/admin/index.php" target="_blank" rel="noopener noreferrer" class="link-card">
+          <a href="https://admin.bizfit.kr/v1/admin/index.php" target="_blank" rel="noopener noreferrer" class="link-card admin">
             <span class="material-symbols-outlined">admin_panel_settings</span><span>비즈핏 어드민</span>
           </a>
-          <a href="https://bizfit.co.kr/bfnew/partners/account/view/login.html" target="_blank" rel="noopener noreferrer" class="link-card">
+          <a href="https://bizfit.co.kr/bfnew/partners/account/view/login.html" target="_blank" rel="noopener noreferrer" class="link-card partner">
             <span class="material-symbols-outlined">storefront</span><span>지사 페이지</span>
           </a>
-          <a href="http://higherad.co.kr/bfnew/partners/account/view/login.html" target="_blank" rel="noopener noreferrer" class="link-card">
+          <a href="http://higherad.co.kr/bfnew/partners/account/view/login.html" target="_blank" rel="noopener noreferrer" class="link-card partner">
             <span class="material-symbols-outlined">store</span><span>광고주 페이지</span>
           </a>
         </div>
