@@ -97,8 +97,29 @@
     .tool-button:hover { background-color: var(--hover-color); transform: translateX(3px); }
     .tool-button.active { background-color: var(--active-bg); border-color: #a0c4ff; font-weight: bold; }
 
-    #content { flex-grow: 1; position: relative; background: #fff; overflow-y: auto; display: flex; flex-direction: column; }
-    iframe { width: 100%; height: 100%; border: none; display: none; flex-grow: 1; }
+    /* --- 탭 바 스타일 --- */
+    #tabBar {
+      display: none; background: #f0f0f0; border-bottom: 1px solid var(--border-color);
+      overflow-x: auto; white-space: nowrap; padding: 6px 6px 0 6px; gap: 4px;
+      scrollbar-width: none; /* Firefox */
+    }
+    #tabBar::-webkit-scrollbar { display: none; } /* Chrome */
+
+    .tab {
+      display: inline-flex; align-items: center; padding: 8px 15px; background: #e0e0e0;
+      border: 1px solid #ccc; border-bottom: none; border-radius: 8px 8px 0 0;
+      font-size: 13px; cursor: pointer; max-width: 180px; transition: all 0.2s; color: #666;
+      user-select: none;
+    }
+    .tab.active { background: #fff; font-weight: bold; border-bottom: 2px solid var(--primary-color); color: var(--text-main); }
+    .tab.dragging { opacity: 0.5; border: 2px dashed var(--primary-color); background: #fff; }
+    .tab .close-tab { margin-left: 8px; font-size: 16px; color: #999; border-radius: 50%; }
+    .tab .close-tab:hover { background: #ff4d4d; color: white; }
+
+    #content { flex-grow: 1; position: relative; background: #fff; overflow: hidden; display: flex; flex-direction: column; }
+    #iframeContainer { flex-grow: 1; position: relative; width: 100%; height: 100%; }
+    #iframeContainer iframe { position: absolute; top:0; left:0; width: 100%; height: 100%; border: none; display: none; }
+    #iframeContainer iframe.active { display: block; }
 
     #loader { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; }
     .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
@@ -106,7 +127,7 @@
 
     #welcome {
       display: flex; flex-direction: column; justify-content: center;
-      align-items: center; min-height: 100%; text-align: center; padding: 40px 20px;
+      align-items: center; height: 100%; text-align: center; padding: 40px 20px; overflow-y: auto;
     }
     #naverClock {
       font-size: 42px; font-weight: bold; margin: 15px 0;
@@ -147,50 +168,17 @@
     }
 
     @media (max-width: 768px) {
-      body { flex-direction: column; overflow: hidden; }
-      
-      #sidebar {
-        width: 100%; min-width: 100%; 
-        /* 높이를 50%에서 40% 정도로 약간 줄여 콘텐츠 공간 확보 */
-        height: 40%; 
-        border-right: none; border-bottom: 1px solid var(--border-color);
-        flex-shrink: 0;
-      }
-
-      /* 사이드바가 접혔을 때 */
+      body { flex-direction: column; }
+      #sidebar { width: 100%; min-width: 100%; height: 40%; border-right: none; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
       #sidebar.collapsed { height: 62px !important; }
-      #sidebar.collapsed .scroll-area, 
-      #sidebar.collapsed .sidebar-footer { display: none; }
-      
+      #sidebar.collapsed .scroll-area, #sidebar.collapsed .sidebar-footer { display: none; }
       #toggleMenuBtn { display: flex; }
-
-      #content { 
-        height: 100%; 
-        flex-grow: 1; 
-        overflow-y: auto; 
-        background: #fff;
-        /* 핵심: 상단 사이드바에 가려지지 않도록 안쪽 여백 추가 */
-        padding-top: 10px; 
-      }
-
-      #welcome { 
-        padding: 30px 15px; 
-        /* 사이드바가 열려있을 때를 대비해 최소 높이 조정 */
-        min-height: auto; 
-      }
-
+      #content { height: 100%; flex-grow: 1; padding-top: 0; }
+      #welcome { padding: 30px 15px; height: auto; min-height: 100%; }
       #naverClock { font-size: 28px; padding: 8px 20px; }
-      
-      .quick-links { 
-        grid-template-columns: repeat(2, 1fr); 
-        gap: 10px; 
-        margin-top: 20px;
-      }
-      
+      .quick-links { grid-template-columns: repeat(2, 1fr); gap: 10px; }
       .link-card { aspect-ratio: 1.5 / 1; }
-      .link-card span { font-size: 11px; }
-
-      #toolFrame { height: 100%; width: 100%; }
+      #tabBar { display: none !important; } /* 모바일 탭바 강제 숨김 */
     }
   </style>
 </head>
@@ -242,41 +230,42 @@
 
   <div id="content">
     <div id="loader"><div class="spinner"></div></div>
-    
-    <div id="welcome">
-      <h2 style="color: var(--primary-color); margin-bottom: 5px;">🍀 환영합니다!</h2>
-      <p id="todayDisplay" style="margin-top: 0; color: #666; font-size: 14px;"></p>
-      <div id="naverClock">00:00:00</div>
+    <div id="tabBar"></div>
+    <div id="iframeContainer">
+      <div id="welcome">
+        <h2 style="color: var(--primary-color); margin-bottom: 5px;">🍀 환영합니다!</h2>
+        <p id="todayDisplay" style="margin-top: 0; color: #666; font-size: 14px;"></p>
+        <div id="naverClock">00:00:00</div>
 
-      <div class="quick-links">
-        <a href="https://www.notion.so/HigherAd-Lab-24d5c6b1d0d68034a68afd3e96f80255" target="_blank" class="link-card c-notion">
-          <span class="material-symbols-outlined">description</span>
-          <span>하이어애드 노션</span>
-        </a>
-        <a href="https://docs.google.com/spreadsheets/d/1sHZCaJTA9icEf2S4Ad9zLWdo8oAvoK1hTfA1EONmzS8/edit?usp=sharing" target="_blank" class="link-card c-sheet">
-          <span class="material-symbols-outlined">table_chart</span>
-          <span>⭐순위표</span>
-        </a>
-        <a href="https://docs.google.com/spreadsheets/d/1Ia3CcylXPF-Y4f2V6qBiVHmRf85vSPiJ43v9GnQPB2c/edit?usp=sharing" target="_blank" class="link-card c-sheet">
-          <span class="material-symbols-outlined">table_chart</span>
-          <span>♠️단독 상품성 분류</span>
-        </a>
-        <a href="https://admin.bizfit.kr/v1/admin/index.php" target="_blank" class="link-card c-admin">
-          <span class="material-symbols-outlined">admin_panel_settings</span>
-          <span>비즈핏 어드민</span>
-        </a>
-        <a href="https://bizfit.co.kr/bfnew/partners/account/view/login.html" target="_blank" class="link-card c-store">
-          <span class="material-symbols-outlined">storefront</span>
-          <span>지사 페이지</span>
-        </a>
-        <a href="http://higherad.co.kr/bfnew/partners/account/view/login.html" target="_blank" class="link-card c-store">
-          <span class="material-symbols-outlined">store</span>
-          <span>광고주 페이지</span>
-        </a>
+        <div class="quick-links">
+          <a href="https://www.notion.so/HigherAd-Lab-24d5c6b1d0d68034a68afd3e96f80255" target="_blank" class="link-card c-notion">
+            <span class="material-symbols-outlined">description</span>
+            <span>하이어애드 노션</span>
+          </a>
+          <a href="https://docs.google.com/spreadsheets/d/1sHZCaJTA9icEf2S4Ad9zLWdo8oAvoK1hTfA1EONmzS8/edit?usp=sharing" target="_blank" class="link-card c-sheet">
+            <span class="material-symbols-outlined">table_chart</span>
+            <span>⭐순위표</span>
+          </a>
+          <a href="https://docs.google.com/spreadsheets/d/1Ia3CcylXPF-Y4f2V6qBiVHmRf85vSPiJ43v9GnQPB2c/edit?usp=sharing" target="_blank" class="link-card c-sheet">
+            <span class="material-symbols-outlined">table_chart</span>
+            <span>♠️단독 상품성 분류</span>
+          </a>
+          <a href="https://admin.bizfit.kr/v1/admin/index.php" target="_blank" class="link-card c-admin">
+            <span class="material-symbols-outlined">admin_panel_settings</span>
+            <span>비즈핏 어드민</span>
+          </a>
+          <a href="https://bizfit.co.kr/bfnew/partners/account/view/login.html" target="_blank" class="link-card c-store">
+            <span class="material-symbols-outlined">storefront</span>
+            <span>지사 페이지</span>
+          </a>
+          <a href="http://higherad.co.kr/bfnew/partners/account/view/login.html" target="_blank" class="link-card c-store">
+            <span class="material-symbols-outlined">store</span>
+            <span>광고주 페이지</span>
+          </a>
+        </div>
+        <p style="color: #bbb; margin-top: 40px; font-size: 12px;">클라우드 동기화 중입니다. 로그인하면 어디서든 내 설정이 유지됩니다.</p>
       </div>
-      <p style="color: #bbb; margin-top: 40px; font-size: 12px;">클라우드 동기화 중입니다. 로그인하면 어디서든 내 설정이 유지됩니다.</p>
     </div>
-    <iframe id="toolFrame"></iframe>
   </div>
 
   <script type="module">
@@ -305,10 +294,8 @@
       document.getElementById('regBox').style.display = isRegister ? 'block' : 'none';
     };
 
-    // index.html의 스크립트 부분
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // 로그인된 경우: 화면을 보여주고 데이터 로드
         document.body.style.display = 'flex'; 
         document.getElementById('displayUser').textContent = user.email.split('@')[0] + "님";
         
@@ -327,13 +314,12 @@
         updateClock();
         setInterval(updateClock, 1000);
         setupDragAndDrop();
+        setupTabDragAndDrop(); // 탭 드래그 초기화 추가
       } else {
-        // 로그인 안 된 경우: 즉시 로그인 페이지로 이동
         location.replace("login.html");
       }
     });
 
-    // 실시간 서버 저장 함수 (드래그 끝날 때 호출)
     window.saveStateToServer = function(state) {
       const user = auth.currentUser;
       if (!user) return;
@@ -373,9 +359,12 @@
 
   <script>
     const sections = ['favTools', 'activeTools', 'inactiveTools'].map(id => document.getElementById(id));
-    const frame = document.getElementById('toolFrame');
     const welcome = document.getElementById('welcome');
+    const tabBar = document.getElementById('tabBar');
+    const iframeContainer = document.getElementById('iframeContainer');
     let dragged = null;
+    let draggedTab = null; // 탭 드래그용 변수 추가
+    let tabs = [];
 
     const defaultTools = [
       {file: "★/메모장.html", label: "⏰ 메모장"},
@@ -392,9 +381,9 @@
       {file: "★/업체별 수량 관리.html", label: "📚 업체별 수량 관리"},
       {file: "★/업무 관련 URL.html", label: "📍 업무 관련 URL"},
       {file: "★/블로그 태그 검색.html", label: "🏷️ 블로그 태그 검색"},
-      {file: "★/진행중 중복 체크.html", label: "💻 진행중 중복 체크.html"},
-      
     ];
+
+    const isMobile = () => window.innerWidth <= 768;
 
     function renderAppFromServer(state) {
       const render = (files, container) => {
@@ -404,24 +393,13 @@
           if (tool) container.appendChild(createButton(tool));
         });
       };
-
-      // 1. 모든 섹션에 포함된 파일 리스트 추출
       const allSavedFiles = [...(state.fav || []), ...(state.active || []), ...(state.inactive || [])];
-      
-      // 2. 누락된 메뉴(신규 메뉴) 찾기
       const missingTools = defaultTools.filter(tool => !allSavedFiles.includes(tool.file));
-
-      // 3. 누락된 메뉴가 있다면 'active' 상태에 강제로 추가 (데이터 보정)
       if (missingTools.length > 0) {
-        missingTools.forEach(tool => {
-          state.active.unshift(tool.file); // 사용 중 섹션 최상단에 추가
-        });
-        // 서버와 로컬 스토리지에 즉시 반영하여 다음부터는 누락되지 않게 함
+        missingTools.forEach(tool => { state.active.unshift(tool.file); });
         if (window.saveStateToServer) window.saveStateToServer(state);
         localStorage.setItem("toolDashboardState", JSON.stringify(state));
       }
-
-      // 4. 최종 결과 렌더링
       render(state.fav, sections[0]);
       render(state.active, sections[1]);
       render(state.inactive, sections[2]);
@@ -439,14 +417,134 @@
       btn.draggable = true;
       btn.dataset.file = tool.file;
       btn.innerHTML = `<span>${tool.label}</span>`;
-      btn.onclick = () => {
-        document.querySelectorAll('.tool-button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        welcome.style.display = "none";
-        frame.style.display = "block"; frame.src = tool.file;
-      };
+      btn.onclick = () => openTab(tool);
       btn.ondragstart = () => { dragged = btn; };
       return btn;
+    }
+
+    // --- 탭 시스템 및 드래그 앤 드롭 ---
+    function openTab(tool) {
+      if (isMobile()) {
+        document.querySelectorAll('.tool-button').forEach(b => b.classList.remove('active'));
+        const activeBtn = document.querySelector(`.tool-button[data-file="${tool.file}"]`);
+        if(activeBtn) activeBtn.classList.add('active');
+
+        welcome.style.display = "none";
+        tabBar.style.display = "none";
+        
+        let mFrame = document.getElementById('mobileFrame');
+        if(!mFrame) {
+          mFrame = document.createElement('iframe');
+          mFrame.id = 'mobileFrame';
+          iframeContainer.appendChild(mFrame);
+        }
+        document.querySelectorAll('#iframeContainer iframe').forEach(f => f.classList.remove('active'));
+        mFrame.classList.add('active');
+        mFrame.src = tool.file;
+
+        if (!document.getElementById('sidebar').classList.contains('collapsed')) toggleSidebar();
+        return;
+      }
+
+      let existingTab = tabs.find(t => t.file === tool.file);
+      if (existingTab) {
+        activateTab(tool.file);
+        return;
+      }
+
+      const tabId = 'frame_' + btoa(tool.file).replace(/=/g, '');
+      tabs.push({ file: tool.file, label: tool.label, id: tabId });
+
+      const tabEl = document.createElement('div');
+      tabEl.className = 'tab';
+      tabEl.id = 'tab_' + tabId;
+      tabEl.dataset.file = tool.file;
+      tabEl.draggable = true; // 드래그 가능하게 설정
+      tabEl.innerHTML = `<span>${tool.label}</span><span class="material-symbols-outlined close-tab" onclick="closeTab(event, '${tool.file}')">close</span>`;
+      
+      // 탭 드래그 이벤트 리스너
+      tabEl.addEventListener('dragstart', (e) => {
+        draggedTab = tabEl;
+        tabEl.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      tabEl.addEventListener('dragend', () => {
+        draggedTab = null;
+        tabEl.classList.remove('dragging');
+        updateTabsArrayOrder();
+      });
+
+      tabEl.onclick = () => activateTab(tool.file);
+      tabBar.appendChild(tabEl);
+
+      const ifrm = document.createElement('iframe');
+      ifrm.id = tabId;
+      ifrm.src = tool.file;
+      iframeContainer.appendChild(ifrm);
+
+      activateTab(tool.file);
+    }
+
+    // 탭 바 드래그 오버 로직
+    function setupTabDragAndDrop() {
+      tabBar.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (!draggedTab) return;
+        const afterElement = getTabDragAfterElement(tabBar, e.clientX);
+        if (afterElement == null) {
+          tabBar.appendChild(draggedTab);
+        } else {
+          tabBar.insertBefore(draggedTab, afterElement);
+        }
+      });
+    }
+
+    function getTabDragAfterElement(container, x) {
+      const draggableElements = [...container.querySelectorAll('.tab:not(.dragging)')];
+      return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = x - box.left - box.width / 2;
+        if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+        else return closest;
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function updateTabsArrayOrder() {
+      const currentTabElements = [...tabBar.querySelectorAll('.tab')];
+      tabs = currentTabElements.map(el => tabs.find(t => t.file === el.dataset.file));
+    }
+
+    function activateTab(file) {
+      if (isMobile()) return;
+      const tid = 'frame_' + btoa(file).replace(/=/g, '');
+      document.querySelectorAll('.tab, #iframeContainer iframe, .tool-button').forEach(el => el.classList.remove('active'));
+      welcome.style.display = "none";
+      tabBar.style.display = "flex";
+      const tBtn = document.getElementById('tab_' + tid);
+      const ifr = document.getElementById(tid);
+      const mBtn = document.querySelector(`.tool-button[data-file="${file}"]`);
+      if(tBtn) tBtn.classList.add('active');
+      if(ifr) ifr.classList.add('active');
+      if(mBtn) mBtn.classList.add('active');
+    }
+
+    window.closeTab = function(e, file) {
+      e.stopPropagation();
+      const tid = 'frame_' + btoa(file).replace(/=/g, '');
+      tabs = tabs.filter(t => t.file !== file);
+      document.getElementById('tab_' + tid).remove();
+      document.getElementById(tid).remove();
+      if (tabs.length > 0) activateTab(tabs[tabs.length - 1].file);
+      else goHome();
+    };
+
+    function goHome() {
+      document.querySelectorAll('.tab, #iframeContainer iframe, .tool-button').forEach(el => el.classList.remove('active'));
+      tabBar.style.display = "none";
+      welcome.style.display = "flex";
+      const mf = document.getElementById('mobileFrame');
+      if(mf) mf.src = "";
     }
 
     function setupDragAndDrop() {
@@ -458,14 +556,13 @@
           const afterElement = getDragAfterElement(section, e.clientY);
           if (afterElement == null) section.appendChild(dragged);
           else section.insertBefore(dragged, afterElement);
-          
-          // 드래그 종료 후 서버에 즉시 전송
           const state = {
             fav: Array.from(sections[0].children).map(b => b.dataset.file),
             active: Array.from(sections[1].children).map(b => b.dataset.file),
             inactive: Array.from(sections[2].children).map(b => b.dataset.file)
           };
           if(window.saveStateToServer) window.saveStateToServer(state);
+          dragged = null; // 드래그 종료 후 초기화
         };
       });
     }
@@ -482,18 +579,13 @@
 
     function updateClock() {
       const now = new Date();
-      document.getElementById('naverClock').textContent = now.toTimeString().split(' ')[0];
+      const clock = document.getElementById('naverClock');
+      if(clock) clock.textContent = now.toTimeString().split(' ')[0];
       const days = ['일','월','화','수','목','금','토'];
-      document.getElementById('todayDisplay').textContent = `${now.getFullYear()}. ${now.getMonth()+1}. ${now.getDate()} (${days[now.getDay()]})`;
+      const disp = document.getElementById('todayDisplay');
+      if(disp) disp.textContent = `${now.getFullYear()}. ${now.getMonth()+1}. ${now.getDate()} (${days[now.getDay()]})`;
     }
 
-    function goHome() {
-      document.querySelectorAll('.tool-button').forEach(b => b.classList.remove('active'));
-      frame.src = ""; frame.style.display = "none";
-      welcome.style.display = "flex";
-    }
-
-    // 1. 한글 초성 추출 함수 추가
     function getChosung(str) {
       const cho = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
       let result = "";
@@ -505,28 +597,22 @@
       return result;
     }
 
-    // 2. 수정된 검색 함수
     function filterTools() {
       const query = document.getElementById('toolSearch').value.toLowerCase().replace(/\s/g, "");
-      const queryChosung = getChosung(query); // 입력값의 초성 추출
-
+      const queryChosung = getChosung(query);
       document.querySelectorAll('.tool-button').forEach(btn => {
         const label = btn.textContent.toLowerCase().replace(/\s/g, "");
-        const labelChosung = getChosung(label); // 버튼 텍스트의 초성 추출
-
-        // 일반 포함 검사 OR 초성 포함 검사
-        if (label.includes(query) || labelChosung.includes(query)) {
-          btn.style.display = "flex";
-        } else {
-          btn.style.display = "none";
-        }
+        const labelChosung = getChosung(label);
+        if (label.includes(query) || labelChosung.includes(query)) btn.style.display = "flex";
+        else btn.style.display = "none";
       });
     }
 
     function toggleSidebar() {
       const sb = document.getElementById('sidebar');
       sb.classList.toggle('collapsed');
-      document.getElementById('toggleIcon').textContent = sb.classList.contains('collapsed') ? 'expand_more' : 'expand_less';
+      const icon = document.getElementById('toggleIcon');
+      if(icon) icon.textContent = sb.classList.contains('collapsed') ? 'expand_more' : 'expand_less';
     }
   </script>
 </body>
