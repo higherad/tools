@@ -44,14 +44,13 @@
       box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.1);
     }
 
-    /* ✅ 1번 스타일: 버튼 애니메이션 기본 및 클래스 추가 */
     .auth-btn { 
       width: 100%; padding: 16px; 
       background: var(--primary-color); color: white; 
       border: none; border-radius: 12px; 
       cursor: pointer; margin-top: 20px; 
       font-weight: 700; font-size: 17px;
-      transition: all 0.1s ease; /* 애니메이션을 위해 0.1s로 조정 */
+      transition: all 0.1s ease;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
@@ -94,7 +93,7 @@
 
   <div class="auth-card" id="regBox" style="display: none;">
     <div class="logo-container">
-      <img src="https://raw.githubusercontent.com/goo-sle/tools/main/%ED%95%98%EC%9D%B4%EC%96%B4%EC%95%A0%EB%93%9C_%EB%A1%9C%EA%B3%A0_1.png" alt="하이어애드 로고" class="logo-img">
+      <img src="https://raw.githubusercontent.com/goo-sle/tools/main/%ED%95%98%EC%9D%B4%EC%96%B4%EB%93%9C_%EB%A1%9C%EA%B3%A0_1.png" alt="하이어애드 로고" class="logo-img">
     </div>
     
     <form onsubmit="handleRegister(); return false;">
@@ -127,7 +126,6 @@
 
   const formatId = (id) => `${id.trim()}@higherad.com`;
 
-  // 애니메이션 효과 함수
   const triggerBtnEffect = (btnId) => {
     const btn = document.getElementById(btnId);
     if(btn) {
@@ -135,6 +133,18 @@
       setTimeout(() => btn.classList.remove('is-active'), 150);
     }
   };
+
+  // ✅ 보완: 전역 키 이벤트 리스너 추가 (자동 완성 시 대응)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const isLoginVisible = document.getElementById('loginBox').style.display !== 'none';
+      if (isLoginVisible) {
+        handleLogin();
+      } else {
+        handleRegister();
+      }
+    }
+  });
 
   onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -148,10 +158,11 @@
   };
 
   window.handleLogin = async () => {
-    triggerBtnEffect('loginBtn'); // ✅ 애니메이션 실행
+    triggerBtnEffect('loginBtn');
     const id = document.getElementById('userId').value;
     const pw = document.getElementById('userPw').value;
-    if(!id || !pw) return alert("아이디와 비밀번호를 입력해주세요.");
+    if(!id || !pw) return; // 아이디/비번 없을 땐 알림 대신 무시 (엔터 연타 방지)
+    
     try { 
       await signInWithEmailAndPassword(auth, formatId(id), pw); 
     } catch(e) { 
@@ -160,7 +171,7 @@
   };
 
   window.handleRegister = async () => {
-    triggerBtnEffect('regBtn'); // ✅ 애니메이션 실행
+    triggerBtnEffect('regBtn');
     const id = document.getElementById('regId').value;
     const pw = document.getElementById('regPw').value;
     const pwC = document.getElementById('regPwConfirm').value;
