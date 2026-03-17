@@ -39,7 +39,7 @@
 
 <div class="container">
     <div class="header">
-        <h1>Higher Ad | 📊 순위 변동 분석 센터</h1>
+        <h1 id="mainTitle">Higher Ad | 📊 순위 변동 분석 센터</h1>
         <div id="lastUpdated" style="font-size: 11px; color: #888;">데이터 불러오는 중...</div>
     </div>
 
@@ -60,7 +60,7 @@
 
 <script>
     // 여기에 본인의 배포된 웹앱 URL을 넣으세요
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbz4tsGW2vcLM7Cmz7Yv21QDepe-qU5wugpUX-mFPEbY4ZUQ1cqIuO1Mne5MINAnOovU/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyglTc6LadaWh_V9sWVGa9Tu3d-G9yrPZTcdhe-xzsSYoWv4A_sheK5k7UGKBREG-GP/exec";
     
     let rawData = { branchNames: [], results: [] };
     let currentBucket = "전체";
@@ -74,6 +74,11 @@
             const response = await fetch(`${GAS_URL}?action=getRankData`);
             rawData = await response.json();
             
+            // 추가: 전달받은 날짜 제목으로 화면 타이틀 변경
+            if (rawData.dateTitle) {
+                document.getElementById('mainTitle').innerText = "Higher Ad | 📊 " + rawData.dateTitle;
+            }
+
             // 영업점 필터 생성
             const filter = document.getElementById('branchFilter');
             filter.innerHTML = '<option value="all">전체 영업점 보기</option>';
@@ -85,7 +90,7 @@
             renderTabs();
             renderData();
         } catch (e) {
-            document.getElementById('contentArea').innerHTML = '<div class="loading" style="color:red">데이터를 불러오지 못했습니다. 앱 배포 주소를 확인하세요.</div>';
+            document.getElementById('contentArea').innerHTML = '<div class="loading" style="color:red">데이터를 불러오지 못했습니다.</div>';
         }
     }
 
