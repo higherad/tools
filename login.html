@@ -103,9 +103,12 @@
       <img src="https://raw.githubusercontent.com/goo-sle/tools/main/%ED%95%98%EC%9D%B4%EC%96%B4%EC%95%A0%EB%93%9C_%EB%A1%9C%EA%B3%A0_1.png" alt="하이어애드 로고" class="logo-img">
     </div>
     
-    <input type="text" id="userId" placeholder="아이디">
-    <input type="password" id="userPw" placeholder="비밀번호">
-    <button class="auth-btn" onclick="handleLogin()">로그인</button>
+    <form onsubmit="handleLogin(); return false;">
+      <input type="text" id="userId" placeholder="아이디">
+      <input type="password" id="userPw" placeholder="비밀번호">
+      <button type="submit" class="auth-btn">로그인</button>
+    </form>
+    
     <p class="auth-footer" onclick="toggleAuth(true)">계정이 없으신가요? 회원가입</p>
   </div>
 
