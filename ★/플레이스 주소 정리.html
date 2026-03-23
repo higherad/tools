@@ -102,7 +102,7 @@
     function extractorApp() {
         const createRow = () => ({ name: '', url: '', mid: '', keyword: '', days: '', startDate: '', goal: '' });
         return {
-            inputGrid: Array.from({length: 10}, () => createRow()),
+            inputGrid: Array.from({length: 5}, () => createRow()),
             outputGrid: [],
             
             autoExtractMid(idx) {
@@ -183,7 +183,7 @@
             },
 
             reset() {
-                this.inputGrid = Array.from({length: 10}, () => createRow());
+                this.inputGrid = Array.from({length: 5}, () => createRow());
                 this.outputGrid = [];
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
