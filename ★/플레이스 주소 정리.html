@@ -2,31 +2,62 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>📊 플레이스 데이터 추출 도구</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>📊 플레이스 데이터 정밀 추출 도구</title>
     <style>
-        :root { --primary: #2d7df4; --primary-light: #e3f2fd; --bg: #f8fafc; --white: #ffffff; --border: #e2e8f0; --text-main: #1e293b; --text-sub: #64748b; }
-        body { font-family: 'Pretendard', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; padding: 40px 20px; scroll-behavior: smooth; }
+        :root {
+            --primary: #2d7df4; --primary-light: #e3f2fd; --bg: #f8fafc;
+            --white: #ffffff; --border: #e2e8f0; --text-main: #1e293b;
+            --text-sub: #64748b;
+        }
+        body {
+            font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
+            background: var(--bg); color: var(--text-main);
+            margin: 0; padding: 40px 20px; line-height: 1.6;
+            scroll-behavior: smooth;
+        }
         .container { max-width: 1200px; margin: 0 auto; }
-        .card { background: var(--white); padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid var(--border); margin-bottom: 25px; }
+        header { text-align: center; margin-bottom: 30px; }
+        header h1 { font-size: 26px; font-weight: 800; color: var(--primary); margin: 0; }
+
+        .card {
+            background: var(--white); padding: 25px; border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); border: 1px solid var(--border); margin-bottom: 25px;
+        }
+        .section-title { font-size: 14px; font-weight: 700; margin-bottom: 15px; color: var(--primary); display: flex; align-items: center; gap: 6px; }
+
         .sheet-wrapper { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
         .sheet-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; min-width: 1050px; }
         .sheet-table th { background: #f8f9fa; border: 1px solid var(--border); height: 36px; color: var(--text-sub); text-align: center; }
-        .sheet-table td { border: 1px solid var(--border); height: 38px; padding: 0; text-align: center; vertical-align: middle; }
-        .col-num { width: 35px; background: #f8f9fa; color: #94a3b8; font-size: 12px; font-weight: 500; text-align: center !important; }
+        .sheet-table td { border: 1px solid var(--border); height: 38px; padding: 0; background: #fff; text-align: center; position: relative; }
+
+        /* [핵심 수정] 평상시에는 마우스 이벤트를 무시하여 스크롤 방해 금지 */
         .grid-input {
             width: 100%; height: 100%; border: none; padding: 0 8px; outline: none;
             font-size: 13px; box-sizing: border-box; background: transparent; text-align: center;
-            overflow: hidden !important; white-space: nowrap; text-overflow: clip;
-            pointer-events: none;
+            overflow: hidden !important; 
+            white-space: nowrap; 
+            text-overflow: clip;
+            pointer-events: none; /* 핵심: 클릭 전까지는 마우스 이벤트를 통과시킴 */
         }
+
+        /* 셀을 클릭하거나 포커스가 가면 그때만 입력 가능하도록 변경 */
         .sheet-table td:active .grid-input,
-        .sheet-table td:focus-within .grid-input { pointer-events: auto; background: var(--primary-light); }
+        .sheet-table td:focus-within .grid-input {
+            pointer-events: auto;
+            background: var(--primary-light);
+        }
+
+        .col-num { width: 25px !important; background: #f8f9fa; color: #94a3b8; font-size: 11px; }
         .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-main { flex: 1; height: 52px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 15px; transition: 0.2s; }
-        .btn-main:hover { background: #1e63c9; }
-        .btn-reset { width: 100px; height: 52px; background: #f1f5f9; color: var(--text-sub); border: 1px solid var(--border); border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 14px; }
-        .btn-copy { width: 100%; margin-top: 15px; background: #fff; color: var(--primary); border: 2px solid var(--primary); }
-        .btn-copy:hover { background: var(--primary-light); }
+        .btn-main {
+            flex: 1; height: 52px; background: var(--primary); color: white; border: none;
+            border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer;
+            transition: all 0.2s; box-shadow: 0 4px 6px rgba(45, 125, 244, 0.15);
+        }
+        .btn-main:hover { background: #1e63c9; transform: translateY(-1px); }
+        .btn-reset { width: 90px; background: #f1f5f9; color: var(--text-sub); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 13px; }
+
         .res-cell { padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 38px; text-align: center; }
         [x-cloak] { display: none !important; }
     </style>
@@ -34,7 +65,10 @@
 <body>
 
 <div class="container" x-data="extractorApp()">
+    <header><h1>플레이스 데이터 추출 도구</h1></header>
+
     <div class="card" @keydown.enter="process()">
+        <label class="section-title">📥 데이터 입력</label>
         <div class="sheet-wrapper">
             <table class="sheet-table">
                 <thead>
@@ -48,14 +82,28 @@
                     <template x-for="(row, rIdx) in inputGrid" :key="rIdx">
                         <tr>
                             <td class="col-num" x-text="rIdx + 1"></td>
-                            <template x-for="f in ['name','url','mid','keyword','days','startDate','goal']">
-                                <td @click="$el.querySelector('input').focus()">
-                                    <input type="text" class="grid-input" x-model="row[f]" 
-                                           @paste="handlePaste($event, rIdx, f)"
-                                           @input="f === 'url' && autoExtractMid(rIdx)"
-                                           @scroll="$el.scrollLeft = 0">
-                                </td>
-                            </template>
+                            <!-- td 클릭 시 자식 input에 포커스를 줘서 pointer-events가 풀리게 함 -->
+                            <td @click="$el.querySelector('input').focus()">
+                                <input type="text" class="grid-input" x-model="row.name" @paste="handlePaste($event, rIdx, 'name')">
+                            </td>
+                            <td @click="$el.querySelector('input').focus()">
+                                <input type="text" class="grid-input" x-model="row.url" @paste="handlePaste($event, rIdx, 'url')" @input="autoExtractMid(rIdx)">
+                            </td>
+                            <td @click="$el.querySelector('input').focus()">
+                                <input type="text" class="grid-input" x-model="row.mid" @paste="handlePaste($event, rIdx, 'mid')">
+                            </td>
+                            <td @click="$el.querySelector('input').focus()">
+                                <input type="text" class="grid-input" x-model="row.keyword" @paste="handlePaste($event, rIdx, 'keyword')">
+                            </td>
+                            <td @click="$el.querySelector('input').focus()">
+                                <input type="text" class="grid-input" x-model="row.days" @paste="handlePaste($event, rIdx, 'days')">
+                            </td>
+                            <td @click="$el.querySelector('input').focus()">
+                                <input type="text" class="grid-input" x-model="row.startDate" @paste="handlePaste($event, rIdx, 'startDate')">
+                            </td>
+                            <td @click="$el.querySelector('input').focus()">
+                                <input type="text" class="grid-input" x-model="row.goal" @paste="handlePaste($event, rIdx, 'goal')">
+                            </td>
                         </tr>
                     </template>
                 </tbody>
@@ -67,7 +115,9 @@
         </div>
     </div>
 
+    <!-- 결과 섹션 -->
     <div class="card" x-show="outputGrid.length > 0" x-cloak>
+        <label class="section-title">✅ 정제 완료 리스트</label>
         <div class="sheet-wrapper">
             <table class="sheet-table">
                 <thead>
@@ -93,7 +143,7 @@
                 </tbody>
             </table>
         </div>
-        <button class="btn-main btn-copy" @click="copy()">📋 결과 복사</button>
+        <button class="btn-main" style="width:100%; margin-top:15px; background:#fff; color:var(--primary); border:2px solid var(--primary);" @click="copy()">📋 결과 복사</button>
     </div>
 </div>
 
@@ -104,49 +154,33 @@
         return {
             inputGrid: Array.from({length: 5}, () => createRow()),
             outputGrid: [],
-            
-            autoExtractMid(idx) {
-                const match = this.inputGrid[idx].url.match(/\/(?:restaurant|hospital|place|hairshop|nailshop)\/([0-9]+)/);
-                if (match) {
-                    this.inputGrid[idx].mid = match[1];
-                    if (!this.inputGrid[idx].url.startsWith('https://m.place')) {
-                        this.inputGrid[idx].url = `https://m.place.naver.com/restaurant/${match[1]}`;
-                    }
+
+            formatDate(val) {
+                if (!val) return '';
+                const today = new Date();
+                const currentYear = today.getFullYear();
+                let nums = val.replace(/[^0-9]/g, '-').split('-').filter(v => v !== '');
+                let y, m, d;
+                if (nums.length === 2) { y = currentYear; m = nums[0]; d = nums[1]; }
+                else if (nums.length === 3) { 
+                    y = nums[0].length === 2 ? "20" + nums[0] : nums[0]; 
+                    m = nums[1]; d = nums[2]; 
                 }
+                else return val;
+                return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
             },
 
-            normalizeDate(dateStr) {
-                if (!dateStr) return '';
-                let clean = dateStr.replace(/\s+/g, '').trim();
-                let now = new Date();
-                let year = now.getFullYear();
-                let month, day;
-
-                if (clean.includes('월')) {
-                    const m = clean.match(/(\d+)월(\d+)일?/);
-                    if (m) { month = m[1]; day = m[2]; }
-                } 
-                else if (/[-./]/.test(clean)) {
-                    const parts = clean.split(/[-./]/).filter(p => p !== '');
-                    if (parts.length === 3) {
-                        year = parts[0].length === 2 ? '20' + parts[0] : parts[0];
-                        month = parts[1]; day = parts[2];
-                    } else if (parts.length === 2) {
-                        month = parts[0]; day = parts[1];
-                    }
+            autoExtractMid(idx) {
+                let row = this.inputGrid[idx];
+                if (!row.url) return;
+                let cleanUrl = row.url.split('?')[0].trim();
+                const match = cleanUrl.match(/\/(?:restaurant|hospital|place|hairshop|nailshop)\/([0-9]+)/);
+                if (match) {
+                    row.mid = match[1];
+                    row.url = `https://m.place.naver.com/restaurant/${match[1]}`;
+                } else {
+                    row.url = cleanUrl;
                 }
-                else if (/^\d{4}$/.test(clean)) {
-                    month = clean.substring(0, 2); day = clean.substring(2, 4);
-                } else if (/^\d{6}$/.test(clean)) {
-                    year = '20' + clean.substring(0, 2); month = clean.substring(2, 4); day = clean.substring(4, 6);
-                } else if (/^\d{8}$/.test(clean)) {
-                    year = clean.substring(0, 4); month = clean.substring(4, 6); day = clean.substring(6, 8);
-                }
-
-                if (month && day) {
-                    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                }
-                return dateStr;
             },
 
             handlePaste(e, rowIdx, field) {
@@ -170,16 +204,20 @@
             },
 
             process() {
-                this.inputGrid.forEach((row, i) => {
-                    if (row.startDate) this.inputGrid[i].startDate = this.normalizeDate(row.startDate);
+                this.outputGrid = [];
+                this.inputGrid.forEach((row) => {
+                    if (row.name.trim() !== '' && row.url.includes('naver.com')) {
+                        row.startDate = this.formatDate(row.startDate);
+                        this.autoExtractMid(this.inputGrid.indexOf(row)); 
+                        this.outputGrid.push({...row});
+                    }
                 });
-                this.outputGrid = JSON.parse(JSON.stringify(this.inputGrid.filter(r => Object.values(r).some(v => v !== ''))));
-                this.$nextTick(() => { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); });
+                this.$nextTick(() => { if(this.outputGrid.length > 0) window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); });
             },
 
             copy() {
                 const text = this.outputGrid.map(r => Object.values(r).join('\t')).join('\n');
-                navigator.clipboard.writeText(text).then(() => alert('복사되었습니다.'));
+                navigator.clipboard.writeText(text).then(() => alert('복사 완료!'));
             },
 
             reset() {
