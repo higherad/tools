@@ -365,71 +365,85 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
-    import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
-    const firebaseConfig = {
-      apiKey: "AIzaSyCRnAMy3PyD0zracrwyo17hEZ-R40pAvt4",
-      authDomain: "higherad-530c4.firebaseapp.com",
-      databaseURL: "https://higherad-530c4-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "higherad-530c4",
-      storageBucket: "higherad-530c4.firebasestorage.app",
-      messagingSenderId: "1028078651420",
-      appId: "1:1028078651420:web:71c8b8c5e69f0772d637d9"
-    };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-    const formatId = (id) => `${id.trim()}@higherad.com`;
-    window.toggleAuth = (isRegister) => {
-      document.getElementById('loginBox').style.display = isRegister ? 'none' : 'block';
-      document.getElementById('regBox').style.display = isRegister ? 'block' : 'none';
-    };
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        await loadDefaultTools();
-        document.body.style.display = 'flex';
-        document.getElementById('displayUser').textContent = user.email.split('@')[0] + "님";
-        onValue(ref(db, 'users/' + user.uid), (snapshot) => {
-          if (snapshot.exists()) {
-            const data = snapshot.val();
-            if (data.toolDashboardState) {
-              localStorage.setItem("toolDashboardState", data.toolDashboardState);
-              renderAppFromServer(JSON.parse(data.toolDashboardState));
-            }
-          } else { initApp(); }
-        });
-        updateClock(); setInterval(updateClock, 1000);
-        setupDragAndDrop(); setupTabDragAndDrop();
-      } else { location.replace("login.html"); }
-    });
-    window.saveStateToServer = function(state) {
-      const user = auth.currentUser; if (!user) return;
-      update(ref(db, 'users/' + user.uid), { toolDashboardState: JSON.stringify(state) });
-    };
-    window.handleLogin = async () => {
-      const id = document.getElementById('userId').value;
-      const pw = document.getElementById('userPw').value;
-      if(!id || !pw) return alert("아이디/비번을 입력하세요.");
-      try { await signInWithEmailAndPassword(auth, formatId(id), pw); } catch(e) { alert("계정 정보를 확인하세요."); }
-    };
-    window.handleRegister = async () => {
-      const id = document.getElementById('regId').value;
-      const pw = document.getElementById('regPw').value;
-      const pwC = document.getElementById('regPwConfirm').value;
-      if(!id || pw.length < 6) return alert("비밀번호는 6자 이상이어야 합니다.");
-      if(pw !== pwC) return alert("비밀번호가 일치하지 않습니다.");
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, formatId(id), pw);
-        const user = userCredential.user;
-        const initialState = { fav: [], active: defaultTools.map(t => t.file), inactive: [] };
-        await set(ref(db, 'users/' + user.uid), { toolDashboardState: JSON.stringify(initialState), email: user.email, createdAt: new Date().toISOString() });
-        alert("가입 성공!"); window.toggleAuth(false);
-      } catch (e) { alert("가입 실패: " + e.message); }
-    };
-    window.handleLogout = () => { if(confirm("로그아웃 하시겠습니까?")) signOut(auth).then(()=>location.reload()); };
-  </script>
+    // ha-tools.js (또는 firebase-config.js)에서 db 객체를 가져옵니다.
+    import { db } from "./ha-tools.js"; 
+    import { ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
 
+    // 1. 로그인 체크 (LocalStorage 방식)
+    const currentUserId = localStorage.getItem('ha_user');
+
+    if (!currentUserId) {
+      // 로그인 정보 없으면 로그인 페이지로 이동
+      location.replace("login.html");
+    } else {
+      // 로그인 정보가 있으면 화면 표시 및 데이터 로드 시작
+      document.body.style.display = 'flex';
+      document.getElementById('displayUser').textContent = currentUserId + "님";
+      
+      // 유저 데이터 로드 및 실시간 동기화
+      initUserData();
+    }
+
+    // 2. 유저 데이터 로드 함수
+    async function initUserData() {
+      await loadDefaultTools(); // manifest 로드
+
+      const userRef = ref(db, 'users/' + currentUserId);
+      
+      // 실시간으로 DB 값 감시 (ha-store.js와 동일한 방식)
+      onValue(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          // 데이터 구조가 toolDashboardState(문자열)인 경우와 fav/active(객체)인 경우 모두 대응
+          let state;
+          if (data.toolDashboardState) {
+            state = JSON.parse(data.toolDashboardState);
+          } else {
+            state = {
+              fav: data.fav || [],
+              active: data.active || [],
+              inactive: data.inactive || []
+            };
+          }
+          localStorage.setItem("toolDashboardState", JSON.stringify(state));
+          renderAppFromServer(state);
+        } else {
+          // 데이터가 없으면 초기화
+          initApp();
+        }
+      });
+
+      updateClock();
+      setInterval(updateClock, 1000);
+      setupDragAndDrop();
+      setupTabDragAndDrop();
+    }
+
+    // 3. 서버에 상태 저장 함수 (수정됨)
+    window.saveStateToServer = function(state) {
+      if (!currentUserId) return;
+      const userRef = ref(db, 'users/' + currentUserId);
+      
+      // 개별 필드로 업데이트 (ha-store 방식)
+      update(userRef, {
+        fav: state.fav,
+        active: state.active,
+        inactive: state.inactive,
+        toolDashboardState: JSON.stringify(state) // 호환성을 위해 유지
+      });
+    };
+
+    // 4. 로그아웃 함수 (수정됨)
+    window.handleLogout = () => {
+      if(confirm("로그아웃 하시겠습니까?")) {
+        localStorage.removeItem('ha_user');
+        location.replace("login.html");
+      }
+    };
+
+    // 기타 기존 함수 유지용 가상 auth 객체 (에러 방지)
+    window.auth = { currentUser: { uid: currentUserId } };
+  </script>
 
   <script>
     const sections = ['favTools', 'activeTools', 'inactiveTools'].map(id => document.getElementById(id));

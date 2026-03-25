@@ -106,26 +106,11 @@
   </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
-  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+  // ha-tools.js 파일에서 db 객체를 가져옵니다.
+  import { db } from "./ha-tools.js"; 
+  import { ref, set, get } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCRnAMy3PyD0zracrwyo17hEZ-R40pAvt4",
-    authDomain: "higherad-530c4.firebaseapp.com",
-    databaseURL: "https://higherad-530c4-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "higherad-530c4",
-    storageBucket: "higherad-530c4.firebasestorage.app",
-    messagingSenderId: "1028078651420",
-    appId: "1:1028078651420:web:71c8b8c5e69f0772d637d9"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getDatabase(app);
-
-  const formatId = (id) => `${id.trim()}@higherad.com`;
-
+  // 버튼 클릭 시 시각 효과 함수
   const triggerBtnEffect = (btnId) => {
     const btn = document.getElementById(btnId);
     if(btn) {
@@ -134,60 +119,90 @@
     }
   };
 
-  // ✅ 보완: 전역 키 이벤트 리스너 추가 (자동 완성 시 대응)
+  // ✅ [보완] 접속 시 이미 로그인된 상태인지 확인 (localStorage 방식)
+  const currentUserId = localStorage.getItem('ha_user');
+  if (currentUserId) {
+    location.replace("index.html");
+  }
+
+  // 엔터키 입력 시 로그인/회원가입 실행
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       const isLoginVisible = document.getElementById('loginBox').style.display !== 'none';
       if (isLoginVisible) {
-        handleLogin();
+        window.handleLogin();
       } else {
-        handleRegister();
+        window.handleRegister();
       }
     }
   });
 
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      location.replace("index.html");
-    }
-  });
-
+  // 로그인/회원가입 화면 전환
   window.toggleAuth = (isRegister) => {
     document.getElementById('loginBox').style.display = isRegister ? 'none' : 'block';
     document.getElementById('regBox').style.display = isRegister ? 'block' : 'none';
   };
 
+  // ✅ [수정] DB 기반 로그인 처리 (ha-store.js 방식)
   window.handleLogin = async () => {
-    triggerBtnEffect('loginBtn');
-    const id = document.getElementById('userId').value;
-    const pw = document.getElementById('userPw').value;
-    if(!id || !pw) return; // 아이디/비번 없을 땐 알림 대신 무시 (엔터 연타 방지)
+    const idField = document.getElementById('userId');
+    const pwField = document.getElementById('userPw');
+    const id = idField.value.trim();
+    const pw = pwField.value;
     
-    try { 
-      await signInWithEmailAndPassword(auth, formatId(id), pw); 
-    } catch(e) { 
-      alert("로그인 정보가 올바르지 않습니다."); 
+    if(!id || !pw) return;
+    triggerBtnEffect('loginBtn');
+
+    try {
+      // DB의 users/아이디 경로를 조회합니다.
+      const userRef = ref(db, `users/${id}`);
+      const snapshot = await get(userRef);
+
+      if (snapshot.exists() && snapshot.val().password === pw) {
+        // 로그인 성공: 로컬 스토리지에 유저 ID 저장
+        localStorage.setItem('ha_user', id);
+        location.href = 'index.html';
+      } else {
+        alert("아이디 또는 비밀번호가 올바르지 않습니다.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("로그인 중 오류가 발생했습니다. DB 규칙 설정을 확인하세요.");
     }
   };
 
+  // ✅ [수정] DB 기반 회원가입 처리
   window.handleRegister = async () => {
-    triggerBtnEffect('regBtn');
-    const id = document.getElementById('regId').value;
+    const id = document.getElementById('regId').value.trim();
     const pw = document.getElementById('regPw').value;
     const pwC = document.getElementById('regPwConfirm').value;
-    if(!id || pw.length < 6) return alert("비밀번호는 6자 이상이어야 합니다.");
+
+    if(!id) return alert("아이디를 입력해주세요.");
+    if(pw.length < 4) return alert("비밀번호는 4자 이상이어야 합니다.");
     if(pw !== pwC) return alert("비밀번호 확인이 일치하지 않습니다.");
+    
+    triggerBtnEffect('regBtn');
+
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, formatId(id), pw);
-      const user = userCredential.user;
-      const initialState = { fav: [], active: ["tools/메모장.html"], inactive: [] };
-      await set(ref(db, 'users/' + user.uid), {
-        toolDashboardState: JSON.stringify(initialState),
-        email: user.email,
-        createdAt: new Date().toISOString()
+      const userRef = ref(db, `users/${id}`);
+      const snapshot = await get(userRef);
+      
+      if(snapshot.exists()) return alert("이미 존재하는 아이디입니다.");
+
+      // DB에 유저 정보 직접 저장
+      await set(userRef, {
+        password: pw,
+        fav: [],
+        active: ["tools/메모장.html"], // 기본 도구 설정
+        inactive: []
       });
-      alert("회원가입이 완료되었습니다!");
-    } catch (e) { alert("가입 실패: " + e.message); }
+
+      alert("회원가입이 완료되었습니다! 로그인해주세요.");
+      window.toggleAuth(false);
+    } catch (e) {
+      console.error(e);
+      alert("회원가입 중 오류가 발생했습니다.");
+    }
   };
 </script>
 </body>
