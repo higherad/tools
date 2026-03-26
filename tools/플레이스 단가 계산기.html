@@ -144,7 +144,7 @@
           <div class="filter-group">
             <label><input type="checkbox" id="showTraffic1" checked /> 트래픽</label>
             <label><input type="checkbox" id="showRoute1" checked /> 길찾기</label>
-            <label style="color:var(--accent)"><input type="checkbox" id="combine1" /> 합산(+)</label>
+            <label style="color:var(--accent)"><input type="checkbox" id="combine1" checked /> 합산(+)</label>
           </div>
         </div>
         <button class="copy-btn" id="copy1">복사</button>
@@ -159,7 +159,7 @@
           <div class="filter-group">
             <label><input type="checkbox" id="showTraffic2" checked /> 트래픽</label>
             <label><input type="checkbox" id="showRoute2" checked /> 길찾기</label>
-            <label style="color:var(--accent)"><input type="checkbox" id="combine2" /> 합산(+)</label>
+            <label style="color:var(--accent)"><input type="checkbox" id="combine2" checked /> 합산(+)</label>
             <label style="margin-left:5px; border-left:1px solid #ddd; padding-left:10px;"><input type="checkbox" id="isNextDay" /> 익일 구동</label>
           </div>
         </div>
@@ -318,6 +318,7 @@
 
   window.applyClient = (idx) => {
     const c = clients[idx]; $("#trafficPrice").value = c.tp; $("#routePrice").value = c.rp;
+    $$(".blk input").forEach(i => i.value = ""); // 모든 블록 내 입력값 초기화
     recalc(); recalcRefund(); $("#modalOverlay").style.display = "none";
   };
   window.editClient = (idx) => {
