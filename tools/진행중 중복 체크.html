@@ -26,7 +26,6 @@
         .type-btn { padding: 10px 30px; border: 2px solid var(--border); border-radius: 30px; background: white; font-weight: bold; cursor: pointer; color: #666; transition: 0.2s; }
         .type-btn.active { background: var(--dark-blue); color: white; border-color: var(--dark-blue); }
 
-        /* 테이블 디자인 고정 */
         .data-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; min-width: 1500px; border: 1px solid var(--border); }
         .data-table th { background: #f1f3f4; border: 1px solid var(--border); padding: 10px 8px; color: #666; position: sticky; top: 0; z-index: 10; text-align: center; }
         .data-table td { border: 1px solid var(--border); padding: 10px 5px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -103,7 +102,7 @@
         btn.innerText = "데이터 로딩 중...";
         
         try {
-            const response = await fetch(GAS_URL + "?action=getData"); // action 파라미터 추가
+            const response = await fetch(GAS_URL + "?action=getData");
             const json = await response.json();
             
             if(!json.success) {
@@ -111,7 +110,6 @@
                 return;
             }
 
-            // [수정] 데이터 변환 없이 있는 그대로 저장
             window.headersA = json.headersA;
             window.headersB = json.headersB;
             window.dbA = json.listA || [];
@@ -124,7 +122,7 @@
             alert(`동기화 완료!`);
         } catch (e) {
             console.error(e);
-            alert("데이터를 가져오는 데 실패했습니다. URL과 배포 상태를 확인하세요.");
+            alert("데이터를 가져오는 데 실패했습니다.");
         } finally {
             btn.innerHTML = originalText;
         }
@@ -138,7 +136,6 @@
 
     function renderHeader(id, hList) {
         if(!hList || hList.length === 0) return;
-        // [수정] 헤더 명칭 변경 로직 삭제 (시트 헤더 그대로 노출)
         document.getElementById(id).innerHTML = `<tr>${hList.map(h => `<th>${h}</th>`).join('')}</tr>`;
     }
 
@@ -149,17 +146,31 @@
         document.getElementById('sectionB').classList.toggle('active', type === 'B');
     }
 
+    // --- [중요: 화면 표시용 포맷팅 함수] ---
+    function formatDisplayValue(header, value) {
+        if (header === '등락') {
+            const num = parseFloat(value);
+            if (isNaN(num) || num === 0) return "-";
+            return num > 0 ? "▲ " + num : "▼ " + Math.abs(num);
+        }
+        return value || "-";
+    }
+
     function renderMaster() {
         const draw = (db, headers) => {
             if(!db || !headers || headers.length === 0) return '<tr><td colspan="20" style="padding:50px; color:#999;">데이터를 불러와주세요.</td></tr>';
             return db.map(item => {
                 return `<tr>${headers.map(h => {
-                    // [수정] 헤더 명칭(h) 그대로 데이터 키값 사용
                     const v = item.data[h] || '-';
+                    const displayValue = formatDisplayValue(h, v); // 기호 붙이기 처리
+                    
                     let style = (h === 'MID') ? "color:var(--main-green); font-weight:bold;" : "";
-                    if (String(v).includes('▲')) style = "color: #ff4d4d; font-weight:bold;";
-                    else if (String(v).includes('▼')) style = "color: #4e46e5; font-weight:bold;";
-                    return `<td title="${v}" style="${style}">${v}</td>`;
+                    
+                    // 기호가 붙은 displayValue를 기준으로 색상 적용
+                    if (String(displayValue).includes('▲')) style = "color: #ff4d4d; font-weight:bold;";
+                    else if (String(displayValue).includes('▼')) style = "color: #4e46e5; font-weight:bold;";
+                    
+                    return `<td title="${displayValue}" style="${style}">${displayValue}</td>`;
                 }).join('')}</tr>`;
             }).join('');
         };
@@ -167,7 +178,6 @@
         document.getElementById('masterBodyB').innerHTML = draw(window.dbB, window.headersB);
     }
 
-    // searchMID 함수 내의 헤더 로직도 동일하게 수정
     window.searchMID = function() {
         const input = document.getElementById('searchInput').value;
         const resultArea = document.getElementById('searchResultArea');
@@ -187,11 +197,7 @@
 
         if(foundRows.length > 0) {
             resultArea.style.display = 'block';
-            
-            // [수정] 현재 데이터의 실제 헤더를 가져옴 (데이터가 있는 목록 기준)
             const hList = window.headersA.length > 0 ? window.headersA : window.headersB;
-            
-            // 헤더를 시트 이름 그대로 생성
             searchHeader.innerHTML = `<tr><th style="width:80px; background:#eee">구분</th>${hList.map(h => `<th>${h}</th>`).join('')}</tr>`;
             
             resultBody.innerHTML = foundRows.map(item => {
@@ -199,23 +205,19 @@
                     <td style="background:#f9f9f9; font-weight:bold; color:var(--dark-blue)">${item.listType}</td>
                     ${hList.map(h => {
                         const v = item.data[h] || '-';
-                        // 날짜 포맷팅 재확인 (웹단 방어코드)
-                        let displayValue = v;
-                        if (String(v).includes('GMT')) {
-                            try { displayValue = new Date(v).toLocaleDateString('ko-KR', {month:'2-digit', day:'2-digit'}).replace(/\. /g, '-').replace('.',''); } catch(e) {}
-                        }
+                        const displayValue = formatDisplayValue(h, v); // 기호 붙이기 처리
                         
                         let style = (h === 'MID') ? "color:red; font-weight:bold;" : "";
                         if (String(displayValue).includes('▲')) style += "color: #ff4d4d; font-weight:bold;";
                         else if (String(displayValue).includes('▼')) style += "color: #4e46e5; font-weight:bold;";
+                        
                         return `<td title="${displayValue}" style="${style}">${displayValue}</td>`;
                     }).join('')}
                 </tr>`;
             }).join('');
         } else {
-        // [추가된 부분] 결과가 없을 때 처리
-        resultArea.style.display = 'none'; // 이전 검색 결과가 있다면 숨김
-        alert("일치하는 MID 정보가 없습니다.");
+            resultArea.style.display = 'none';
+            alert("일치하는 MID 정보가 없습니다.");
         }
     }
 </script>
