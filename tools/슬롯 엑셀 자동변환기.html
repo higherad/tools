@@ -570,7 +570,7 @@ function renderTable(){
       <td><input type="text" value="${esc(row.name)}" placeholder="업체명" style="min-width:135px;" oninput="upd(${row.id},'name',this.value)"/></td>
       <td><input type="text" value="${esc(row.url)}" placeholder="https://m.place.naver.com/..." style="min-width:200px;" oninput="upd(${row.id},'url',this.value)"/></td>
       <td><input type="text" value="${esc(row.pid)}" placeholder="PID" style="min-width:95px;" oninput="upd(${row.id},'pid',this.value)"/></td>
-      <td><input type="text" value="${esc(row.keyword)}" placeholder="지역 맛집" style="min-width:95px;" oninput="upd(${row.id},'keyword',this.value)"/></td>
+      <td><input type="text" value="${esc(row.keyword)}" placeholder="순위키워드" style="min-width:95px;" oninput="upd(${row.id},'keyword',this.value)"/></td>
       <td><input type="number" value="${row.days}" min="1" style="min-width:50px;max-width:60px;" oninput="upd(${row.id},'days',parseInt(this.value)||7)"/></td>
       <td><input type="date" value="${row.startDate}" oninput="upd(${row.id},'startDate',this.value)" style="min-width:115px;"/></td>
       <td><input type="number" value="${row.dailyTarget}" min="1" style="min-width:62px;max-width:75px;" oninput="upd(${row.id},'dailyTarget',parseInt(this.value)||0)"/></td>
