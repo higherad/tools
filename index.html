@@ -464,6 +464,28 @@
       }, { onlyOnce: false });
     };
 
+    // 7. 슬롯 엑셀 변환기 데이터 저장 (슬롯_엑셀_자동변환기.html에서 호출)
+    window.saveSlotData = function(data) {
+      if (!currentUserId) return;
+      const slotRef = ref(db, `users/${currentUserId}/slotConverter`);
+      set(slotRef, data)
+        .then(() => console.log("슬롯 변환기 데이터 저장 완료"))
+        .catch(err => console.error("슬롯 변환기 저장 실패:", err));
+    };
+
+    // 8. 슬롯 엑셀 변환기 데이터 로드 (슬롯_엑셀_자동변환기.html에서 호출)
+    window.loadSlotData = function() {
+      if (!currentUserId) return;
+      const slotRef = ref(db, `users/${currentUserId}/slotConverter`);
+      onValue(slotRef, (snapshot) => {
+        const data = snapshot.val();
+        const activeFrame = document.querySelector('#iframeContainer iframe.active, #mobileFrame');
+        if (activeFrame && activeFrame.contentWindow && activeFrame.contentWindow.applySlotData) {
+          activeFrame.contentWindow.applySlotData(data);
+        }
+      }, { onlyOnce: true });
+    };
+
     // 기타 기존 함수 유지용 가상 auth 객체 (에러 방지)
     window.auth = { currentUser: { uid: currentUserId } };
   </script>
