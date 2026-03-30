@@ -292,14 +292,14 @@ input[type=date]:focus{border-color:var(--acc);}
 <script>
 // ── Product defaults ──
 let prods = [
-  {id:'p1',name:'블랙',   color:'#3b82f6',active:true,  ver:'ver.5.1/3.2', ratio:50},
-  {id:'p2',name:'올리브', color:'#8b5cf6',active:true,  ver:'ver.5.1/3.2', ratio:50},
-  {id:'p3',name:'X3',     color:'#10b981',active:false, ver:'ver.5.1/3.2', ratio:100},
-  {id:'p4',name:'X4',     color:'#f97316',active:false, ver:'ver.5.1/3.2', ratio:100},
-  {id:'p5',name:'X5',     color:'#cbd5e1',active:false, ver:'ver.5.1/3.2', ratio:100},
-  {id:'p6',name:'X6',     color:'#84cc16',active:false, ver:'ver.5.1/3.2', ratio:100},
-  {id:'p7',name:'X7',     color:'#ec4899',active:false, ver:'ver.5.1/3.2', ratio:100},
-  {id:'p8',name:'X8',     color:'#eab308',active:false, ver:'ver.5.1/3.2', ratio:100},
+  {id:'p1',name:'블랙',   color:'#3b82f6',active:true,  ver:'ver.5.0/3.2', ratio:50},
+  {id:'p2',name:'올리브', color:'#8b5cf6',active:true,  ver:'ver.5.0/3.2', ratio:50},
+  {id:'p3',name:'X3',     color:'#10b981',active:false, ver:'ver.5.0/3.2', ratio:100},
+  {id:'p4',name:'X4',     color:'#f97316',active:false, ver:'ver.5.0/3.2', ratio:100},
+  {id:'p5',name:'X5',     color:'#cbd5e1',active:false, ver:'ver.5.0/3.2', ratio:100},
+  {id:'p6',name:'X6',     color:'#84cc16',active:false, ver:'ver.5.0/3.2', ratio:100},
+  {id:'p7',name:'X7',     color:'#ec4899',active:false, ver:'ver.5.0/3.2', ratio:100},
+  {id:'p8',name:'X8',     color:'#eab308',active:false, ver:'ver.5.0/3.2', ratio:100},
 ];
 
 let rows = [], rid = 0;
@@ -822,20 +822,18 @@ function buildJusuSheet(wb,f){
   const ws={};
   const totalGil=f.reduce((s,r)=>s+r.dailyTarget*r.days,0);
 
-  sc(ws,0,0,'트-총 수량',{font:{bold:true,color:{rgb:'FFFFFF'}},fill:'111827'});
-  sc(ws,0,1,'길-총 수량',{font:{bold:true,color:{rgb:'FFFFFF'}},fill:'111827'});
-  sc(ws,1,0,0,           {font:{bold:true},fill:'F3F4F6'});
-  sc(ws,1,1,totalGil,    {font:{bold:true},fill:'F3F4F6'});
+  sc(ws,0,0,'총 일 목표 합계',{font:{bold:true,color:{rgb:'FFFFFF'}},fill:'111827'});
+  sc(ws,1,0,totalGil,    {font:{bold:true},fill:'F3F4F6'});
 
   const AP=ap();
-  const baseH=['업체명','업체URL','업체PID번호','순위키워드','일수','시작일','트래픽 수량','분류','길찾기 수량','분류','키워드'];
+  const baseH=['업체명','업체URL','업체PID번호','순위키워드','일수','시작일','일 목표','분류','검색키워드'];
   const prodH=AP.map(p=>p.name);
-  const tailH=['트-합계','길-합계'];
+  const tailH=['합계'];
   const headers=[...baseH,...prodH,...tailH];
 
   headers.forEach((h,ci)=>{
     const prod=AP.find(p=>p.name===h);
-    const fill=prod?prod.color.replace('#',''):(ci<11?'D97706':'374151');
+    const fill=prod?prod.color.replace('#',''):(ci<9?'D97706':'374151'); // ci 기준 11 -> 9로 변경
     sc(ws,3,ci,h,{font:{bold:true,color:{rgb:'FFFFFF'}},fill,align:'center'});
   });
 
@@ -843,13 +841,13 @@ function buildJusuSheet(wb,f){
     const rowIdx=4+ri;
     const asgn=AP.filter(p=>r.products.includes(p.id));
     const totalRatio=asgn.reduce((s,p)=>s+p.ratio,0)||1;
-    const base=[r.name,r.url,r.pid,r.keyword,r.days,r.startDate,'','',r.dailyTarget,asgn.length,r.searchKeywords];
+    const base=[r.name,r.url,r.pid,r.keyword,r.days,r.startDate,r.dailyTarget,asgn.length,r.searchKeywords];
     const pv=AP.map(p=>r.products.includes(p.id)?Math.round(r.dailyTarget*(p.ratio/totalRatio)):'');
-    const tail=['',r.dailyTarget*r.days];
+    const tail=[r.dailyTarget*r.days];
     const row=[...base,...pv,...tail];
     row.forEach((v,ci)=>{
       if(v===''||v===undefined) return;
-      const pi=ci-11; const isProd=ci>=11&&ci<11+AP.length&&pv[pi]!=='';
+      const pi=ci-9; const isProd=ci>=9&&ci<9+AP.length&&pv[pi]!=='';
       const fc=isProd?AP[pi].color.replace('#',''):null;
       sc(ws,rowIdx,ci,v,{
         align:[0,1,3,10].includes(ci)?'left':'center',
@@ -896,8 +894,8 @@ function buildJusuPrev(f){
     const totalRatio=asgn.reduce((s,p)=>s+p.ratio,0)||1;
     const pc={}; ap().forEach(p=>{pc[p.name]=r.products.includes(p.id)?Math.round(r.dailyTarget*(p.ratio/totalRatio)):'';});
     return {'업체명':r.name,'업체URL':r.url,'PID':r.pid,'순위키워드':r.keyword,
-      '일수':r.days,'시작일':r.startDate,'길찾기수량':r.dailyTarget,'분류':asgn.length,
-      '검색키워드':r.searchKeywords,...pc,'길-합계':r.dailyTarget*r.days};
+      '일수':r.days,'시작일':r.startDate,'일 목표':r.dailyTarget,'분류':asgn.length,
+      '검색키워드':r.searchKeywords,...pc,'합계':r.dailyTarget*r.days};
   });
 }
 function buildProdPrev(f, pname){
