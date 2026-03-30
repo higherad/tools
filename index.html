@@ -215,7 +215,7 @@
 
     .quick-links {
       display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 13px; margin-top: 22px; width: 100%; max-width: 680px;
+      gap: 13px; margin-top: 22px; width: 100%; max-width: 800px;
     }
     .link-card {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -273,7 +273,7 @@
       #content { height: 100%; flex-grow: 1; padding-top: 0; }
       #tabBar { display: none !important; }
       .quick-links { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-      .link-card { aspect-ratio: 2 / 1.2; font-size: 12px; padding: 12px 8px; }
+      .link-card { aspect-ratio: auto; min-height: 80px; padding: 10px 5px; font-size: 12px; }
       .link-card .material-symbols-outlined { font-size: 18px; }
     }
   </style>
@@ -342,14 +342,25 @@
           <a href="https://www.notion.so/HigherAd-Lab-24d5c6b1d0d68034a68afd3e96f80255" target="_blank" rel="noopener noreferrer" class="link-card notion">
             <span class="material-symbols-outlined">description</span><span>하이어애드 노션</span>
           </a>
+          <a href="https://higherad.kro.kr/" target="_blank" rel="noopener noreferrer" class="link-card admin">
+            <span class="material-symbols-outlined">admin_panel_settings</span><span>하이어애드 어드민</span>
+          </a>
+          <a href="https://hireward.kro.kr/" target="_blank" rel="noopener noreferrer" class="link-card partner">
+            <span class="material-symbols-outlined">storefront</span><span>하이어애드 영업점</span>
+          </a>
+
           <a href="https://docs.google.com/spreadsheets/d/1sHZCaJTA9icEf2S4Ad9zLWdo8oAvoK1hTfA1EONmzS8/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet">
             <span class="material-symbols-outlined">table_chart</span><span>⭐순위표</span>
           </a>
-          <a href="https://docs.google.com/spreadsheets/d/1Z5bqkEGjX4cMKbV0fNlMTbb-qNIdjmwy8IgLg1u9-n8/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet">
-            <span class="material-symbols-outlined">table_chart</span><span>♦️단독 순위 분석</span>
+          <a href="https://docs.google.com/spreadsheets/d/1Z5bqkEGjX4cMKbV0+fNlMTbb-qNIdjmwy8IgLg1u9-n8/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet">
+            <span class="material-symbols-outlined">analytics</span><span>♦️단독 순위 분석</span>
           </a>
+          <a href="https://docs.google.com/spreadsheets/d/1Ia3CcylXPF-Y4f2V6qBiVHmRf85vSPiJ43v9GnQPB2c/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet">
+            <span class="material-symbols-outlined">reorder</span><span>♠️영업점 순위 분류</span>
+          </a>
+
           <a href="https://admin.bizfit.kr/v1/admin/index.php" target="_blank" rel="noopener noreferrer" class="link-card admin">
-            <span class="material-symbols-outlined">admin_panel_settings</span><span>비즈핏 어드민</span>
+            <span class="material-symbols-outlined">manage_accounts</span><span>비즈핏 어드민</span>
           </a>
           <a href="https://bizfit.co.kr/bfnew/partners/account/view/login.html" target="_blank" rel="noopener noreferrer" class="link-card partner">
             <span class="material-symbols-outlined">storefront</span><span>지사 페이지</span>
@@ -357,6 +368,7 @@
           <a href="http://higherad.co.kr/bfnew/partners/account/view/login.html" target="_blank" rel="noopener noreferrer" class="link-card partner">
             <span class="material-symbols-outlined">store</span><span>광고주 페이지</span>
           </a>         
+        </div>
         </div>
         <p style="color:#bbb; margin-top:40px; font-size:12px;">클라우드 동기화 중입니다. 로그인하면 어디서든 내 설정이 유지됩니다.</p>
       </div>
