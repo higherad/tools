@@ -320,7 +320,6 @@
       <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
         <span id="displayUser" style="font-size: 11px; color: var(--text-sub); margin-left: 5px;"></span>
         <div style="display:flex; gap:6px;">
-          <button class="footer-btn" style="flex: none; width: auto; padding: 4px 8px;" onclick="refreshToolsManifest()">목록 새로고침</button>
           <button class="footer-btn" style="flex: none; width: auto; padding: 4px 8px;" onclick="handleLogout()">로그아웃</button>
         </div>
       </div>
@@ -505,7 +504,7 @@
 
     async function loadDefaultTools() {
       try {
-        const res = await fetch(`tools-manifest.json?v=${Date.now()}`, { cache: 'no-store' });
+        const res = await fetch(`tools-manifest.json`);
         if (!res.ok) throw new Error('manifest load failed');
         const list = await res.json();
         if (!Array.isArray(list) || list.length === 0) throw new Error('manifest empty');
@@ -517,14 +516,6 @@
         defaultTools = [{ file: "tools/메모장.html", label: "⏰ 메모장" }];
       }
     }
-
-    window.refreshToolsManifest = async function() {
-      await loadDefaultTools();
-      const saved = localStorage.getItem("toolDashboardState");
-      const state = saved ? JSON.parse(saved) : { fav: [], active: defaultTools.map(t => t.file), inactive: [] };
-      renderAppFromServer(state);
-      alert("도구 목록을 새로고침했습니다.");
-    };
 
     const isMobile = () => window.innerWidth <= 768;
 
