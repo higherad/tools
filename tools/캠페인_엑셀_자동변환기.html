@@ -687,12 +687,12 @@ function switchPTab(ag, n){
 function prevTable(data){
   if(!data||!data.length) return `<div class="empty"><div class="ico">📭</div><p>배정된 업체가 없습니다</p></div>`;
   const cols=Object.keys(data[0]);
-  return `<div class="tw"><table>
-    <thead style="position:sticky;top:0;z-index:1;"><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+  return `<div class="tw" style="overflow-x:auto;"><table style="white-space:nowrap;">
+    <thead style="position:sticky;top:0;z-index:1;"><tr>${cols.map(c=>`<th style="white-space:nowrap;">${c}</th>`).join('')}</tr></thead>
     <tbody>${data.map(row=>`<tr>${cols.map(c=>{
       const v=row[c]??'';
       const prod=prods.find(p=>p.name===c);
-      const st=prod&&v!==''?`style="color:${prod.color};font-weight:700"`:'' ;
+      const st=prod&&v!==''?`style="color:${prod.color};font-weight:700;white-space:nowrap;"`:' style="white-space:nowrap;"';
       return `<td ${st}>${esc(String(v))}</td>`;
     }).join('')}</tr>`).join('')}</tbody>
   </table></div>`;
