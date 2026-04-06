@@ -9,20 +9,33 @@
         body { font-family: 'Pretendard', sans-serif; background: var(--bg); padding: 40px; }
         .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         h2 { color: var(--main); text-align: center; margin-bottom: 25px; }
-        
+
         textarea { width: 100%; height: 150px; padding: 15px; border: 1px solid #ddd; border-radius: 10px; resize: none; box-sizing: border-box; font-size: 14px; margin-bottom: 15px; }
         .btn-group { display: flex; gap: 10px; margin-bottom: 25px; }
         button { flex: 1; padding: 15px; background: var(--main); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; }
         button:disabled { background: #ccc; cursor: not-allowed; }
-        
+
         .status-bar { margin-bottom: 15px; font-size: 14px; color: #666; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-        th { background: #f1f3f4; padding: 12px; border: 1px solid #ddd; }
-        td { padding: 10px; border: 1px solid #ddd; text-align: center; }
-        
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; table-layout: fixed; }
+        th { background: #f1f3f4; padding: 12px; border: 1px solid #ddd; text-align: center; }
+        td { padding: 10px 12px; border: 1px solid #ddd; text-align: center; vertical-align: middle; }
+
+        .col-num  { width: 52px; }
+        .col-kw   { width: 110px; }
+        .col-yn   { width: 90px; }
+        .col-cnt  { width: 64px; }
+        .col-tags { text-align: left; }
+
         .status-yes { color: #03c75a; font-weight: bold; }
-        .status-no { color: #d93025; font-weight: bold; }
+        .status-no  { color: #d93025; font-weight: bold; }
+
         .tag-count { background: #e8f5e9; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+
+        .kw-cell { white-space: nowrap; font-weight: bold; }
+
+        .tag-wrap { display: flex; flex-wrap: wrap; gap: 5px; }
+        .tag { display: inline-block; background: #f1f3f4; color: #444; font-size: 12px; padding: 3px 9px; border-radius: 20px; border: 1px solid #ddd; white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -31,7 +44,7 @@
     <h2>📋 대량 키워드 자동완성 체커</h2>
     <p style="font-size:13px; color:#666; margin-bottom:10px;">* 분석할 키워드를 한 줄에 하나씩 입력해 주세요.</p>
     <textarea id="keywordList" placeholder="홍대맛집&#10;강남카페&#10;제주도여행"></textarea>
-    
+
     <div class="btn-group">
         <button id="startBtn" onclick="processBatch()">분석 시작하기</button>
         <button id="copyBtn" onclick="copyTable()" style="background:#4285f4; display:none;">결과 복사하기</button>
@@ -42,11 +55,11 @@
     <table id="resultTable" style="display:none;">
         <thead>
             <tr>
-                <th>번호</th>
-                <th>키워드</th>
-                <th>자동완성 유무</th>
-                <th>개수</th>
-                <th>자동완성(전체)</th>
+                <th class="col-num">번호</th>
+                <th class="col-kw">키워드</th>
+                <th class="col-yn">자동완성 유무</th>
+                <th class="col-cnt">개수</th>
+                <th class="col-tags">자동완성(전체)</th>
             </tr>
         </thead>
         <tbody id="resultBody"></tbody>
@@ -64,8 +77,8 @@
         keywords = input.split('\n').map(k => k.trim()).filter(k => k !== "");
         currentIndex = 0;
 
-        // UI 초기화
         document.getElementById('startBtn').disabled = true;
+        document.getElementById('copyBtn').style.display = 'none';
         document.getElementById('resultTable').style.display = 'table';
         document.getElementById('resultBody').innerHTML = '';
         document.getElementById('status').innerText = `전체 ${keywords.length}개 분석 시작...`;
@@ -84,7 +97,6 @@
         const query = keywords[currentIndex];
         document.getElementById('status').innerText = `진행 중: ${currentIndex + 1} / ${keywords.length} (${query})`;
 
-        // JSONP 호출
         const script = document.createElement('script');
         script.src = `https://ac.search.naver.com/nx/ac?q=${encodeURIComponent(query)}&con=0&ans=2&ans_con=3&forced_shape=blank&r_format=json&r_enc=UTF-8&st=100&r_lt=100&_callback=handleBatchResponse`;
         document.body.appendChild(script);
@@ -95,35 +107,36 @@
         const items = data.items[0] || [];
         const query = keywords[currentIndex];
         const tbody = document.getElementById('resultBody');
-        
+
         const hasRelated = items.length > 0;
         const count = items.length;
-        const topRelated = items.map(i => i[0]).join(', ');
+        const tagsHTML = items.length
+            ? items.map(i => `<span class="tag">${i[0]}</span>`).join('')
+            : '<span style="color:#aaa; font-size:12px;">-</span>';
 
         const row = `
             <tr>
                 <td>${currentIndex + 1}</td>
-                <td><strong>${query}</strong></td>
+                <td class="kw-cell">${query}</td>
                 <td class="${hasRelated ? 'status-yes' : 'status-no'}">${hasRelated ? 'O' : 'X'}</td>
                 <td><span class="tag-count">${count}개</span></td>
-                <td style="text-align:left; font-size:12px; color:#666;">${topRelated || '-'}</td>
+                <td class="col-tags"><div class="tag-wrap">${tagsHTML}</div></td>
             </tr>
         `;
-        
+
         tbody.insertAdjacentHTML('beforeend', row);
-        
+
         currentIndex++;
-        // API 과부하 방지를 위해 0.2초 간격으로 호출
         setTimeout(nextKeyword, 200);
     }
 
     function copyTable() {
-        // 테이블 내용을 텍스트 형식으로 복사 (엑셀 붙여넣기용)
         let text = "번호\t키워드\t유무\t개수\t자동완성\n";
         const rows = document.querySelectorAll("#resultBody tr");
         rows.forEach(row => {
             const cols = row.querySelectorAll("td");
-            text += `${cols[0].innerText}\t${cols[1].innerText}\t${cols[2].innerText}\t${cols[3].innerText}\t${cols[4].innerText}\n`;
+            const tags = [...cols[4].querySelectorAll('.tag')].map(t => t.innerText).join(', ');
+            text += `${cols[0].innerText}\t${cols[1].innerText}\t${cols[2].innerText}\t${cols[3].innerText}\t${tags}\n`;
         });
 
         navigator.clipboard.writeText(text).then(() => {
