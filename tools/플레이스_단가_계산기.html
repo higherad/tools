@@ -542,12 +542,10 @@ input[readonly]{background:#f3f4f6;color:var(--muted);cursor:not-allowed}
       `• 단가: ${fmt(uPrice)}원\n`;
     let amtPart;
     if(totalRefund > 0){
-      const net    = totalA - totalRefund;
-      const netDep = Math.ceil(net*(100+vat)/100);
       amtPart =
         `• 환불 금액: -${won(totalRefund)}\n` +
-        `• 금액: ${won(net)} (VAT 별도)\n\n` +
-        `• 입금액: ${won(netDep)} (VAT 포함)`;
+        `• 금액: ${won(totalA)} (VAT 별도)\n\n` +
+        `• 입금액: ${won(totalD)} (VAT 포함)`;
     } else {
       amtPart =
         `• 금액: ${won(totalA)} (VAT 별도)\n\n` +
