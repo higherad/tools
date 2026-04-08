@@ -203,12 +203,12 @@ input[readonly]{background:#f3f4f6;color:var(--muted);cursor:not-allowed}
 
   const todayStr = () => new Date().toISOString().split("T")[0];
 
-  /* 오늘 기준 내일~종료예정일 일수 계산 */
+  /* 오늘 포함하여 종료예정일까지 일수 계산 */
   function calcRefundDays(endDateVal){
     if(!endDateVal) return 0;
     const today = new Date(); today.setHours(0,0,0,0);
     const end   = new Date(endDateVal); end.setHours(0,0,0,0);
-    const diff  = Math.round((end - today) / 86400000); // 오늘 제외 → 내일부터
+    const diff  = Math.round((end - today) / 86400000) + 1; // 오늘 포함
     return diff > 0 ? diff : 0;
   }
 
