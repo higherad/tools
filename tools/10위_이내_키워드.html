@@ -3,174 +3,443 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>최신 순위 TOP 10 필터</title>
+    <title>순위 키워드 필터</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         :root {
-            --primary-color: #1a73e8;
-            --primary-hover: #1557b0;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --success-bg: #dcfce7;
-            --success-text: #166534;
-            --border-color: #e2e8f0;
+            --bg: #f4f4f0;
+            --card: #ffffff;
+            --border: #e8e8e4;
+            --border-strong: #d0d0c8;
+            --accent: #2563eb;
+            --accent-light: #eff4ff;
+            --text: #1a1a18;
+            --text-muted: #888880;
+            --text-sub: #555550;
+            --success-bg: #f0faf4;
+            --success-text: #1a7a40;
+            --success-border: #b8e8cc;
+            --tag-bg: #f0f0ec;
+            --radius: 10px;
+            --radius-sm: 6px;
         }
 
         body {
-            font-family: 'Pretendard', -apple-system, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 40px 20px;
+            font-family: 'Noto Sans KR', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 40px 16px 80px;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 1100px;
             margin: 0 auto;
-            background: var(--card-bg);
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
         }
 
-        .header-container {
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 15px;
-            margin-bottom: 25px;
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            align-items: start;
         }
 
-        .main-title {
-            font-size: 28px;
-            font-weight: 800;
-            color: var(--primary-color);
-            margin: 0;
+        .result-grid .card {
+            margin-bottom: 0;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 28px;
+        }
+        .page-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.4px;
+        }
+        .page-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        /* Card */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 12px;
+        }
+
+        /* Label */
+        .field-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        /* Textarea */
+        textarea {
+            width: 100%;
+            height: 160px;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-family: 'Noto Sans KR', monospace;
+            background: #fafafa;
+            color: var(--text);
+            resize: vertical;
+            outline: none;
+            line-height: 1.6;
+            transition: border-color 0.15s;
+        }
+        textarea:focus { border-color: var(--accent); background: #fff; }
+        textarea::placeholder { color: #bbb; }
+
+        /* Options row */
+        .options-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            align-items: flex-end;
+        }
+
+        .field-group { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+
+        .input-inline {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0 12px;
+            background: #fafafa;
+            height: 42px;
+            white-space: nowrap;
+        }
+        .input-inline input[type=number] {
+            width: 48px;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            outline: none;
+            text-align: center;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .input-inline .unit {
+            font-size: 12px;
+            color: var(--text-muted);
         }
 
-        .subtitle { 
-            color: var(--text-muted); 
-            font-size: 14px; 
-            margin-top: 15px;
-            margin-bottom: 15px; 
+        .btn-group { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+
+        .run-btn {
+            width: 100%;
+            height: 42px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Noto Sans KR', sans-serif;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            letter-spacing: -0.2px;
+            white-space: nowrap;
+        }
+        .run-btn:hover { background: #1d4ed8; }
+        .run-btn:active { transform: scale(0.98); }
+
+        /* Empty */
+        .empty {
+            text-align: center;
+            padding: 40px 0;
+            font-size: 13px;
+            color: var(--text-muted);
         }
 
-        textarea {
-            width: 100%; height: 180px; padding: 16px; border: 1px solid var(--border-color);
-            border-radius: 12px; font-size: 14px; box-sizing: border-box; outline: none; background-color: #fcfcfd;
+        /* Section title inside result */
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-sub);
+        }
+        .section-count {
+            font-size: 12px;
+            color: var(--text-muted);
+            background: var(--tag-bg);
+            padding: 2px 9px;
+            border-radius: 99px;
         }
 
-        button {
-            width: 100%; background-color: var(--primary-color); color: white; border: none;
-            padding: 16px; font-size: 16px; font-weight: 700; border-radius: 12px; cursor: pointer; margin-top: 16px;
-            transition: background 0.2s;
-        }
-
-        button:hover { background-color: var(--primary-hover); }
-
-        table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; margin-top: 30px; }
-        th { background-color: #f8fafc; padding: 12px 16px; font-size: 13px; color: var(--text-muted); text-align: left; border-bottom: 1px solid var(--border-color); }
-        td { padding: 16px; font-size: 15px; border-bottom: 1px solid var(--border-color); }
+        /* Table - 원본 스타일 */
+        table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        th { background-color: #f8fafc; padding: 12px 16px; font-size: 13px; color: var(--text-muted); text-align: left; border-bottom: 1px solid var(--border); }
+        td { padding: 16px; font-size: 15px; border-bottom: 1px solid var(--border); }
+        tr:last-child td { border-bottom: none; }
 
         .keyword-name {
-            font-weight: 600; color: var(--primary-color); cursor: pointer; text-decoration: none; /* 밑줄 제거 */
+            font-weight: 600;
+            color: var(--accent);
+            cursor: pointer;
         }
-        .keyword-name:hover { color: var(--primary-hover); }
-        .rank-badge { background-color: var(--success-bg); color: var(--success-text); padding: 4px 12px; border-radius: 6px; font-weight: 800; font-size: 13px; }
-        
-        #toast {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 30px; font-size: 14px;
-            display: none; z-index: 100; font-weight: 500;
+        .keyword-name:hover { color: #1d4ed8; }
+
+        .rank-badge {
+            background-color: var(--success-bg);
+            color: var(--success-text);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 13px;
         }
+
+        .view-text { font-size: 13px; color: var(--text-muted); }
+
+        /* Merge cards */
+        .merge-section { margin-top: 12px; }
+        .merge-cards { display: flex; flex-direction: column; gap: 8px; }
+
+        .merge-card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            background: #fafaf8;
+            cursor: pointer;
+            transition: background 0.12s, border-color 0.12s;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .merge-card:hover { background: var(--accent-light); border-color: var(--accent); }
+        .merge-card:hover .merge-num { color: var(--accent); border-color: var(--accent); }
+        .merge-card:active { transform: scale(0.99); }
+
+        .merge-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid var(--border-strong);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: color 0.12s, border-color 0.12s;
+        }
+        .merge-keywords {
+            font-size: 13px;
+            color: var(--text);
+            flex: 1;
+            word-break: break-all;
+            line-height: 1.5;
+        }
+        .merge-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(8px);
+            background: var(--text);
+            color: #fff;
+            padding: 9px 20px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 99;
+            white-space: nowrap;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header-container">
-        <h1 class="main-title">🚀 최신 순위 TOP 10 필터</h1>
+    <div class="page-header">
+        <div class="page-title">순위 키워드 필터</div>
+        <div class="page-desc">키워드를 클릭하면 복사됩니다. 결과는 조회수 높은 순으로 정렬됩니다.</div>
     </div>
-    
-    <div class="subtitle">키워드를 클릭하면 복사됩니다. 결과는 조회수 높은 순으로 자동 정렬됩니다.</div>
-    
-    <textarea id="rawData" placeholder="데이터 전체를 복사해서 여기에 붙여넣으세요..."></textarea>
-    <button onclick="processData()">지금 바로 분석하기</button>
+
+    <div class="card input-card">
+        <div class="field-label">데이터 입력</div>
+        <textarea id="rawData" placeholder="키워드 데이터를 전체 복사해서 여기에 붙여넣으세요..."></textarea>
+
+        <div class="options-row">
+            <div class="field-group">
+                <div class="field-label">순위 기준</div>
+                <div class="input-inline">
+                    <input type="number" id="rankLimit" value="10" min="1" max="100" />
+                    <span class="unit">위 이내</span>
+                </div>
+            </div>
+            <div class="field-group">
+                <div class="field-label">병합 묶음</div>
+                <div class="input-inline">
+                    <input type="number" id="mergeCount" value="4" min="1" max="50" />
+                    <span class="unit">개씩</span>
+                </div>
+            </div>
+            <div class="btn-group">
+                <div class="field-label">&nbsp;</div>
+                <button class="run-btn" onclick="processData()">분석하기</button>
+            </div>
+        </div>
+    </div>
 
     <div id="resultArea">
-        <table id="topTable">
-            <thead>
-                <tr>
-                    <th>키워드</th>
-                    <th>조회수</th>
-                    <th>오늘 순위</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="3" style="text-align:center; padding:40px; color:#ccc;">데이터를 입력해주세요.</td></tr>
-            </tbody>
-        </table>
+        <div class="card">
+            <div class="empty">데이터를 입력하고 분석하기를 눌러주세요.</div>
+        </div>
     </div>
 </div>
 
-<div id="toast">✅ 키워드가 클립보드에 복사되었습니다!</div>
+<div class="toast" id="toast"></div>
 
 <script>
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        const toast = document.getElementById('toast');
-        toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, 1500);
-    });
+let allResults = [];
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+function copyText(text, label) {
+    navigator.clipboard.writeText(text).then(() => showToast(label + ' 복사됨'));
 }
 
 function processData() {
     const text = document.getElementById('rawData').value;
+    const rankLimit = parseInt(document.getElementById('rankLimit').value) || 10;
+    const mergeCount = parseInt(document.getElementById('mergeCount').value) || 4;
     const lines = text.split('\n');
-    const tbody = document.querySelector('#topTable tbody');
-    tbody.innerHTML = '';
+    allResults = [];
 
-    let results = [];
-    
     for (let i = 0; i < lines.length; i++) {
         let line = lines[i].trim();
-        
         if (line && !line.includes('위') && isNaN(parseInt(line.charAt(0)))) {
             let keyword = line;
-            let nextLine = lines[i + 1] ? lines[i + 1].trim() : "";
-            
+            let nextLine = lines[i + 1] ? lines[i + 1].trim() : '';
             if (nextLine.includes('위') || nextLine.includes('건')) {
                 let countMatch = nextLine.match(/([0-9,]+)건/);
                 let rawCount = countMatch ? parseInt(countMatch[1].replace(/,/g, '')) : 0;
-                let displayCount = countMatch ? countMatch[0] : "0건";
-                
-                let ranks = nextLine.replace(/[0-9,]+건/, '').split('위').filter(r => r.trim() !== "");
+                let displayCount = countMatch ? countMatch[0] : '0건';
+                let ranks = nextLine.replace(/[0-9,]+건/, '').split('위').filter(r => r.trim() !== '');
                 let currentRank = ranks.length > 0 ? parseInt(ranks[0]) : 999;
-
-                if (currentRank <= 10) {
-                    results.push({ keyword, displayCount, rawCount, rank: currentRank });
+                if (currentRank <= rankLimit) {
+                    allResults.push({ keyword, displayCount, rawCount, rank: currentRank });
                 }
             }
         }
     }
 
-    // 조회수 내림차순 정렬 (높은 순 -> 낮은 순)
-    results.sort((a, b) => b.rawCount - a.rawCount);
+    allResults.sort((a, b) => b.rawCount - a.rawCount);
+    renderResults(mergeCount, rankLimit);
+}
 
-    if (results.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:40px; color:#999;">분석 결과 10위권 이내 키워드가 없습니다.</td></tr>';
-    } else {
-        results.forEach(item => {
-            const row = `<tr>
-                <td class="keyword-name" onclick="copyToClipboard('${item.keyword}')">${item.keyword}</td>
-                <td style="color: var(--text-muted);">${item.displayCount}</td>
-                <td><span class="rank-badge">${item.rank}위</span></td>
-            </tr>`;
-            tbody.innerHTML += row;
-        });
+function renderResults(mergeCount, rankLimit) {
+    const area = document.getElementById('resultArea');
+
+    if (allResults.length === 0) {
+        area.innerHTML = `<div class="card"><div class="empty">${rankLimit}위 이내 키워드가 없습니다.</div></div>`;
+        return;
     }
+
+    // Table rows - 원본 디자인
+    const tableRows = allResults.map(item => `
+        <tr>
+            <td><span class="keyword-name" onclick="copyText('${escQ(item.keyword)}', '${escQ(item.keyword)}')">${esc(item.keyword)}</span></td>
+            <td style="color: var(--text-muted);">${item.displayCount}</td>
+            <td><span class="rank-badge">${item.rank}위</span></td>
+        </tr>
+    `).join('');
+
+    // Merge groups
+    const groups = [];
+    for (let i = 0; i < allResults.length; i += mergeCount) {
+        groups.push(allResults.slice(i, i + mergeCount));
+    }
+
+    const mergeCards = groups.map((g, gi) => {
+        const merged = g.map(r => r.keyword).join(',');
+        const label = g.map(r => esc(r.keyword)).join(', ');
+        const from = gi * mergeCount + 1;
+        const to = Math.min((gi + 1) * mergeCount, allResults.length);
+        return `
+            <div class="merge-card" onclick="copyText('${escQ(merged)}', '묶음 ${gi + 1}')">
+                <div class="merge-num">${gi + 1}</div>
+                <div class="merge-keywords">${label}</div>
+                <div class="merge-meta">${from}–${to}번 · ${g.length}개</div>
+            </div>
+        `;
+    }).join('');
+
+    area.innerHTML = `
+        <div class="result-grid">
+            <div class="card">
+                <div class="section-head">
+                    <div class="section-title">${rankLimit}위 이내 키워드</div>
+                    <div class="section-count">${allResults.length}개</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>키워드</th>
+                            <th>조회수</th>
+                            <th>오늘 순위</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="section-head">
+                    <div class="section-title">쉼표 병합 묶음</div>
+                    <div class="section-count">${mergeCount}개씩 · ${groups.length}묶음</div>
+                </div>
+                <div class="merge-cards">${mergeCards}</div>
+            </div>
+        </div>
+    `;
+}
+
+function esc(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escQ(str) {
+    return str.replace(/'/g, "\\'");
 }
 </script>
 
