@@ -56,6 +56,22 @@
             border-radius: 3px;
             display: block;
         }
+        .sync-badge {
+            display: none;
+            background: var(--main-green);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-left: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .sync-badge.show {
+            display: inline-block;
+            opacity: 1;
+        }
         .btn-sync {
             height: 38px;
             padding: 0 18px;
@@ -314,7 +330,7 @@
 <div class="sticky-top">
 
     <div class="header">
-        <h1>Higher Ad 데이터 통합 대시보드</h1>
+        <h1>Higher Ad 데이터 통합 대시보드 <span id="syncBadge" class="sync-badge">동기화 완료</span></h1>
         <button class="btn-sync" onclick="syncWithGoogleSheet()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
@@ -427,7 +443,9 @@
             updateCountBadge('countA', window.dbA.length);
             updateCountBadge('countB', window.dbB.length);
             renderAll();
-            alert("동기화 완료!");
+            const badge = document.getElementById('syncBadge');
+            badge.classList.add('show');
+            setTimeout(() => { badge.classList.remove('show'); }, 3000);
         } catch (e) {
             console.error(e);
             alert("데이터를 가져오는 데 실패했습니다.");
