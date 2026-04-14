@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -7,184 +7,721 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <style>
     :root {
-      --primary: #2e7d32;
-      --primary-dark: #1b5e20;
-      --blue: #1976d2;
-      --blue-dark: #0d47a1;
-      --bg: #f8f9fa;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: rgba(79,70,229,0.1);
+      --green: #059669;
+      --green-hover: #047857;
+      --green-light: rgba(5,150,105,0.1);
+      --red: #dc2626;
+      --red-light: rgba(220,38,38,0.1);
+      --bg: #f5f5f7;
       --card: #ffffff;
-      --border: #e0e0e0;
-      --text: #333;
-      --muted: #666;
-      --radius: 12px;
-      --shadow: 0 8px 30px rgba(0,0,0,0.05);
+      --card2: #f9f9fb;
+      --border: #e5e7eb;
+      --text: #111827;
+      --text2: #6b7280;
+      --text3: #9ca3af;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.06);
+      --shadow-sm: 0 1px 4px rgba(0,0,0,0.08);
+      --transition: all 0.2s ease;
     }
 
-    * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
+    [data-theme="dark"] {
+      --bg: #0f0f11;
+      --card: #1a1a1f;
+      --card2: #222228;
+      --border: #2e2e38;
+      --text: #f0f0f5;
+      --text2: #a0a0b0;
+      --text3: #606075;
+      --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.3);
+      --shadow-sm: 0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      margin: 0; padding: 40px 20px;
-      background-color: var(--bg);
+      font-family: 'Pretendard', -apple-system, sans-serif;
+      background: var(--bg);
       color: var(--text);
-      display: flex; justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: background 0.3s, color 0.3s;
     }
 
-    .container {
-      width: 100%; max-width: 800px;
-      background: var(--card);
-      padding: 32px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(0,0,0,0.03);
-    }
-
-    h2 {
-      margin-top: 0;
-      color: var(--primary);
-      font-size: 24px;
-      text-align: center;
-      margin-bottom: 30px;
+    /* ── Header ── */
+    .header {
+      width: 100%;
+      max-width: 860px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
+      justify-content: space-between;
+      margin-bottom: 28px;
     }
 
-    .field-group {
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--primary), #7c3aed);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+
+    .header-sub {
+      font-size: 13px;
+      color: var(--text2);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    .theme-btn {
+      width: 40px; height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition);
+      box-shadow: var(--shadow-sm);
+    }
+    .theme-btn:hover { background: var(--card2); color: var(--text); }
+
+    /* ── Card ── */
+    .card {
+      width: 100%;
+      max-width: 860px;
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    /* ── Mode selector ── */
+    .mode-bar {
+      display: flex;
+      gap: 6px;
       margin-bottom: 24px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 4px;
     }
 
-    .label {
-      display: block;
-      font-weight: 700;
-      margin-bottom: 8px;
-      font-size: 14px;
-      color: var(--muted);
-      margin-left: 4px;
+    .mode-btn {
+      flex: 1;
+      padding: 9px 12px;
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--text2);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: 'Pretendard', sans-serif;
     }
+
+    .mode-btn.active {
+      background: var(--card);
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ── Text area block ── */
+    .area-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .area-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .area-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .area-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .char-count {
+      font-size: 11px;
+      color: var(--text3);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .icon-btn {
+      width: 28px; height: 28px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--card2);
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition);
+      position: relative;
+    }
+    .icon-btn:hover { background: var(--border); color: var(--text); }
+    .icon-btn.success { background: var(--green-light); color: var(--green); border-color: var(--green); }
 
     textarea {
       width: 100%;
-      min-height: 160px;
-      padding: 16px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      background: #fafafa;
-      font-size: 15px;
-      line-height: 1.6;
+      min-height: 140px;
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: var(--card2);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.7;
       resize: vertical;
-      transition: all 0.2s ease;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+      font-family: 'Consolas', 'Monaco', 'Pretendard', monospace;
     }
 
     textarea:focus {
       outline: none;
       border-color: var(--primary);
-      background: #fff;
-      box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.1);
+      background: var(--card);
+      box-shadow: 0 0 0 3px var(--primary-light);
     }
 
-    .btn-container {
+    textarea[readonly] {
+      cursor: default;
+      color: var(--text2);
+    }
+    textarea[readonly]:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px var(--green-light);
+    }
+
+    /* ── Action row ── */
+    .action-row {
       display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
+      gap: 10px;
+      align-items: center;
+      margin: 16px 0;
     }
 
-    button {
+    .divider {
       flex: 1;
-      padding: 14px;
-      border: none;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .action-center {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 6px;
-      color: white;
+      gap: 7px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 9px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: 'Pretendard', sans-serif;
+      white-space: nowrap;
     }
 
-    .btn-encode { background-color: var(--primary); }
-    .btn-encode:hover { background-color: var(--primary-dark); transform: translateY(-1px); }
-    
-    .btn-decode { background-color: var(--blue); }
-    .btn-decode:hover { background-color: var(--blue-dark); transform: translateY(-1px); }
-
-    .btn-clear { 
-      background-color: #f1f3f4; 
-      color: #5f6368;
-      border: 1px solid #dadce0;
+    .btn-encode {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(79,70,229,0.25);
     }
-    .btn-clear:hover { background-color: #e8eaed; }
+    .btn-encode:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(79,70,229,0.35); }
 
-    #result {
-      background: #fdfdfd;
-      font-family: 'Consolas', 'Monaco', monospace;
-      color: #1a1a1a;
-      border-color: var(--border);
+    .btn-decode {
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(5,150,105,0.25);
+    }
+    .btn-decode:hover { background: var(--green-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(5,150,105,0.35); }
+
+    .btn-swap {
+      background: var(--card2);
+      color: var(--text2);
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+    }
+    .btn-swap:hover { background: var(--border); color: var(--text); }
+
+    .btn-clear {
+      background: var(--card2);
+      color: var(--text2);
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+    }
+    .btn-clear:hover { background: var(--red-light); color: var(--red); border-color: var(--red); }
+
+    /* ── Status badge ── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      min-height: 22px;
     }
 
-    .info-text {
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 0.25s, transform 0.25s;
+    }
+
+    .status-badge.show { opacity: 1; transform: translateY(0); }
+    .status-badge.encode { background: var(--primary-light); color: var(--primary); }
+    .status-badge.decode { background: var(--green-light); color: var(--green); }
+    .status-badge.error { background: var(--red-light); color: var(--red); }
+
+    /* ── History ── */
+    .history-section {
+      margin-top: 24px;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .history-title {
       font-size: 12px;
-      color: var(--muted);
-      text-align: center;
-      margin-top: 20px;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
-    @media (max-width: 480px) {
-      .btn-container { flex-direction: column; }
-      body { padding: 20px 15px; }
+    .history-clear-btn {
+      font-size: 11px;
+      color: var(--text3);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Pretendard', sans-serif;
+      transition: color 0.2s;
+    }
+    .history-clear-btn:hover { color: var(--red); }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .history-item:hover { border-color: var(--primary); background: var(--primary-light); }
+
+    .history-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+    .history-badge.enc { background: var(--primary-light); color: var(--primary); }
+    .history-badge.dec { background: var(--green-light); color: var(--green); }
+    .history-badge.b64 { background: rgba(245,158,11,0.1); color: #b45309; }
+
+    .history-text {
+      flex: 1;
+      font-size: 12px;
+      color: var(--text2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: 'Consolas', monospace;
+    }
+
+    .history-copy {
+      font-size: 12px;
+      color: var(--text3);
+      flex-shrink: 0;
+    }
+
+    /* ── Empty history ── */
+    .history-empty {
+      text-align: center;
+      padding: 20px;
+      color: var(--text3);
+      font-size: 13px;
+    }
+
+    /* ── Footer ── */
+    .footer-note {
+      font-size: 12px;
+      color: var(--text3);
+      text-align: center;
+      margin-top: 28px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      body { padding: 24px 14px 50px; }
+      .card { padding: 20px 16px; }
+      .action-row { flex-wrap: wrap; }
+      .action-center { width: 100%; justify-content: center; }
+      .divider { display: none; }
+      h1 { font-size: 18px; }
     }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <h2>🔗 URL 인코딩/디코딩</h2>
-  
-  <div class="field-group">
-    <span class="label">입력 텍스트</span>
-    <textarea id="inputText" placeholder="인코딩 또는 디코딩할 URL/텍스트를 입력하세요..."></textarea>
+<!-- Header -->
+<div class="header">
+  <div class="header-title">
+    <div class="header-icon">🔗</div>
+    <div>
+      <h1>URL 인코딩 / 디코딩</h1>
+      <div class="header-sub">URL, 한글, 특수문자를 안전하게 변환</div>
+    </div>
+  </div>
+  <button class="theme-btn" id="themeBtn" title="다크모드 전환">🌙</button>
+</div>
+
+<!-- Main card -->
+<div class="card">
+
+  <!-- Mode selector -->
+  <div class="mode-bar" id="modeBar">
+    <button class="mode-btn active" data-mode="component">encodeURIComponent</button>
+    <button class="mode-btn" data-mode="uri">encodeURI</button>
+    <button class="mode-btn" data-mode="base64">Base64</button>
   </div>
 
-  <div class="btn-container">
-    <button class="btn-encode" onclick="encodeURL()">🔒 인코딩</button>
-    <button class="btn-decode" onclick="decodeURL()">🔓 디코딩</button>
-    <button class="btn-clear" onclick="clearText()">🧹 초기화</button>
+  <!-- Input -->
+  <div class="area-block">
+    <div class="area-header">
+      <span class="area-label">입력</span>
+      <div class="area-actions">
+        <span class="char-count" id="inputCount">0자</span>
+        <button class="icon-btn" id="pasteBtn" title="클립보드에서 붙여넣기">📋</button>
+        <button class="icon-btn" id="clearInputBtn" title="입력 지우기">✕</button>
+      </div>
+    </div>
+    <textarea id="inputText" placeholder="인코딩 또는 디코딩할 텍스트를 입력하세요..."></textarea>
   </div>
 
-  <div class="field-group">
-    <span class="label">결과</span>
+  <!-- Action row -->
+  <div class="action-row">
+    <div class="divider"></div>
+    <div class="action-center">
+      <button class="btn btn-encode" id="encodeBtn">🔒 인코딩</button>
+      <button class="btn btn-decode" id="decodeBtn">🔓 디코딩</button>
+      <button class="btn btn-swap" id="swapBtn" title="입력↔결과 교체">⇅</button>
+      <button class="btn btn-clear" id="clearBtn" title="전체 초기화">🗑</button>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <!-- Output -->
+  <div class="area-block">
+    <div class="area-header">
+      <span class="area-label">결과</span>
+      <div class="area-actions">
+        <span class="char-count" id="outputCount">0자</span>
+        <button class="icon-btn" id="copyBtn" title="결과 복사">⎘</button>
+      </div>
+    </div>
     <textarea id="result" readonly placeholder="결과가 여기에 표시됩니다..."></textarea>
   </div>
 
-  <p class="info-text">* 특수문자 및 한글이 포함된 URL을 안전하게 변환합니다.</p>
+  <!-- Status -->
+  <div class="status-bar">
+    <div class="status-badge" id="statusBadge"></div>
+  </div>
+
+  <!-- History -->
+  <div class="history-section">
+    <div class="history-header">
+      <span class="history-title">⏱ 최근 변환 이력</span>
+      <button class="history-clear-btn" id="historyClearBtn">전체 삭제</button>
+    </div>
+    <div class="history-list" id="historyList">
+      <div class="history-empty">아직 변환 이력이 없습니다.</div>
+    </div>
+  </div>
+
 </div>
 
+<div class="footer-note">특수문자·한글이 포함된 URL을 안전하게 변환합니다 · Ctrl+Enter로 빠른 인코딩</div>
+
 <script>
-  const $ = (id) => document.getElementById(id);
+  // ── State ──────────────────────────────────────────────
+  let mode = 'component'; // component | uri | base64
+  let history = JSON.parse(localStorage.getItem('url_tool_history') || '[]');
 
-  function encodeURL() {
-    const v = $("inputText").value;
-    if(!v.trim()) return;
-    $("result").value = encodeURIComponent(v);
+  // ── DOM refs ───────────────────────────────────────────
+  const inputEl    = document.getElementById('inputText');
+  const resultEl   = document.getElementById('result');
+  const inputCount = document.getElementById('inputCount');
+  const outputCount= document.getElementById('outputCount');
+  const statusBadge= document.getElementById('statusBadge');
+  const historyList= document.getElementById('historyList');
+  const themeBtn   = document.getElementById('themeBtn');
+
+  // ── Theme ──────────────────────────────────────────────
+  const savedTheme = localStorage.getItem('url_tool_theme') || 'light';
+  setTheme(savedTheme);
+
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    themeBtn.textContent = t === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('url_tool_theme', t);
   }
 
-  function decodeURL() {
-    const v = $("inputText").value;
-    if(!v.trim()) return;
+  themeBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    setTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  // ── Mode selector ──────────────────────────────────────
+  document.getElementById('modeBar').addEventListener('click', e => {
+    const btn = e.target.closest('.mode-btn');
+    if (!btn) return;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+  });
+
+  // ── Char counter ───────────────────────────────────────
+  inputEl.addEventListener('input', () => {
+    inputCount.textContent = inputEl.value.length.toLocaleString() + '자';
+  });
+
+  // ── Keyboard shortcut: Ctrl+Enter = encode ─────────────
+  inputEl.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); encode(); }
+    if (e.shiftKey && e.key === 'Enter') { e.preventDefault(); decode(); }
+  });
+
+  // ── Encode / Decode ────────────────────────────────────
+  function encode() {
+    const v = inputEl.value;
+    if (!v.trim()) return;
+    let out;
     try {
-      $("result").value = decodeURIComponent(v);
-    } catch (e) {
-      $("result").value = "⚠️ 오류: 유효하지 않은 인코딩 문자열입니다. 형식을 확인해주세요.";
+      if (mode === 'component') out = encodeURIComponent(v);
+      else if (mode === 'uri')  out = encodeURI(v);
+      else                      out = btoa(unescape(encodeURIComponent(v)));
+    } catch(e) {
+      showStatus('error', '⚠ 인코딩 실패: ' + e.message); return;
     }
+    resultEl.value = out;
+    updateOutputCount();
+    showStatus('encode', `✓ ${modeLabel()} 인코딩 완료`);
+    addHistory('enc', v, out);
   }
 
-  function clearText() {
-    $("inputText").value = "";
-    $("result").value = "";
-    $("inputText").focus();
+  function decode() {
+    const v = inputEl.value;
+    if (!v.trim()) return;
+    let out;
+    try {
+      if (mode === 'component') out = decodeURIComponent(v);
+      else if (mode === 'uri')  out = decodeURI(v);
+      else                      out = decodeURIComponent(escape(atob(v)));
+    } catch(e) {
+      showStatus('error', '⚠ 디코딩 실패: 유효하지 않은 형식입니다'); return;
+    }
+    resultEl.value = out;
+    updateOutputCount();
+    showStatus('decode', `✓ ${modeLabel()} 디코딩 완료`);
+    addHistory('dec', v, out);
   }
+
+  function modeLabel() {
+    return mode === 'component' ? 'encodeURIComponent' : mode === 'uri' ? 'encodeURI' : 'Base64';
+  }
+
+  // ── Swap ───────────────────────────────────────────────
+  document.getElementById('swapBtn').addEventListener('click', () => {
+    const tmp = inputEl.value;
+    inputEl.value = resultEl.value;
+    resultEl.value = tmp;
+    inputCount.textContent = inputEl.value.length.toLocaleString() + '자';
+    updateOutputCount();
+  });
+
+  // ── Clear ──────────────────────────────────────────────
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    inputEl.value = ''; resultEl.value = '';
+    inputCount.textContent = '0자'; outputCount.textContent = '0자';
+    hideStatus();
+    inputEl.focus();
+  });
+
+  document.getElementById('clearInputBtn').addEventListener('click', () => {
+    inputEl.value = '';
+    inputCount.textContent = '0자';
+    inputEl.focus();
+  });
+
+  // ── Paste ──────────────────────────────────────────────
+  document.getElementById('pasteBtn').addEventListener('click', async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      inputEl.value = text;
+      inputCount.textContent = text.length.toLocaleString() + '자';
+      inputEl.focus();
+    } catch(e) {
+      showStatus('error', '⚠ 클립보드 접근 권한이 필요합니다');
+    }
+  });
+
+  // ── Copy ───────────────────────────────────────────────
+  document.getElementById('copyBtn').addEventListener('click', async () => {
+    const v = resultEl.value;
+    if (!v) return;
+    try {
+      await navigator.clipboard.writeText(v);
+      const btn = document.getElementById('copyBtn');
+      btn.classList.add('success');
+      btn.textContent = '✓';
+      setTimeout(() => { btn.classList.remove('success'); btn.textContent = '⎘'; }, 1500);
+    } catch(e) {
+      // fallback
+      resultEl.select();
+      document.execCommand('copy');
+    }
+  });
+
+  // ── Button events ──────────────────────────────────────
+  document.getElementById('encodeBtn').addEventListener('click', encode);
+  document.getElementById('decodeBtn').addEventListener('click', decode);
+
+  // ── Status ─────────────────────────────────────────────
+  let statusTimer;
+  function showStatus(type, msg) {
+    clearTimeout(statusTimer);
+    statusBadge.textContent = msg;
+    statusBadge.className = 'status-badge ' + type;
+    // force reflow for animation
+    void statusBadge.offsetWidth;
+    statusBadge.classList.add('show');
+    statusTimer = setTimeout(hideStatus, 3000);
+  }
+
+  function hideStatus() {
+    statusBadge.classList.remove('show');
+  }
+
+  // ── Output counter ─────────────────────────────────────
+  function updateOutputCount() {
+    outputCount.textContent = resultEl.value.length.toLocaleString() + '자';
+  }
+
+  // ── History ────────────────────────────────────────────
+  function addHistory(type, input, output) {
+    history.unshift({ type, input, output, time: Date.now() });
+    if (history.length > 10) history.pop();
+    localStorage.setItem('url_tool_history', JSON.stringify(history));
+    renderHistory();
+  }
+
+  function renderHistory() {
+    if (history.length === 0) {
+      historyList.innerHTML = '<div class="history-empty">아직 변환 이력이 없습니다.</div>';
+      return;
+    }
+    historyList.innerHTML = history.map((item, i) => {
+      const badgeClass = item.type === 'enc' ? 'enc' : item.type === 'dec' ? 'dec' : 'b64';
+      const badgeLabel = item.type === 'enc' ? 'ENC' : item.type === 'dec' ? 'DEC' : 'B64';
+      const preview = (item.output || '').slice(0, 80) + ((item.output || '').length > 80 ? '…' : '');
+      return `<div class="history-item" data-i="${i}">
+        <span class="history-badge ${badgeClass}">${badgeLabel}</span>
+        <span class="history-text">${escapeHtml(preview)}</span>
+        <span class="history-copy">↩</span>
+      </div>`;
+    }).join('');
+
+    historyList.querySelectorAll('.history-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const item = history[+el.dataset.i];
+        inputEl.value = item.input;
+        resultEl.value = item.output;
+        inputCount.textContent = item.input.length.toLocaleString() + '자';
+        updateOutputCount();
+        showStatus('decode', '✓ 이력에서 불러왔습니다');
+      });
+    });
+  }
+
+  document.getElementById('historyClearBtn').addEventListener('click', () => {
+    history = [];
+    localStorage.removeItem('url_tool_history');
+    renderHistory();
+  });
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── Init ───────────────────────────────────────────────
+  renderHistory();
 </script>
 
 </body>
