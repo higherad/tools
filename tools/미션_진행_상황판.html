@@ -13,8 +13,20 @@
         }
 
         body { background: var(--bg); margin: 0; padding: 20px; font-family: 'Pretendard', sans-serif; color: #333; }
-        .container { max-width: 1000px; margin: 0 auto; text-align: center; }
+        .container { max-width: 1600px; margin: 0 auto; text-align: center; }
         h1 { color: var(--primary); margin-bottom: 30px; font-size: 24px; }
+
+        /* 3열 가로 레이아웃 */
+        .sections-row {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        .sections-row .accordion-item {
+            flex: 1;
+            min-width: 0;
+            margin-bottom: 0;
+        }
 
         /* 아코디언 스타일 */
         .accordion-item {
@@ -103,6 +115,8 @@
 <div class="container">
     <h1>🍀 비즈핏 통합 상황판</h1>
 
+    <div class="sections-row">
+
     <div class="accordion-item">
         <button class="accordion-header">
             <h3>📒 NP 트래픽 등급표</h3>
@@ -141,6 +155,8 @@
             <iframe class="sheet-frame" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vR3OdGJxL1NjwRU89xfKURxPMlJvl-AshXFgqR7X1NM3hwFZ9HUrkT76oA7fXJ90Q/pubhtml?gid=1007752263&single=true&widget=false&chrome=false"></iframe>
         </div>
     </div>
+
+    </div><!-- /.sections-row -->
 
     <p class="footer-info">※ 각 항목을 클릭하면 상세 상황판이 열립니다.</p>
 </div>
