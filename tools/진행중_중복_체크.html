@@ -347,8 +347,8 @@
     </div>
 
     <div class="type-selector">
-        <button id="btnTypeA" class="type-btn active" onclick="switchType('A')">📂 블랙/올리브</button>
-        <button id="btnTypeB" class="type-btn"        onclick="switchType('B')">📂 기타등급</button>
+        <button id="btnTypeA" class="type-btn active" onclick="switchType('A')">📂 블랙/올리브 <span id="countA" class="count-badge" style="margin-left:4px;">0건</span></button>
+        <button id="btnTypeB" class="type-btn"        onclick="switchType('B')">📂 기타등급 <span id="countB" class="count-badge" style="margin-left:4px;">0건</span></button>
     </div>
 
 </div><!-- /sticky-top -->
@@ -423,6 +423,8 @@
             window.sortStateA = { colIndex: -1, state: 0 };
             window.sortStateB = { colIndex: -1, state: 0 };
 
+            updateCountBadge('countA', window.dbA.length);
+            updateCountBadge('countB', window.dbB.length);
             renderAll();
             alert("동기화 완료!");
         } catch (e) {
@@ -431,6 +433,10 @@
         } finally {
             btn.innerHTML = originalHTML;
         }
+    }
+
+    function updateCountBadge(id, count) {
+        document.getElementById(id).innerText = count + "건";
     }
 
     function stripGrade(val) {
