@@ -275,6 +275,23 @@
     .link-card.new-stat .material-symbols-outlined { color: #7b1fa2; }
     .link-card.new-stat:hover { background: #f3e5f5; border-color: #ce93d8; }
 
+    /* ── NEW / UPDATE 배지 ── */
+    .badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 8.5px; font-weight: 800; letter-spacing: 0.2px;
+      padding: 1px 5px; border-radius: 20px; line-height: 1.6;
+      flex-shrink: 0; vertical-align: middle;
+    }
+    .badge.new    { background: #e53935; color: #fff; }
+    .badge.update { background: #1e88e5; color: #fff; }
+
+    /* 사이드바 버튼 끝 배지 */
+    .tool-button .badge { margin-left: auto; }
+    #sidebar.collapsed .tool-button .badge { display: none; }
+
+    /* 카드 인라인 배지 */
+    .link-card .badge { margin-left: 4px; font-size: 8px; }
+
     .sidebar-footer {
       padding: 10px 16px; border-top: 1px solid var(--border-color);
       display: flex; flex-wrap: wrap; gap: 5px;
@@ -399,13 +416,13 @@
               <span class="g-title">순위 &amp; 통계</span>
             </div>
             <div class="card-grid cols-4">
-              <a href="https://docs.google.com/spreadsheets/d/1sHZCaJTA9icEf2S4Ad9zLWdo8oAvoK1hTfA1EONmzS8/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet">
+              <a href="https://docs.google.com/spreadsheets/d/1sHZCaJTA9icEf2S4Ad9zLWdo8oAvoK1hTfA1EONmzS8/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet" data-pipeline="ranking">
                 <span class="material-symbols-outlined">table_chart</span><span>⭐ 순위표</span>
               </a>
-              <a href="https://docs.google.com/spreadsheets/d/1Z5bqkEGjX4cMKbV0fNlMTbb-qNIdjmwy8IgLg1u9-n8/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet">
+              <a href="https://docs.google.com/spreadsheets/d/1Z5bqkEGjX4cMKbV0fNlMTbb-qNIdjmwy8IgLg1u9-n8/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet" data-pipeline="ranking">
                 <span class="material-symbols-outlined">analytics</span><span>♦️ 단독 순위 분석</span>
               </a>
-              <a href="https://docs.google.com/spreadsheets/d/1Ia3CcylXPF-Y4f2V6qBiVHmRf85vSPiJ43v9GnQPB2c/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet">
+              <a href="https://docs.google.com/spreadsheets/d/1Ia3CcylXPF-Y4f2V6qBiVHmRf85vSPiJ43v9GnQPB2c/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet" data-pipeline="ranking">
                 <span class="material-symbols-outlined">reorder</span><span>♠️ 영업점 순위 분류</span>
               </a>
               <a href="https://docs.google.com/spreadsheets/d/1zUjR04Cr__GxpWi2rVUsfF9sdTYhRxUXN2IZir8MMmU/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card new-stat">
@@ -563,6 +580,35 @@
 
     // 기타 기존 함수 유지용 가상 auth 객체 (에러 방지)
     window.auth = { currentUser: { uid: currentUserId } };
+
+    // 파이프라인 완료 배지 — ha/pipeline/allDone 이 오늘 날짜면 카드에 UPDATE 표시
+    function getTodayYYMMDD() {
+      const d = new Date();
+      const yy = String(d.getFullYear()).slice(2);
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return yy + mm + dd;
+    }
+
+    const pipelineRef = ref(db, 'ha/pipeline/allDone');
+    onValue(pipelineRef, (snapshot) => {
+      const val = snapshot.val();
+      const today = getTodayYYMMDD();
+      document.querySelectorAll('[data-pipeline="ranking"]').forEach(card => {
+        const existing = card.querySelector('.badge');
+        if (val === today) {
+          if (!existing) {
+            const labelSpan = card.querySelector('span:last-child');
+            const badge = document.createElement('span');
+            badge.className = 'badge update';
+            badge.textContent = 'UPDATE';
+            labelSpan.appendChild(badge);
+          }
+        } else {
+          if (existing) existing.remove();
+        }
+      });
+    });
   </script>
 
   <script>
@@ -587,6 +633,8 @@
         defaultTools = list.map(t => ({
           file: normalizeToolFile(t.file),
           label: t.label || t.file,
+          addedAt:   t.addedAt   || null,
+          updatedAt: t.updatedAt || null,
         }));
       } catch (e) {
         defaultTools = [{ file: "tools/메모장.html", label: "⏰ 메모장" }];
@@ -625,6 +673,22 @@
       renderAppFromServer(state);
     }
 
+    const BADGE_NEW_DAYS    = 14;
+    const BADGE_UPDATE_DAYS = 7;
+
+    function getToolBadge(tool) {
+      const now = Date.now();
+      if (tool.addedAt) {
+        const diff = (now - new Date(tool.addedAt)) / 86400000;
+        if (diff < BADGE_NEW_DAYS) return 'new';
+      }
+      if (tool.updatedAt) {
+        const diff = (now - new Date(tool.updatedAt)) / 86400000;
+        if (diff < BADGE_UPDATE_DAYS) return 'update';
+      }
+      return null;
+    }
+
     function createButton(tool) {
       const btn = document.createElement("div");
       btn.className = "tool-button";
@@ -636,9 +700,15 @@
       const iconPart = segments[0].segment;
       const textPart = segments.slice(1).map(s => s.segment).join('').trim();
 
+      const badge = getToolBadge(tool);
+      const badgeHtml = badge
+        ? `<span class="badge ${badge}">${badge === 'new' ? 'NEW' : 'UPDATE'}</span>`
+        : '';
+
       btn.innerHTML = `
         <span class="tool-icon">${iconPart}</span>
         <span class="tool-text">${textPart}</span>
+        ${badgeHtml}
       `;
 
       btn.onclick = () => openTab(tool);
