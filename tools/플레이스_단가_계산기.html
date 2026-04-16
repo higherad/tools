@@ -284,8 +284,8 @@ input[readonly]{background:#f3f4f6;color:var(--muted);cursor:not-allowed}
     }
 
     const days   = calcRefundDays(endVal);
-    const tAmt   = tQty * tp;
-    const rAmt   = rQty * rp;
+    const tAmt   = tQty * tp * days;
+    const rAmt   = rQty * rp * days;
     const total  = tAmt + rAmt;
 
     if(days === 0){
@@ -305,8 +305,8 @@ input[readonly]{background:#f3f4f6;color:var(--muted);cursor:not-allowed}
     }
 
     const parts = [];
-    if(tAmt > 0) parts.push(`트래픽 ${fmt(tQty)}개 × ${fmt(tp)}원 = -${won(tAmt)}`);
-    if(rAmt > 0) parts.push(`길찾기 ${fmt(rQty)}개 × ${fmt(rp)}원 = -${won(rAmt)}`);
+    if(tAmt > 0) parts.push(`트래픽 ${fmt(tQty)}개 × ${fmt(tp)}원 × ${days}일 = -${won(tAmt)}`);
+    if(rAmt > 0) parts.push(`길찾기 ${fmt(rQty)}개 × ${fmt(rp)}원 × ${days}일 = -${won(rAmt)}`);
 
     res.innerHTML =
       `<span class="r-days">${days}일 잔여</span>` +
@@ -336,8 +336,8 @@ input[readonly]{background:#f3f4f6;color:var(--muted);cursor:not-allowed}
     rows.forEach(b => {
       const days = calcRefundDays(b.querySelector(".r-end").value);
       if(days > 0){
-        sumT += num(b.querySelector(".r-t-qty").value) * tp;
-        sumR += num(b.querySelector(".r-r-qty").value) * rp;
+        sumT += num(b.querySelector(".r-t-qty").value) * tp * days;
+        sumR += num(b.querySelector(".r-r-qty").value) * rp * days;
       }
     });
 
@@ -386,8 +386,8 @@ input[readonly]{background:#f3f4f6;color:var(--muted);cursor:not-allowed}
       const days = calcRefundDays(b.querySelector(".r-end").value);
       if(days > 0){
         refundTotal +=
-          num(b.querySelector(".r-t-qty").value) * tp +
-          num(b.querySelector(".r-r-qty").value) * rp;
+          num(b.querySelector(".r-t-qty").value) * tp * days +
+          num(b.querySelector(".r-r-qty").value) * rp * days;
       }
     });
 
