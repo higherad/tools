@@ -161,9 +161,10 @@ input[type=date]:focus{border-color:var(--acc);}
 
 /* product groups */
 .pg-btn{display:inline-flex;align-items:center;gap:7px;background:var(--sur2);border:1.5px solid var(--brd);border-radius:8px;padding:5px 8px 5px 12px;cursor:pointer;transition:all .2s;user-select:none;}
-.pg-btn:hover{border-color:var(--acc);background:rgba(0,229,255,.05);}
-.pg-btn.active-g{border-color:var(--acc);background:rgba(0,229,255,.08);}
-.pg-name{font-size:12px;font-weight:700;}
+.pg-btn:hover{border-color:rgba(255,255,255,.2);background:#222230;}
+.pg-name-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:2px;}
+.pg-name{font-size:12px;font-weight:700;line-height:1.2;}
+.pg-active-ind{height:2px;width:100%;background:var(--acc);border-radius:1px;box-shadow:0 0 6px rgba(0,229,255,.5);}
 .pg-dots{display:flex;gap:3px;align-items:center;}
 .pg-del{width:18px;height:18px;border-radius:4px;border:none;background:rgba(239,68,68,.08);color:var(--red);cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0;line-height:1;}
 .pg-del:hover{background:rgba(239,68,68,.25);}
@@ -216,14 +217,13 @@ input[type=date]:focus{border-color:var(--acc);}
 
   <!-- Product type settings -->
   <div class="panel">
-    <div class="ph"><span>🏷️</span><h2>상품 유형 설정</h2><span class="m">클릭하면 상품명·버전·고정 비율 설정 가능</span></div>
+    <div class="ph"><span>🏷️</span><h2>상품 유형 설정</h2><span class="m">클릭하면 상품명·버전·고정 비율 설정 가능</span><button class="btn btn-s" style="font-size:11px;padding:4px 10px;margin-left:auto;" onclick="showAddGroup()">＋ 그룹 추가</button></div>
     <div class="pb">
       <!-- Groups -->
       <div class="pg-section">
-        <div class="pg-label">그룹 프리셋 — 저장 후 클릭하면 설정이 자동 적용됩니다</div>
+        <div class="pg-label">그룹 프리셋 — 클릭하면 설정이 자동 적용됩니다</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
           <div id="groupWrap" style="display:contents;"></div>
-          <button class="btn btn-s" style="font-size:11px;padding:4px 10px;" onclick="showAddGroup()">＋ 현재 상태 저장</button>
         </div>
         <div id="addGroupForm" class="pg-add-form" style="display:none;">
           <input type="text" id="groupNameInput" placeholder="그룹 이름 (예: 블랙+올리브)" maxlength="24"
@@ -351,8 +351,11 @@ function renderGroups() {
       const col = p ? p.color : '#555';
       return `<span style="width:7px;height:7px;border-radius:50%;background:${col};opacity:${s.active?1:.2};display:inline-block;flex-shrink:0;"></span>`;
     }).join('');
-    return `<div class="pg-btn${isActive?' active-g':''}" onclick="applyGroup('${g.id}')" title="${g.state.filter(s=>s.active).map(s=>prods.find(x=>x.id===s.id)?.name||s.id).join(', ')}">
-      <span class="pg-name">${esc(g.name)}</span>
+    return `<div class="pg-btn" onclick="applyGroup('${g.id}')" title="${g.state.filter(s=>s.active).map(s=>prods.find(x=>x.id===s.id)?.name||s.id).join(', ')}">
+      <div class="pg-name-wrap">
+        <span class="pg-name">${esc(g.name)}</span>
+        ${isActive ? '<div class="pg-active-ind"></div>' : ''}
+      </div>
       <span class="pg-dots">${dots}</span>
       <button class="pg-del" onclick="event.stopPropagation();deleteGroup('${g.id}')">✕</button>
     </div>`;
