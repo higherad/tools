@@ -413,7 +413,8 @@ function applyGroup(id) {
     if(s.ver  !== undefined) p.ver   = s.ver;
   });
   activeGroupId = id;
-  rows.forEach(r => { r.products = (r.products||[]).filter(mid => prods.find(p=>p.id===mid&&p.active)); });
+  const activeIds = prods.filter(p=>p.active).map(p=>p.id);
+  rows.forEach(r => { r.products = activeIds.slice(); });
   renderPS(); renderGroups(); renderTable(); refreshUI();
   scheduleSave();
 }
