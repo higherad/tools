@@ -159,6 +159,10 @@ input[type=date]:focus{border-color:var(--acc);}
 .pgf{height:100%;background:linear-gradient(90deg,var(--acc),#7c3aed);border-radius:2px;width:0%;transition:width .3s;}
 .pgl{font-size:11px;color:var(--txd);margin-top:4px;text-align:center;}
 
+/* group overlay */
+#groupOverlay{display:none;position:fixed;inset:0;z-index:5;}
+#prodPanel{position:relative;z-index:6;}
+
 /* product groups */
 .pg-btn{display:inline-flex;align-items:center;gap:7px;background:var(--sur2);border:1.5px solid var(--brd);border-radius:8px;padding:5px 8px 5px 12px;cursor:pointer;transition:all .2s;user-select:none;}
 .pg-btn:hover{border-color:rgba(255,255,255,.2);background:#222230;}
@@ -190,6 +194,7 @@ input[type=date]:focus{border-color:var(--acc);}
 </head>
 <body>
 
+<div id="groupOverlay" onclick="deactivateGroup()"></div>
 <div class="hdr">
   <div class="hdr-icon">📊</div>
   <div>
@@ -338,6 +343,7 @@ function loadDefaultState() {
 }
 function deactivateGroup() {
   activeGroupId = null;
+  document.getElementById('groupOverlay').style.display = 'none';
   if (defaultProds) {
     defaultProds.forEach(s => {
       const p=prods.find(x=>x.id===s.id); if(!p) return;
@@ -418,6 +424,7 @@ function applyGroup(id) {
     if(s.ver  !== undefined) p.ver   = s.ver;
   });
   activeGroupId = id;
+  document.getElementById('groupOverlay').style.display = 'block';
   rows.forEach(r => { r.products = r.products.filter(mid => prods.find(p=>p.id===mid&&p.active)); });
   renderPS(); renderGroups(); renderTable(); refreshUI();
   scheduleSave();
@@ -517,12 +524,6 @@ window.onload = () => {
   renderGroups();
   addRow(); addRow(); addRow();
   setupUpload();
-  // 상품 유형 설정 패널 밖 클릭 시 그룹 해제
-  document.addEventListener('mousedown', e => {
-    if (!activeGroupId) return;
-    if (e.target.closest('#prodPanel') || e.target.closest('#modalBg')) return;
-    deactivateGroup();
-  });
   // 부모 창에게 데이터 요청
   if (window.parent && window.parent.loadSlotData) {
     window.parent.loadSlotData();
