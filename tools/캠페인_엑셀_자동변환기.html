@@ -457,7 +457,7 @@ function rowsByAgency(ag){
 // 저장: 부모 창의 saveSlotData 호출
 function saveToServer() {
   if (window.parent && window.parent.saveSlotData) {
-    window.parent.saveSlotData({ prods, rows });
+    window.parent.saveSlotData({ prods, rows, groups });
   }
 }
 
@@ -467,9 +467,11 @@ window.applySlotData = function(data) {
   if (data.prods && Array.isArray(data.prods)) {
     prods = data.prods;
   }
+  if (data.groups && Array.isArray(data.groups)) {
+    groups = data.groups;
+  }
   if (data.rows && Array.isArray(data.rows)) {
     rows = data.rows;
-    // rid를 기존 최대 id+1로 맞춤 (새 행 id 충돌 방지)
     if (rows.length > 0) {
       rid = Math.max(...rows.map(r => r.id ?? 0)) + 1;
     }
