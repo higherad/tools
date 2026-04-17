@@ -519,7 +519,7 @@ window.onload = () => {
   setupUpload();
   document.addEventListener('mousedown', e => {
     if (!activeGroupId) return;
-    if (e.target.closest('#prodPanel') || e.target.closest('#modalBg')) return;
+    if (e.target.closest('#prodPanel') || e.target.closest('#modalBg') || e.target.closest('#upz')) return;
     deactivateGroup();
   });
   // 부모 창에게 데이터 요청
