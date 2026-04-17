@@ -159,6 +159,20 @@ input[type=date]:focus{border-color:var(--acc);}
 .pgf{height:100%;background:linear-gradient(90deg,var(--acc),#7c3aed);border-radius:2px;width:0%;transition:width .3s;}
 .pgl{font-size:11px;color:var(--txd);margin-top:4px;text-align:center;}
 
+/* product groups */
+.pg-btn{display:inline-flex;align-items:center;gap:7px;background:var(--sur2);border:1.5px solid var(--brd);border-radius:8px;padding:5px 8px 5px 12px;cursor:pointer;transition:all .2s;user-select:none;}
+.pg-btn:hover{border-color:var(--acc);background:rgba(0,229,255,.05);}
+.pg-btn.active-g{border-color:var(--acc);background:rgba(0,229,255,.08);}
+.pg-name{font-size:12px;font-weight:700;}
+.pg-dots{display:flex;gap:3px;align-items:center;}
+.pg-del{width:18px;height:18px;border-radius:4px;border:none;background:rgba(239,68,68,.08);color:var(--red);cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0;line-height:1;}
+.pg-del:hover{background:rgba(239,68,68,.25);}
+.pg-section{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--brd);}
+.pg-label{font-size:10px;font-weight:700;color:var(--txd);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.pg-add-form{margin-top:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.pg-add-form input[type=text]{background:var(--sur2);border:1px solid var(--brd);border-radius:7px;color:var(--tx);padding:5px 10px;font-size:12px;font-family:inherit;outline:none;width:160px;transition:border-color .15s;}
+.pg-add-form input[type=text]:focus{border-color:var(--acc);}
+
 /* misc */
 .empty{padding:36px;text-align:center;color:var(--txd);}
 .empty .ico{font-size:34px;margin-bottom:8px;}
@@ -204,6 +218,21 @@ input[type=date]:focus{border-color:var(--acc);}
   <div class="panel">
     <div class="ph"><span>🏷️</span><h2>상품 유형 설정</h2><span class="m">클릭하면 상품명·버전·고정 비율 설정 가능</span></div>
     <div class="pb">
+      <!-- Groups -->
+      <div class="pg-section">
+        <div class="pg-label">그룹 프리셋 — 저장 후 클릭하면 설정이 자동 적용됩니다</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+          <div id="groupWrap" style="display:contents;"></div>
+          <button class="btn btn-s" style="font-size:11px;padding:4px 10px;" onclick="showAddGroup()">＋ 현재 상태 저장</button>
+        </div>
+        <div id="addGroupForm" class="pg-add-form" style="display:none;">
+          <input type="text" id="groupNameInput" placeholder="그룹 이름 (예: 블랙+올리브)" maxlength="24"
+            onkeydown="if(event.key==='Enter')saveNewGroup();if(event.key==='Escape')hideAddGroup();" />
+          <button class="btn btn-p" style="font-size:11px;padding:4px 12px;" onclick="saveNewGroup()">✔ 저장</button>
+          <button class="btn btn-s" style="font-size:11px;padding:4px 10px;" onclick="hideAddGroup()">취소</button>
+        </div>
+      </div>
+      <!-- Products -->
       <div class="ps-wrap" id="psWrap"></div>
     </div>
   </div>
@@ -295,6 +324,71 @@ let prods = [
 ];
 
 let rows = [], rid = 0;
+let groups = [];
+
+// ── Product Groups ──
+const GROUPS_KEY = '캠페인_prod_groups';
+
+function loadGroups() {
+  try { const s=localStorage.getItem(GROUPS_KEY); if(s) groups=JSON.parse(s); } catch(e){}
+}
+function saveGroupsLocal() {
+  try { localStorage.setItem(GROUPS_KEY, JSON.stringify(groups)); } catch(e){}
+}
+
+function renderGroups() {
+  const wrap = document.getElementById('groupWrap');
+  if (!wrap) return;
+  if (!groups.length) {
+    wrap.innerHTML = `<span style="font-size:11px;color:var(--txd);">저장된 그룹 없음</span>`;
+    return;
+  }
+  wrap.innerHTML = groups.map(g => {
+    const dots = g.state.map(s => {
+      const p = prods.find(x=>x.id===s.id);
+      const col = p ? p.color : '#555';
+      return `<span style="width:7px;height:7px;border-radius:50%;background:${col};opacity:${s.active?1:.2};display:inline-block;flex-shrink:0;"></span>`;
+    }).join('');
+    return `<div class="pg-btn" onclick="applyGroup('${g.id}')" title="${g.state.filter(s=>s.active).map(s=>prods.find(x=>x.id===s.id)?.name||s.id).join(', ')}">
+      <span class="pg-name">${esc(g.name)}</span>
+      <span class="pg-dots">${dots}</span>
+      <button class="pg-del" onclick="event.stopPropagation();deleteGroup('${g.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function showAddGroup() {
+  const f = document.getElementById('addGroupForm');
+  f.style.display = 'flex';
+  document.getElementById('groupNameInput').focus();
+}
+function hideAddGroup() {
+  document.getElementById('addGroupForm').style.display = 'none';
+  document.getElementById('groupNameInput').value = '';
+}
+function saveNewGroup() {
+  const name = document.getElementById('groupNameInput').value.trim();
+  if (!name) { document.getElementById('groupNameInput').focus(); return; }
+  const state = prods.map(p => ({id:p.id, active:p.active}));
+  groups.push({ id:'g'+Date.now(), name, state });
+  saveGroupsLocal();
+  hideAddGroup();
+  renderGroups();
+}
+function deleteGroup(id) {
+  groups = groups.filter(g=>g.id!==id);
+  saveGroupsLocal();
+  renderGroups();
+}
+function applyGroup(id) {
+  const g = groups.find(x=>x.id===id); if(!g) return;
+  g.state.forEach(s => {
+    const p = prods.find(x=>x.id===s.id); if(p) p.active = s.active;
+  });
+  rows.forEach(r => { r.products = r.products.filter(mid => prods.find(p=>p.id===mid&&p.active)); });
+  renderPS(); renderGroups(); renderTable(); refreshUI();
+  scheduleSave();
+}
 
 // ── utils ──
 const today = () => new Date().toISOString().split('T')[0];
@@ -355,7 +449,9 @@ function scheduleSave() {
 
 // ── Init ──
 window.onload = () => {
+  loadGroups();
   renderPS();
+  renderGroups();
   addRow(); addRow(); addRow();
   setupUpload();
   // 부모 창에게 데이터 요청
@@ -366,6 +462,7 @@ window.onload = () => {
 
 // ── Product settings ──
 function renderPS() {
+  renderGroups();
   document.getElementById('psWrap').innerHTML = prods.map(p=>`
     <div class="ps-item${p.active?' active':''}" id="psi-${p.id}" onclick="openModal('${p.id}')">
       <div class="ps-dot" style="background:${p.color};border-color:rgba(255,255,255,.25);"></div>
