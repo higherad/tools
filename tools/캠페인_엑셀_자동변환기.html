@@ -216,7 +216,7 @@ input[type=date]:focus{border-color:var(--acc);}
   </div>
 
   <!-- Product type settings -->
-  <div class="panel">
+  <div class="panel" id="prodPanel">
     <div class="ph"><span>🏷️</span><h2>상품 유형 설정</h2><span class="m">클릭하면 상품명·버전·고정 비율 설정 가능</span><button class="btn btn-s" style="font-size:11px;padding:4px 10px;margin-left:auto;" onclick="showAddGroup()">＋ 그룹 추가</button></div>
     <div class="pb">
       <!-- Groups -->
@@ -517,10 +517,10 @@ window.onload = () => {
   renderGroups();
   addRow(); addRow(); addRow();
   setupUpload();
-  // 그룹 영역 밖 클릭 시 그룹 해제 (mousedown: DOM 재렌더 전에 대상 체크)
+  // 상품 유형 설정 패널 밖 클릭 시 그룹 해제
   document.addEventListener('mousedown', e => {
     if (!activeGroupId) return;
-    if (e.target.closest('[data-gid]') || e.target.closest('#addGroupForm') || e.target.closest('#modalBg') || e.target.closest('.ph')) return;
+    if (e.target.closest('#prodPanel') || e.target.closest('#modalBg')) return;
     deactivateGroup();
   });
   // 부모 창에게 데이터 요청
