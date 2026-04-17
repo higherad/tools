@@ -217,7 +217,7 @@ input[type=date]:focus{border-color:var(--acc);}
 
   <!-- Product type settings -->
   <div class="panel">
-    <div class="ph"><span>🏷️</span><h2>상품 유형 설정</h2><span class="m">클릭하면 상품명·버전·고정 비율 설정 가능</span><button class="btn btn-s" style="font-size:11px;padding:4px 10px;margin-left:auto;" onclick="showAddGroup()">＋ 그룹 추가</button></div>
+    <div class="ph"><span>🏷️</span><h2>상품 유형 설정</h2><span class="m">클릭하면 상품명·버전·고정 비율 설정 가능</span><button class="btn btn-s" style="font-size:11px;padding:4px 10px;margin-left:auto;" onclick="event.stopPropagation();showAddGroup()">＋ 그룹 추가</button></div>
     <div class="pb">
       <!-- Groups -->
       <div class="pg-section">
@@ -225,7 +225,7 @@ input[type=date]:focus{border-color:var(--acc);}
         <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
           <div id="groupWrap" style="display:contents;"></div>
         </div>
-        <div id="addGroupForm" class="pg-add-form" style="display:none;">
+        <div id="addGroupForm" class="pg-add-form" style="display:none;" onclick="event.stopPropagation()">
           <input type="text" id="groupNameInput" placeholder="그룹 이름 (예: 블랙+올리브)" maxlength="24"
             onkeydown="if(event.key==='Enter')saveNewGroup();if(event.key==='Escape')hideAddGroup();" />
           <button class="btn btn-p" style="font-size:11px;padding:4px 12px;" onclick="saveNewGroup()">✔ 저장</button>
@@ -373,7 +373,7 @@ function renderGroups() {
       const col = p ? p.color : '#555';
       return `<span style="width:7px;height:7px;border-radius:50%;background:${col};opacity:${s.active?1:.2};display:inline-block;flex-shrink:0;"></span>`;
     }).join('');
-    return `<div class="pg-btn${isActive?' active-g':''}" data-gid="${g.id}" onclick="applyGroup('${g.id}')" ondblclick="event.stopPropagation();startRenameGroup('${g.id}')" title="${g.state.filter(s=>s.active).map(s=>prods.find(x=>x.id===s.id)?.name||s.id).join(', ')}">
+    return `<div class="pg-btn${isActive?' active-g':''}" data-gid="${g.id}" onclick="event.stopPropagation();applyGroup('${g.id}')" ondblclick="event.stopPropagation();startRenameGroup('${g.id}')" title="${g.state.filter(s=>s.active).map(s=>prods.find(x=>x.id===s.id)?.name||s.id).join(', ')}">
       <div class="pg-name-wrap">
         <span class="pg-name">${esc(g.name)}</span>
         <span class="pg-dots">${dots}</span>
