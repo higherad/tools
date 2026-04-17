@@ -159,10 +159,6 @@ input[type=date]:focus{border-color:var(--acc);}
 .pgf{height:100%;background:linear-gradient(90deg,var(--acc),#7c3aed);border-radius:2px;width:0%;transition:width .3s;}
 .pgl{font-size:11px;color:var(--txd);margin-top:4px;text-align:center;}
 
-/* group overlay */
-#groupOverlay{display:none;position:fixed;inset:0;z-index:5;}
-#prodPanel{position:relative;z-index:6;}
-
 /* product groups */
 .pg-btn{display:inline-flex;align-items:center;gap:7px;background:var(--sur2);border:1.5px solid var(--brd);border-radius:8px;padding:5px 8px 5px 12px;cursor:pointer;transition:all .2s;user-select:none;}
 .pg-btn:hover{border-color:rgba(255,255,255,.2);background:#222230;}
@@ -194,7 +190,6 @@ input[type=date]:focus{border-color:var(--acc);}
 </head>
 <body>
 
-<div id="groupOverlay" onclick="deactivateGroup()"></div>
 <div class="hdr">
   <div class="hdr-icon">📊</div>
   <div>
@@ -221,7 +216,7 @@ input[type=date]:focus{border-color:var(--acc);}
   </div>
 
   <!-- Product type settings -->
-  <div class="panel" id="prodPanel">
+  <div class="panel">
     <div class="ph"><span>🏷️</span><h2>상품 유형 설정</h2><span class="m">클릭하면 상품명·버전·고정 비율 설정 가능</span><button class="btn btn-s" style="font-size:11px;padding:4px 10px;margin-left:auto;" onclick="showAddGroup()">＋ 그룹 추가</button></div>
     <div class="pb">
       <!-- Groups -->
@@ -331,29 +326,6 @@ let prods = [
 let rows = [], rid = 0;
 let groups = [];
 let activeGroupId = null;
-let defaultProds = null;
-const DEFAULT_KEY = '캠페인_default_prods';
-
-function saveDefaultState() {
-  defaultProds = prods.map(p=>({id:p.id,active:p.active,ratio:p.ratio,name:p.name,ver:p.ver}));
-  try { localStorage.setItem(DEFAULT_KEY, JSON.stringify(defaultProds)); } catch(e){}
-}
-function loadDefaultState() {
-  try { const s=localStorage.getItem(DEFAULT_KEY); if(s) defaultProds=JSON.parse(s); } catch(e){}
-}
-function deactivateGroup() {
-  activeGroupId = null;
-  document.getElementById('groupOverlay').style.display = 'none';
-  if (defaultProds) {
-    defaultProds.forEach(s => {
-      const p=prods.find(x=>x.id===s.id); if(!p) return;
-      p.active=s.active; p.ratio=s.ratio; p.name=s.name; p.ver=s.ver;
-    });
-    rows.forEach(r=>{ r.products=r.products.filter(mid=>prods.find(p=>p.id===mid&&p.active)); });
-  }
-  renderPS(); renderGroups(); renderTable(); refreshUI();
-  scheduleSave();
-}
 
 // ── Product Groups ──
 const GROUPS_KEY = '캠페인_prod_groups';
@@ -415,7 +387,6 @@ function deleteGroup(id) {
 }
 function applyGroup(id) {
   const g = groups.find(x=>x.id===id); if(!g) return;
-  if (!activeGroupId) saveDefaultState();
   g.state.forEach(s => {
     const p = prods.find(x=>x.id===s.id); if(!p) return;
     p.active = s.active;
@@ -424,7 +395,6 @@ function applyGroup(id) {
     if(s.ver  !== undefined) p.ver   = s.ver;
   });
   activeGroupId = id;
-  document.getElementById('groupOverlay').style.display = 'block';
   rows.forEach(r => { r.products = r.products.filter(mid => prods.find(p=>p.id===mid&&p.active)); });
   renderPS(); renderGroups(); renderTable(); refreshUI();
   scheduleSave();
@@ -519,7 +489,6 @@ function scheduleSave() {
 // ── Init ──
 window.onload = () => {
   loadGroups();
-  loadDefaultState();
   renderPS();
   renderGroups();
   addRow(); addRow(); addRow();
@@ -612,7 +581,7 @@ function saveModal() {
 
   closeModal();
   rows.forEach(r => { const c=document.getElementById(`tags-${r.id}`); if(c) c.innerHTML=tagsHtml(r); });
-  if (activeGroupId) updateActiveGroup(); else saveDefaultState();
+  if (activeGroupId) updateActiveGroup();
   renderPS(); renderTable(); refreshUI();
   scheduleSave();
 }
@@ -628,12 +597,10 @@ function toggleP(id) {
   const p = prods.find(x=>x.id===id); if(!p) return;
   p.active = !p.active;
   if (!p.active) rows.forEach(r => { r.products=r.products.filter(mid=>mid!==id); });
-  if (activeGroupId) updateActiveGroup(); else saveDefaultState();
+  if (activeGroupId) updateActiveGroup();
   renderPS(); renderTable(); refreshUI();
   scheduleSave();
 }
-
-
 
 // ── Upload ──
 function setupUpload() {
