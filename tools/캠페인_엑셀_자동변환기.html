@@ -369,7 +369,7 @@ function hideAddGroup() {
 function saveNewGroup() {
   const name = document.getElementById('groupNameInput').value.trim();
   if (!name) { document.getElementById('groupNameInput').focus(); return; }
-  const state = prods.map(p => ({id:p.id, active:p.active}));
+  const state = prods.map(p => ({id:p.id, active:p.active, ratio:p.ratio, name:p.name, ver:p.ver}));
   groups.push({ id:'g'+Date.now(), name, state });
   saveGroupsLocal();
   hideAddGroup();
@@ -383,7 +383,11 @@ function deleteGroup(id) {
 function applyGroup(id) {
   const g = groups.find(x=>x.id===id); if(!g) return;
   g.state.forEach(s => {
-    const p = prods.find(x=>x.id===s.id); if(p) p.active = s.active;
+    const p = prods.find(x=>x.id===s.id); if(!p) return;
+    p.active = s.active;
+    if(s.ratio !== undefined) p.ratio = s.ratio;
+    if(s.name)               p.name  = s.name;
+    if(s.ver  !== undefined) p.ver   = s.ver;
   });
   rows.forEach(r => { r.products = r.products.filter(mid => prods.find(p=>p.id===mid&&p.active)); });
   renderPS(); renderGroups(); renderTable(); refreshUI();
