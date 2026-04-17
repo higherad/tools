@@ -216,7 +216,7 @@ input[type=date]:focus{border-color:var(--acc);}
   </div>
 
   <!-- Product type settings -->
-  <div class="panel">
+  <div class="panel" id="prodPanel">
     <div class="ph"><span>🏷️</span><h2>상품 유형 설정</h2><span class="m">클릭하면 상품명·버전·고정 비율 설정 가능</span><button class="btn btn-s" style="font-size:11px;padding:4px 10px;margin-left:auto;" onclick="showAddGroup()">＋ 그룹 추가</button></div>
     <div class="pb">
       <!-- Groups -->
@@ -326,6 +326,23 @@ let prods = [
 let rows = [], rid = 0;
 let groups = [];
 let activeGroupId = null;
+let defaultProds = null;
+
+function saveDefaultState() {
+  defaultProds = prods.map(p=>({id:p.id,active:p.active,ratio:p.ratio,name:p.name,ver:p.ver}));
+}
+function deactivateGroup() {
+  activeGroupId = null;
+  if (defaultProds) {
+    defaultProds.forEach(s => {
+      const p=prods.find(x=>x.id===s.id); if(!p) return;
+      p.active=s.active; p.ratio=s.ratio; p.name=s.name; p.ver=s.ver;
+    });
+    rows.forEach(r=>{ r.products=(r.products||[]).filter(mid=>prods.find(p=>p.id===mid&&p.active)); });
+  }
+  renderPS(); renderGroups(); renderTable(); refreshUI();
+  scheduleSave();
+}
 
 // ── Product Groups ──
 const GROUPS_KEY = '캠페인_prod_groups';
@@ -387,6 +404,7 @@ function deleteGroup(id) {
 }
 function applyGroup(id) {
   const g = groups.find(x=>x.id===id); if(!g) return;
+  if (!activeGroupId) saveDefaultState();
   g.state.forEach(s => {
     const p = prods.find(x=>x.id===s.id); if(!p) return;
     p.active = s.active;
@@ -498,6 +516,11 @@ window.onload = () => {
   renderGroups();
   addRow(); addRow(); addRow();
   setupUpload();
+  document.addEventListener('mousedown', e => {
+    if (!activeGroupId) return;
+    if (e.target.closest('#prodPanel') || e.target.closest('#modalBg')) return;
+    deactivateGroup();
+  });
   // 부모 창에게 데이터 요청
   if (window.parent && window.parent.loadSlotData) {
     window.parent.loadSlotData();
@@ -586,7 +609,7 @@ function saveModal() {
 
   closeModal();
   rows.forEach(r => { const c=document.getElementById(`tags-${r.id}`); if(c) c.innerHTML=tagsHtml(r); });
-  if (activeGroupId) updateActiveGroup();
+  if (activeGroupId) updateActiveGroup(); else saveDefaultState();
   renderPS(); renderTable(); refreshUI();
   scheduleSave();
 }
@@ -602,7 +625,7 @@ function toggleP(id) {
   const p = prods.find(x=>x.id===id); if(!p) return;
   p.active = !p.active;
   if (!p.active) rows.forEach(r => { r.products=(r.products||[]).filter(mid=>mid!==id); });
-  if (activeGroupId) updateActiveGroup();
+  if (activeGroupId) updateActiveGroup(); else saveDefaultState();
   renderPS(); renderTable(); refreshUI();
   scheduleSave();
 }
