@@ -540,6 +540,7 @@ function renderPS() {
 
 // ── Modal ──
 let _modalId = null;
+let _modalFromToggle = false;
 
 function openModal(id, warnRatio=false) {
   const p = prods.find(x=>x.id===id); if(!p) return;
@@ -549,6 +550,7 @@ function openModal(id, warnRatio=false) {
   document.getElementById('mTitle').textContent = `${p.name} 설정`;
   document.getElementById('mName').value = p.name;
   document.getElementById('mVer').value = p.ver||'';
+  _modalFromToggle = warnRatio;
   document.getElementById('ratioWarnNotice').style.display = warnRatio ? 'flex' : 'none';
 
   const actives = ap();
@@ -579,7 +581,16 @@ function updateRatioNote() {
 
 function closeModal() {
   document.getElementById('modalBg').style.display = 'none';
+  if (_modalFromToggle && _modalId) {
+    const p = prods.find(x=>x.id===_modalId);
+    if (p) {
+      p.active = false;
+      rows.forEach(r => { r.products=(r.products||[]).filter(mid=>mid!==p.id); });
+      renderPS(); renderTable(); refreshUI(); scheduleSave();
+    }
+  }
   _modalId = null;
+  _modalFromToggle = false;
 }
 
 function saveModal() {
@@ -605,6 +616,7 @@ function saveModal() {
     if(el) q.ratio = Math.round((parseFloat(el.value)||0) * 10) / 10;
   });
 
+  _modalFromToggle = false;
   closeModal();
   rows.forEach(r => { const c=document.getElementById(`tags-${r.id}`); if(c) c.innerHTML=tagsHtml(r); });
   if (activeGroupId) updateActiveGroup(); else saveDefaultState();
