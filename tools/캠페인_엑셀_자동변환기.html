@@ -247,7 +247,7 @@ input[type=date]:focus{border-color:var(--acc);}
       </div>
       <div class="modal-body">
         <div id="ratioWarnNotice" class="notice" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);color:#fca5a5;">
-          <span>⚠️</span><span>총합 10 필수 (현재 <b id="ratioWarnSum"></b>)</span>
+          <span>⚠️</span><span>비율 합계가 10이 아닙니다.</span>
         </div>
         <div class="mf-row">
           <div class="mf">
@@ -549,10 +549,6 @@ function openModal(id, warnRatio=false) {
   document.getElementById('mName').value = p.name;
   document.getElementById('mVer').value = p.ver||'';
   document.getElementById('ratioWarnNotice').style.display = warnRatio ? 'flex' : 'none';
-  if (warnRatio) {
-    const s = Math.round(ap().reduce((a,q)=>a+q.ratio,0)*10)/10;
-    document.getElementById('ratioWarnSum').textContent = s;
-  }
 
   const actives = ap();
   const grid = document.getElementById('ratioGrid');
