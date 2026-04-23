@@ -99,9 +99,20 @@
       resize: vertical;
     }
 
-    #keywords, #split-keywords {
+    #keywords {
       height: 120px;
       margin-bottom: 20px;
+    }
+
+    #split-card {
+      display: flex;
+      flex-direction: column;
+    }
+
+    #split-keywords {
+      flex: 1;
+      min-height: 120px;
+      margin-bottom: 8px;
     }
 
     .config-grid {
@@ -169,9 +180,11 @@
     #info, #split-info {
       font-size: 12px;
       text-align: right;
-      margin-top: 8px;
       color: var(--text-sub);
     }
+
+    #info { margin-top: 8px; }
+    #split-info { margin-bottom: 8px; min-height: 18px; }
 
     .copy-btn {
       height: 32px;
@@ -275,16 +288,16 @@
     </div>
 
     <!-- 분리 카드 -->
-    <div class="main-card">
+    <div class="main-card" id="split-card">
       <div class="section-title">쉼표 분리</div>
       <label>키워드 입력</label>
       <textarea id="split-keywords" placeholder="키워드1,키워드2,키워드3 형태로 입력하세요..."></textarea>
 
+      <div id="split-info"></div>
       <div class="split-btn-row">
         <button id="split">분리하기</button>
         <button id="split-clear">초기화</button>
       </div>
-      <div id="split-info"></div>
     </div>
   </div>
 
