@@ -52,7 +52,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 
 /* modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;}
-.modal{background:var(--sur);border:1px solid var(--brd);border-radius:14px;width:400px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.65);}
+.modal{background:var(--sur);border:1px solid var(--brd);border-radius:14px;width:460px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.65);}
 .modal-hdr{padding:14px 18px;background:var(--sur2);border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:10px;}
 .modal-hdr h3{font-size:13px;font-weight:700;flex:1;}
 .modal-close{width:24px;height:24px;border-radius:6px;border:none;background:rgba(255,255,255,.06);color:var(--txd);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
@@ -60,8 +60,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 .modal-body{padding:18px;display:flex;flex-direction:column;gap:14px;}
 .mf{display:flex;flex-direction:column;gap:5px;}
 .mf label{font-size:10px;font-weight:700;color:var(--txd);text-transform:uppercase;letter-spacing:.5px;}
-.mf input[type=text]{background:var(--sur2);border:1px solid var(--brd);border-radius:7px;color:var(--tx);padding:8px 11px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;width:100%;}
-.mf input[type=text]:focus{border-color:var(--acc);}
+.mf input[type=text],.mf input[type=number]{background:var(--sur2);border:1px solid var(--brd);border-radius:7px;color:var(--tx);padding:8px 11px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;width:100%;}
+.mf input[type=text]:focus,.mf input[type=number]:focus{border-color:var(--acc);}
 .mf-row{display:flex;gap:8px;}
 .mf-row .mf{flex:1;}
 .ratio-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
@@ -250,11 +250,15 @@ input[type=date]:focus{border-color:var(--acc);}
           <span>⚠️</span><span>비율 합계가 10이 아닙니다.</span>
         </div>
         <div class="mf-row">
-          <div class="mf">
+          <div class="mf" style="flex:1;">
             <label>상품명</label>
             <input type="text" id="mName" placeholder="블랙" />
           </div>
-          <div class="mf">
+          <div class="mf" style="flex:0 0 112px;">
+            <label>키워드 수 <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:9px;">(0=전체)</span></label>
+            <input type="number" id="mKwCount" min="0" max="99" placeholder="4" style="font-family:'JetBrains Mono',monospace;text-align:center;" />
+          </div>
+          <div class="mf" style="flex:1.5;">
             <label>엑셀 버전</label>
             <input type="text" id="mVer" placeholder="ver.5.1/3.2" style="font-family:'JetBrains Mono',monospace;font-size:12px;" />
           </div>
@@ -316,15 +320,15 @@ input[type=date]:focus{border-color:var(--acc);}
 <script>
 // ── Product defaults ──
 let prods = [
-  {id:'p1',    name:'블랙',  color:'#3b82f6',active:true,  ver:'ver.5.0/3.2', ratio:5},
-  {id:'p2',    name:'올리브',color:'#8b5cf6',active:true,  ver:'ver.5.0/3.2', ratio:5},
-  {id:'p3',    name:'X3',    color:'#10b981',active:false, ver:'ver.5.0/3.2', ratio:5},
-  {id:'p4',    name:'X4',    color:'#f97316',active:false, ver:'ver.5.0/3.2', ratio:5},
-  {id:'p5',    name:'X5',    color:'#cbd5e1',active:false, ver:'ver.5.0/3.2', ratio:5},
-  {id:'p6',    name:'X6',    color:'#84cc16',active:false, ver:'ver.5.0/3.2', ratio:5},
-  {id:'p7',    name:'X7',    color:'#ec4899',active:false, ver:'ver.5.0/3.2', ratio:5},
-  {id:'p8',    name:'X8',    color:'#eab308',active:false, ver:'ver.5.0/3.2', ratio:5},
-  {id:'charlie',name:'찰리', color:'#f43f5e',active:false, ver:'ver.4.1/3.2', ratio:5},
+  {id:'p1',    name:'블랙',  color:'#3b82f6',active:true,  ver:'ver.5.0/3.2', ratio:5, kwCount:4},
+  {id:'p2',    name:'올리브',color:'#8b5cf6',active:true,  ver:'ver.5.0/3.2', ratio:5, kwCount:4},
+  {id:'p3',    name:'X3',    color:'#10b981',active:false, ver:'ver.5.0/3.2', ratio:5, kwCount:4},
+  {id:'p4',    name:'X4',    color:'#f97316',active:false, ver:'ver.5.0/3.2', ratio:5, kwCount:4},
+  {id:'p5',    name:'X5',    color:'#cbd5e1',active:false, ver:'ver.5.0/3.2', ratio:5, kwCount:4},
+  {id:'p6',    name:'X6',    color:'#84cc16',active:false, ver:'ver.5.0/3.2', ratio:5, kwCount:4},
+  {id:'p7',    name:'X7',    color:'#ec4899',active:false, ver:'ver.5.0/3.2', ratio:5, kwCount:4},
+  {id:'p8',    name:'X8',    color:'#eab308',active:false, ver:'ver.5.0/3.2', ratio:5, kwCount:4},
+  {id:'charlie',name:'찰리', color:'#f43f5e',active:false, ver:'ver.4.1/3.2', ratio:5, kwCount:0},
 ];
 
 let rows = [], rid = 0;
@@ -333,7 +337,7 @@ let activeGroupId = null;
 let defaultProds = null;
 
 function saveDefaultState() {
-  defaultProds = prods.map(p=>({id:p.id,active:p.active,ratio:p.ratio,name:p.name,ver:p.ver}));
+  defaultProds = prods.map(p=>({id:p.id,active:p.active,ratio:p.ratio,name:p.name,ver:p.ver,kwCount:p.kwCount}));
 }
 function deactivateGroup() {
   activeGroupId = null;
@@ -341,6 +345,7 @@ function deactivateGroup() {
     defaultProds.forEach(s => {
       const p=prods.find(x=>x.id===s.id); if(!p) return;
       p.active=s.active; p.ratio=s.ratio; p.name=s.name; p.ver=s.ver;
+      if(s.kwCount !== undefined) p.kwCount = s.kwCount;
     });
     rows.forEach(r=>{ r.products=(r.products||[]).filter(mid=>prods.find(p=>p.id===mid&&p.active)); });
   }
@@ -394,7 +399,7 @@ function hideAddGroup() {
 function saveNewGroup() {
   const name = document.getElementById('groupNameInput').value.trim();
   if (!name) { document.getElementById('groupNameInput').focus(); return; }
-  const state = prods.map(p => ({id:p.id, active:p.active, ratio:p.ratio, name:p.name, ver:p.ver}));
+  const state = prods.map(p => ({id:p.id, active:p.active, ratio:p.ratio, name:p.name, ver:p.ver, kwCount:p.kwCount}));
   groups.push({ id:'g'+Date.now(), name, state });
   saveGroupsLocal();
   hideAddGroup();
@@ -415,6 +420,7 @@ function applyGroup(id) {
     if(s.ratio !== undefined) p.ratio = s.ratio;
     if(s.name)               p.name  = s.name;
     if(s.ver  !== undefined) p.ver   = s.ver;
+    if(s.kwCount !== undefined) p.kwCount = s.kwCount;
   });
   activeGroupId = id;
   const activeIds = prods.filter(p=>p.active).map(p=>p.id);
@@ -447,7 +453,7 @@ function startRenameGroup(id) {
 function updateActiveGroup() {
   if (!activeGroupId) return;
   const g = groups.find(x=>x.id===activeGroupId); if(!g) return;
-  g.state = prods.map(p => ({id:p.id, active:p.active, ratio:p.ratio, name:p.name, ver:p.ver}));
+  g.state = prods.map(p => ({id:p.id, active:p.active, ratio:p.ratio, name:p.name, ver:p.ver, kwCount:p.kwCount}));
   saveGroupsLocal();
   renderGroups();
 }
@@ -549,6 +555,7 @@ function openModal(id, warnRatio=false) {
   document.getElementById('mdot').style.background = p.color;
   document.getElementById('mTitle').textContent = `${p.name} 설정`;
   document.getElementById('mName').value = p.name;
+  document.getElementById('mKwCount').value = p.kwCount !== undefined ? p.kwCount : 4;
   document.getElementById('mVer').value = p.ver||'';
   _modalFromToggle = warnRatio;
   document.getElementById('ratioWarnNotice').style.display = warnRatio ? 'flex' : 'none';
@@ -596,6 +603,8 @@ function closeModal() {
 function saveModal() {
   const p = prods.find(x=>x.id===_modalId); if(!p) return;
   p.name = document.getElementById('mName').value.trim() || p.name;
+  const kwCountVal = parseInt(document.getElementById('mKwCount').value);
+  p.kwCount = isNaN(kwCountVal) ? 4 : Math.max(0, kwCountVal);
   p.ver  = document.getElementById('mVer').value.trim();
 
   const actives = ap();
@@ -619,7 +628,7 @@ function saveModal() {
   // 모든 그룹의 해당 상품 이름/버전 동기화
   groups.forEach(g => {
     const gs = g.state.find(s => s.id === p.id);
-    if (gs) { gs.name = p.name; gs.ver = p.ver; }
+    if (gs) { gs.name = p.name; gs.ver = p.ver; gs.kwCount = p.kwCount; }
   });
   saveGroupsLocal();
 
@@ -1196,12 +1205,12 @@ function buildJumuSheet(wb,f){
   XLSX.utils.book_append_sheet(wb,ws,'주문');
 }
 
-// 찰리는 전체 키워드, 나머지(x1~x8)는 앞 4개만
 function kwForProd(keywords, prod) {
   if (!keywords) return '';
   const parts = keywords.split(',').map(k => k.trim()).filter(k => k);
-  if (prod.id === 'charlie') return parts.join(',');
-  return parts.slice(0, 4).join(',');
+  const n = prod.kwCount !== undefined ? prod.kwCount : (prod.id === 'charlie' ? 0 : 4);
+  if (n === 0) return parts.join(',');
+  return parts.slice(0, n).join(',');
 }
 
 // ratio 비율로 target 분배, Largest Remainder로 정수 오차 보정
