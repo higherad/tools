@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>애드로그 메모 관리</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+
+  .layout { display: grid; grid-template-columns: 280px 1fr 340px; gap: 16px; padding: 20px; max-width: 1400px; margin: 0 auto; }
+
+  .card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
+  .card-header { background: #f8f9fb; padding: 12px 16px; border-bottom: 1px solid #e8eaf0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+  .card-title  { font-size: 13px; font-weight: 700; color: #2d3748; display: flex; align-items: center; gap: 6px; }
+  .card-body   { padding: 16px; }
+
+  label { display: block; font-size: 11px; font-weight: 600; color: #4a5568; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+  input[type="text"] { width: 100%; padding: 8px 10px; border: 1.5px solid #e2e8f0; border-radius: 7px; font-size: 13px; color: #2d3748; outline: none; transition: border-color 0.2s; margin-bottom: 10px; }
+  input[type="text"]:focus { border-color: #0277bd; }
+  input::placeholder { color: #a0aec0; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 14px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap; }
+  .btn:disabled { background: #a0aec0 !important; cursor: not-allowed; }
+  .btn-blue    { background: #0277bd; color: #fff; }
+  .btn-blue:hover    { background: #01579b; }
+  .btn-green   { background: #2e7d32; color: #fff; }
+  .btn-green:hover   { background: #1b5e20; }
+  .btn-orange  { background: #e65100; color: #fff; }
+  .btn-orange:hover  { background: #bf360c; }
+  .btn-danger  { background: #fff1f0; color: #e53e3e; border: 1.5px solid #fed7d7; padding: 4px 10px; font-size: 12px; border-radius: 6px; }
+  .btn-danger:hover  { background: #ffe0de; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-full { width: 100%; padding: 11px; font-size: 13px; font-weight: 800; border-radius: 8px; }
+
+  .divider { border: none; border-top: 1px solid #e8eaf0; margin: 14px 0; }
+
+  /* 구글 시트 설정 */
+  .sheet-row { display: flex; gap: 8px; align-items: flex-end; }
+  .sheet-row > div:first-child { flex: 1; }
+  .sheet-row > div:last-child { width: 60px; }
+
+  /* 공통 룰 박스 */
+  .rule-box { background: #f8f9fb; border: 1px solid #e8eaf0; border-radius: 8px; padding: 12px; }
+  .rule-row { display: grid; grid-template-columns: 1fr 24px 1fr; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .rule-arrow { text-align: center; color: #a0aec0; font-size: 14px; padding-bottom: 10px; }
+  .rule-row input { margin-bottom: 0; }
+
+  /* MID 테이블 */
+  .mid-table-wrap { overflow-x: auto; }
+  .mid-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .mid-table thead th {
+    background: #f8f9fb; padding: 8px 8px; text-align: left;
+    font-size: 10px; font-weight: 700; color: #718096;
+    text-transform: uppercase; letter-spacing: 0.4px;
+    border-bottom: 1px solid #e8eaf0; white-space: nowrap;
+  }
+  .mid-table thead th:first-child { padding-left: 12px; }
+  .mid-table tbody tr { border-bottom: 1px solid #f0f2f5; transition: background 0.1s; }
+  .mid-table tbody tr:last-child { border-bottom: none; }
+  .mid-table tbody tr:hover { background: #fafbfc; }
+  .mid-table tbody tr.checked { background: #e3f2fd; }
+  .mid-table td { padding: 6px 8px; vertical-align: middle; }
+  .mid-table td:first-child { padding-left: 12px; }
+
+  .td-mid { font-weight: 700; color: #2d3748; font-family: monospace; font-size: 12px; white-space: nowrap; }
+  .td-input { width: 100%; padding: 4px 7px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 11.5px; color: #2d3748; outline: none; }
+  .td-input:focus { border-color: #0277bd; }
+
+  .status-badge { display: inline-block; padding: 2px 7px; border-radius: 100px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+  .s-ready   { background: #edf2f7; color: #718096; }
+  .s-running { background: #e3f2fd; color: #1565c0; }
+  .s-updated { background: #c6f6d5; color: #276749; }
+  .s-skipped { background: #fef9c3; color: #b7791f; }
+  .s-norow   { background: #fed7d7; color: #c53030; }
+  .s-error   { background: #fed7d7; color: #c53030; }
+
+  .select-all-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f8f9fb; border-bottom: 1px solid #e8eaf0; font-size: 12px; font-weight: 600; color: #4a5568; }
+  .select-all-row input[type="checkbox"] { width: 14px; height: 14px; accent-color: #0277bd; cursor: pointer; }
+
+  .empty-msg { text-align: center; padding: 36px 16px; color: #a0aec0; font-size: 13px; }
+
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 100px; font-size: 11px; font-weight: 700; }
+  .badge-blue { background: #e3f2fd; color: #1565c0; }
+
+  /* 우측 */
+  .right-panel { display: flex; flex-direction: column; gap: 14px; }
+  .summary-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin-bottom: 14px; }
+  .sum-item { background: #f8f9fb; border-radius: 8px; padding: 10px 12px; text-align: center; }
+  .sum-label { font-size: 10px; font-weight: 700; color: #718096; text-transform: uppercase; }
+  .sum-value { font-size: 20px; font-weight: 800; color: #2d3748; margin-top: 3px; }
+  .sum-value.blue  { color: #0277bd; }
+  .sum-value.green { color: #2e7d32; }
+
+  .log-area { background: #1a202c; border-radius: 8px; padding: 12px 14px; height: 300px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 11.5px; line-height: 1.7; }
+  .log-line    { display: flex; gap: 8px; }
+  .log-time    { color: #4a5568; flex-shrink: 0; }
+  .log-msg     { color: #e2e8f0; }
+  .log-success .log-msg { color: #68d391; }
+  .log-fail    .log-msg { color: #fc8181; }
+  .log-info    .log-msg { color: #63b3ed; }
+  .log-warn    .log-msg { color: #f6e05e; }
+
+  .progress-wrap { background: #e2e8f0; border-radius: 100px; height: 4px; overflow: hidden; display: none; }
+  .progress-bar  { height: 100%; background: linear-gradient(90deg, #0277bd, #2e7d32); border-radius: 100px; width: 0%; transition: width 0.3s; }
+
+  .tab-row { display: flex; gap: 6px; margin-bottom: 12px; }
+  .tab-btn { flex: 1; padding: 7px; border: 1.5px solid #e2e8f0; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; background: #fff; color: #718096; transition: all 0.15s; text-align: center; }
+  .tab-btn.active.blue   { background: #e3f2fd; border-color: #0277bd; color: #0277bd; }
+  .tab-btn.active.green  { background: #e8f5e9; border-color: #2e7d32; color: #2e7d32; }
+  .tab-btn.active.orange { background: #fff3e0; border-color: #e65100; color: #e65100; }
+
+  @media (max-width: 1100px) { .layout { grid-template-columns: 260px 1fr; } .right-panel { grid-column: 1 / -1; } }
+  @media (max-width: 700px)  { .layout { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- 좌측: 설정 + MID 추가 -->
+  <div style="display:flex;flex-direction:column;gap:14px;">
+
+    <!-- 구글 시트 불러오기 -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">📋 구글 시트 연동</span></div>
+      <div class="card-body">
+        <label>Spreadsheet ID</label>
+        <input type="text" id="gs-id" placeholder="14j9wwFed..." value="14j9wwFedE-kwAebFSnBWjgCYcoCUW2L0hDdBmtGqAf8" />
+        <div class="sheet-row">
+          <div>
+            <label>시트명</label>
+            <input type="text" id="gs-sheet" placeholder="종료리스트" value="종료리스트" />
+          </div>
+          <div>
+            <label>MID 열</label>
+            <input type="text" id="gs-col" placeholder="C" value="C" style="text-align:center;" />
+          </div>
+        </div>
+        <button class="btn btn-blue btn-full" onclick="fetchMids()" id="btn-fetch">📥 MID 불러오기</button>
+      </div>
+    </div>
+
+    <!-- 수동 MID 추가 -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">➕ MID 직접 추가</span></div>
+      <div class="card-body">
+        <label>MID</label>
+        <input type="text" id="inp-mid" placeholder="MID 입력" />
+        <button class="btn btn-blue btn-full" onclick="addMid()">➕ 추가</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 중앙: MID 테이블 -->
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📝 처리 목록 <span class="badge badge-blue" id="mid-count">0</span></span>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-danger btn-sm" onclick="removeChecked()">선택 삭제</button>
+          <button class="btn btn-danger btn-sm" onclick="clearAll()">전체 삭제</button>
+        </div>
+      </div>
+
+      <!-- 공통 룰 적용 바 -->
+      <div style="padding:10px 14px;background:#f0f7ff;border-bottom:1px solid #bee3f8;">
+        <div style="font-size:11px;font-weight:700;color:#1565c0;margin-bottom:8px;">⚙️ 공통 룰 — 선택 항목에 일괄 적용</div>
+        <div style="display:grid;grid-template-columns:1fr 18px 1fr 1fr auto;gap:6px;align-items:end;">
+          <div>
+            <label style="color:#1565c0;">변경 조건</label>
+            <input type="text" id="g-from" placeholder="찾을 텍스트" style="margin-bottom:0;" />
+          </div>
+          <div style="text-align:center;padding-bottom:1px;color:#a0aec0;font-size:13px;">→</div>
+          <div>
+            <label style="color:#1565c0;">변경 결과</label>
+            <input type="text" id="g-to" placeholder="바꿀 텍스트" style="margin-bottom:0;" />
+          </div>
+          <div>
+            <label style="color:#e65100;">삭제 조건</label>
+            <input type="text" id="g-del" placeholder="삭제할 텍스트" style="margin-bottom:0;" />
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn btn-blue btn-sm" onclick="applyGlobalRule()">적용</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="select-all-row">
+        <input type="checkbox" id="chk-all" onchange="toggleAll(this)">
+        <span>전체 선택</span>
+        <span style="color:#718096;font-weight:400;" id="sel-count">0개 선택됨</span>
+      </div>
+
+      <div class="mid-table-wrap">
+        <table class="mid-table">
+          <thead>
+            <tr>
+              <th style="width:36px;"></th>
+              <th>MID</th>
+              <th>변경 조건</th>
+              <th style="width:18px;"></th>
+              <th>변경 결과</th>
+              <th>삭제 조건</th>
+              <th style="width:80px;">상태</th>
+              <th style="width:32px;"></th>
+            </tr>
+          </thead>
+          <tbody id="mid-tbody">
+            <tr><td colspan="8"><div class="empty-msg">등록된 MID가 없습니다.<br>구글 시트에서 불러오거나 직접 추가하세요.</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 우측: 실행 -->
+  <div class="right-panel">
+    <div class="card">
+      <div class="card-header"><span class="card-title">⚡ 실행</span></div>
+      <div class="card-body">
+        <div class="summary-grid">
+          <div class="sum-item"><div class="sum-label">전체 MID</div><div class="sum-value blue" id="sum-total">0</div></div>
+          <div class="sum-item"><div class="sum-label">변경 완료</div><div class="sum-value green" id="sum-updated">0</div></div>
+        </div>
+        <hr class="divider">
+        <button class="btn btn-blue btn-full" id="btn-run" onclick="runProcess()" disabled>⚡ 선택 항목 실행</button>
+        <div style="height:8px;"></div>
+        <div class="progress-wrap" id="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+        <div style="text-align:center;font-size:11px;color:#718096;margin-top:4px;" id="progress-text"></div>
+        <div class="log-area" id="log-area" style="margin-top:12px;">
+          <div class="log-line log-info">
+            <span class="log-time">--:--:--</span>
+            <span class="log-msg">준비 완료. MID를 불러오고 룰을 설정한 뒤 실행하세요.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SERVER = 'https://macro-5-adlog-memo-938928195180.asia-northeast3.run.app';
+
+let entries = [];  // [{mid, change_from, change_to, delete_cond, status, result, checked}]
+
+function save() { if (window.fbSave) window.fbSave(entries.map(e => ({ mid: e.mid, change_from: e.change_from, change_to: e.change_to, delete_cond: e.delete_cond }))); }
+
+// ── 구글 시트 불러오기 ──
+async function fetchMids() {
+  const sid   = document.getElementById('gs-id').value.trim();
+  const sheet = document.getElementById('gs-sheet').value.trim();
+  const col   = document.getElementById('gs-col').value.trim() || 'C';
+  if (!sid || !sheet) { alert('Spreadsheet ID와 시트명을 입력해주세요.'); return; }
+
+  document.getElementById('btn-fetch').disabled = true;
+  addLog(`구글 시트 불러오는 중...`, 'info');
+
+  try {
+    const res  = await fetch(`${SERVER}/fetch-mids`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ spreadsheet_id: sid, sheet_name: sheet, mid_col: col }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+
+    let added = 0;
+    data.mids.forEach(mid => {
+      if (!entries.some(e => e.mid === mid)) {
+        entries.push({ mid, change_from: '', change_to: '', delete_cond: '', status: 'ready', result: '', checked: false });
+        added++;
+      }
+    });
+    save(); renderTable();
+    addLog(`✅ ${data.count}개 중 ${added}개 추가됨 (중복 ${data.count - added}개 스킵)`, 'success');
+  } catch(e) {
+    addLog(`❌ 불러오기 실패: ${e.message}`, 'fail');
+  } finally {
+    document.getElementById('btn-fetch').disabled = false;
+  }
+}
+
+// ── MID 추가 ──
+function addMid() {
+  const mid = document.getElementById('inp-mid').value.trim();
+  if (!mid) { alert('MID를 입력해주세요.'); return; }
+  if (entries.some(e => e.mid === mid)) { alert('이미 등록된 MID입니다.'); return; }
+  entries.push({ mid, change_from: '', change_to: '', delete_cond: '', status: 'ready', result: '', checked: false });
+  document.getElementById('inp-mid').value = '';
+  save(); renderTable();
+}
+
+function removeChecked() {
+  entries = entries.filter(e => !e.checked);
+  save(); renderTable();
+}
+function clearAll() {
+  if (!confirm('모든 항목을 삭제하시겠습니까?')) return;
+  entries = [];
+  save(); renderTable();
+}
+function removeEntry(idx) {
+  entries.splice(idx, 1);
+  save(); renderTable();
+}
+
+// ── 공통 룰 적용 ──
+function applyGlobalRule() {
+  const from = document.getElementById('g-from').value;
+  const to   = document.getElementById('g-to').value;
+  const del  = document.getElementById('g-del').value;
+  const targets = entries.filter(e => e.checked);
+  if (!targets.length) { alert('적용할 항목을 선택해주세요.'); return; }
+  targets.forEach(e => {
+    if (from !== '') e.change_from = from;
+    if (to   !== '') e.change_to   = to;
+    if (del  !== '') e.delete_cond = del;
+  });
+  save(); renderTable();
+  addLog(`공통 룰 ${targets.length}개 항목에 적용됨`, 'info');
+}
+
+// ── 체크박스 ──
+function toggleCheck(idx, el) {
+  entries[idx].checked = el.checked;
+  const row = document.getElementById(`row-${idx}`);
+  if (row) row.classList.toggle('checked', el.checked);
+  syncAll();
+}
+function toggleAll(el) {
+  entries.forEach(e => e.checked = el.checked);
+  renderTable();
+}
+function syncAll() {
+  const total   = entries.length;
+  const checked = entries.filter(e => e.checked).length;
+  const allChk  = document.getElementById('chk-all');
+  allChk.checked       = total > 0 && checked === total;
+  allChk.indeterminate = checked > 0 && checked < total;
+  document.getElementById('sel-count').textContent = `${checked}개 선택됨`;
+  document.getElementById('btn-run').disabled = checked === 0;
+}
+
+// ── 인라인 편집 ──
+function updateField(idx, field, val) {
+  entries[idx][field] = val;
+  save();
+}
+
+// ── 렌더 ──
+function renderTable() {
+  const tbody = document.getElementById('mid-tbody');
+  document.getElementById('mid-count').textContent  = entries.length;
+  document.getElementById('sum-total').textContent  = entries.length;
+
+  if (!entries.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-msg">등록된 MID가 없습니다.<br>구글 시트에서 불러오거나 직접 추가하세요.</div></td></tr>`;
+    syncAll(); return;
+  }
+
+  const sc = { ready:'s-ready', running:'s-running', updated:'s-updated', skipped:'s-skipped', no_row:'s-norow', error:'s-error' };
+  const st = { ready:'대기', running:'⏳', updated:'✅ 변경', skipped:'⏭ 건너뜀', no_row:'❌ 없음', error:'⚠ 오류' };
+
+  tbody.innerHTML = entries.map((e, i) => `
+    <tr id="row-${i}" class="${e.checked?'checked':''}">
+      <td><input type="checkbox" ${e.checked?'checked':''} onchange="toggleCheck(${i},this)" style="width:14px;height:14px;accent-color:#0277bd;cursor:pointer;"></td>
+      <td class="td-mid">${esc(e.mid)}${e.result?`<div style="font-size:10px;color:#718096;margin-top:1px;">${esc(e.result)}</div>`:''}</td>
+      <td><input class="td-input" value="${esc(e.change_from)}" placeholder="찾을 텍스트" oninput="updateField(${i},'change_from',this.value)"></td>
+      <td style="text-align:center;color:#a0aec0;font-size:12px;">→</td>
+      <td><input class="td-input" value="${esc(e.change_to)}" placeholder="바꿀 텍스트" oninput="updateField(${i},'change_to',this.value)"></td>
+      <td><input class="td-input" value="${esc(e.delete_cond)}" placeholder="삭제 조건" oninput="updateField(${i},'delete_cond',this.value)"></td>
+      <td><span class="status-badge ${sc[e.status]||'s-ready'}">${st[e.status]||'대기'}</span></td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeEntry(${i})">✕</button></td>
+    </tr>`).join('');
+
+  syncAll();
+}
+
+// ── 실행 ──
+let running = false;
+
+async function runProcess() {
+  if (running) return;
+  const selected = entries.filter(e => e.checked);
+  if (!selected.length) { alert('실행할 항목을 선택해주세요.'); return; }
+
+  const hasRule = selected.some(e => e.change_from || e.delete_cond);
+  if (!hasRule) { alert('변경 조건 또는 삭제 조건을 입력해주세요.'); return; }
+
+  if (!confirm(`선택한 ${selected.length}개 MID의 메모를 처리하시겠습니까?`)) return;
+
+  running = true;
+  document.getElementById('btn-run').disabled = true;
+  document.getElementById('progress-wrap').style.display = 'block';
+
+  const payload = selected.map(e => ({
+    mid: e.mid, change_from: e.change_from, change_to: e.change_to, delete_cond: e.delete_cond
+  }));
+
+  selected.forEach(e => { e.status = 'running'; e.result = ''; });
+  renderTable();
+  addLog(`▶ 시작 — ${selected.length}개 MID`, 'info');
+  document.getElementById('progress-bar').style.width = '20%';
+  document.getElementById('progress-text').textContent = '처리 중...';
+
+  try {
+    const res  = await fetch(`${SERVER}/process`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entries: payload }),
+    });
+    if (!res.ok) throw new Error(`서버 오류 (${res.status})`);
+    const data = await res.json();
+
+    let totalUpdated = 0;
+    (data.results || []).forEach(r => {
+      const entry = entries.find(e => e.mid === r.mid);
+      if (!entry) return;
+      entry.result = r.message;
+      if (r.no_row)        { entry.status = 'no_row'; }
+      else if (r.updated > 0) { entry.status = 'updated'; totalUpdated++; }
+      else if (r.error > 0)   { entry.status = 'error'; }
+      else                     { entry.status = 'skipped'; }
+
+      const icon = r.no_row ? '❌' : r.updated > 0 ? '✅' : r.error > 0 ? '⚠️' : '⏭';
+      addLog(`${icon} ${r.mid} — ${r.message}`, r.updated > 0 ? 'success' : r.no_row || r.error > 0 ? 'fail' : '');
+    });
+
+    document.getElementById('sum-updated').textContent = totalUpdated;
+    document.getElementById('progress-bar').style.width = '100%';
+    document.getElementById('progress-text').textContent = `완료 — 변경: ${totalUpdated} / ${selected.length}건`;
+    addLog(`━━ 완료 — 변경: ${totalUpdated}건`, totalUpdated > 0 ? 'success' : 'warn');
+
+  } catch(e) {
+    selected.forEach(entry => { entry.status = 'error'; entry.result = e.message; });
+    addLog(`❌ 오류: ${e.message}`, 'fail');
+    document.getElementById('progress-text').textContent = '오류 발생';
+  }
+
+  save(); renderTable();
+  running = false;
+  document.getElementById('btn-run').disabled = false;
+}
+
+// ── 로그 ──
+function addLog(msg, type='') {
+  const area = document.getElementById('log-area');
+  const now  = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+  const div  = document.createElement('div');
+  div.className = `log-line ${type?'log-'+type:''}`;
+  div.innerHTML = `<span class="log-time">${now}</span><span class="log-msg">${esc(msg)}</span>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+renderTable();
+
+(async function checkServer() {
+  try {
+    const res = await fetch(`${SERVER}/ping`, { signal: AbortSignal.timeout(3000) });
+    if (res.ok) { addLog('✅ 서버 연결됨', 'success'); return; }
+  } catch(_) {}
+  addLog('⚠️  서버 연결 실패 — 잠시 후 다시 시도해주세요.', 'warn');
+})();
+</script>
+
+<script type="module">
+  import { db } from "../ha-tools.js";
+  import { ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+
+  const userId = localStorage.getItem('ha_user');
+  if (!userId) { location.replace("../login.html"); }
+
+  const dataRef = ref(db, `users/${userId}/adlog_memo`);
+
+  onValue(dataRef, (snap) => {
+    const data = snap.val();
+    if (Array.isArray(data) && data.length > 0) {
+      entries = data.map(e => ({ ...e, status: 'ready', result: '', checked: false }));
+      renderTable();
+      addLog(`📂 목록 불러옴 (${entries.length}개)`, 'info');
+    }
+  }, { onlyOnce: true });
+
+  window.fbSave = (data) => set(dataRef, data).catch(e => console.error('Firebase 저장 실패:', e));
+</script>
+</body>
+</html>
