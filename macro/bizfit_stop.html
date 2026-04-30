@@ -94,7 +94,6 @@
     transition: all 0.15s;
     user-select: none;
   }
-  .toggle-label input { display: none; }
   .toggle-label.pause-active  { background: #fef9c3; border-color: #d69e2e; color: #b7791f; }
   .toggle-label.force-active  { background: #fed7d7; border-color: #c53030; color: #c53030; }
 
@@ -304,12 +303,8 @@
         </div>
         <label style="margin-bottom:6px;">처리 작업</label>
         <div class="toggle-group">
-          <label class="toggle-label" id="lbl-pause" onclick="toggleAction('pause')">
-            <input type="checkbox" id="chk-pause"> ⏸ 임시중단B
-          </label>
-          <label class="toggle-label" id="lbl-force" onclick="toggleAction('force')">
-            <input type="checkbox" id="chk-force"> 🛑 강제종료
-          </label>
+          <div class="toggle-label" id="lbl-pause" onclick="toggleAction('pause')">⏸ 임시중단B</div>
+          <div class="toggle-label" id="lbl-force" onclick="toggleAction('force')">🛑 강제종료</div>
         </div>
         <button class="btn btn-primary" onclick="addEntry()">➕ 추가</button>
 
