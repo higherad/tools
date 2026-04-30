@@ -778,9 +778,17 @@
         const list = await res.json();
         const container = document.getElementById('macroTools');
         container.innerHTML = '';
-        list.forEach(t => {
-          const tool = { file: t.file, label: t.label, addedAt: t.addedAt || null, updatedAt: t.updatedAt || null };
-          container.appendChild(createButton(tool));
+        list.forEach((t, idx) => {
+          const tool = { file: t.file, label: t.label };
+          const btn = document.createElement('div');
+          btn.className = 'tool-button';
+          btn.dataset.file = tool.file;
+          btn.innerHTML = `
+            <span class="tool-icon" style="font-size:11px;font-weight:800;min-width:20px;text-align:center;">${idx + 1}</span>
+            <span class="tool-text">${tool.label}</span>
+          `;
+          btn.onclick = () => openTab(tool);
+          container.appendChild(btn);
         });
       } catch (e) {
         // 매크로 manifest 없으면 빈 섹션 유지
