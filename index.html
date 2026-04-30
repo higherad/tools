@@ -87,28 +87,120 @@
     }
     #sidebar.collapsed .sidebar-header { justify-content: center; padding: 12px 0; }
 
-    .home-btn {
+    .home-btn, .macro-btn {
       display: flex; align-items: center; justify-content: center;
-      min-width: 32px; height: 32px;
-      border-radius: 50%; border: 1px solid var(--green-border);
-      background: var(--green-light); color: var(--primary-color); cursor: pointer;
+      padding: 4px 10px; height: 26px;
+      border-radius: 5px; border: 1px solid var(--green-border);
+      background: transparent; color: var(--text-sub); cursor: pointer;
       transition: all 0.2s; flex-shrink: 0;
+      font-size: 10.5px; font-weight: 800; letter-spacing: 0.8px;
     }
-    .home-btn:hover { background: var(--primary-color); color: #fff; }
+    .home-btn:hover { background: var(--green-light); color: var(--primary-color); border-color: var(--primary-color); }
+    .home-btn.active { background: var(--green-light); color: var(--primary-color); border-color: var(--primary-color); }
 
-    #toolSearch {
-      flex-grow: 1; width: 0; min-width: 0;
-      padding: 7px 12px; border: 1px solid var(--green-border);
-      border-radius: 20px; outline: none; font-size: 12.5px;
-      transition: border-color 0.2s; background: #fafcfa;
+    .macro-btn { border-color: #333; color: #555; }
+    .macro-btn:hover { background: #111; color: #aaa; border-color: #555; }
+    .macro-btn.active { background: #111; color: #00e676; border-color: #00e676; }
+
+    #sidebar.collapsed .home-btn, #sidebar.collapsed .macro-btn { display: none; }
+
+    body.macro-mode .home-btn { color: #444; border-color: #2a2a2a; }
+    body.macro-mode .home-btn:hover { background: #1e1e1e; color: #aaa; border-color: #555; }
+    body.macro-mode .home-btn.active { background: #1e1e1e; color: #00e676; border-color: #00e676; }
+
+    /* 매크로 모드 */
+    #macroToolsArea { display: none; }
+    body.macro-mode #normalToolsArea { display: none; }
+    body.macro-mode #macroToolsArea { display: block; }
+    body.macro-mode #sidebar { background: #111; border-right-color: #2a2a2a; }
+    body.macro-mode .sidebar-header { background: #0d0d0d; border-bottom-color: #2a2a2a; }
+    body.macro-mode .section-title { color: #555; }
+    body.macro-mode .section:empty::before { color: #333; }
+    body.macro-mode .tool-button { color: #aaa; }
+    body.macro-mode .tool-button:hover { background: #1e1e1e; color: #fff; border-left-color: transparent; }
+    body.macro-mode .tool-button.active { background: #1e1e1e; color: #fff; border-left-color: #666; }
+    body.macro-mode .sidebar-footer { background: #0d0d0d; border-top-color: #2a2a2a; }
+    body.macro-mode .footer-btn { background: #1a1a1a; border-color: #333; color: #888; }
+    body.macro-mode .footer-btn:hover { background: #333; color: #fff; border-color: #555; }
+    body.macro-mode .pc-toggle-btn { color: #666; }
+    body.macro-mode .pc-toggle-btn:hover { background: #1e1e1e; color: #aaa; }
+    body.macro-mode #content { background: #0d0d0d; }
+    body.macro-mode #welcome { background: #0d0d0d; }
+    body.macro-mode #toggleMenuBtn { background: #0d0d0d; border-top-color: #2a2a2a; color: #666; }
+
+    /* 매크로 모드 — 일반 welcome 콘텐츠 숨김 */
+    body.macro-mode .welcome-inner { display: none; }
+
+    /* 매크로 스크린 — 터미널/코드창 */
+    #macroScreen {
+      display: none;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: #0d0d0d;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      color: #00e676; font-size: 13px; line-height: 1.7;
+      overflow: hidden; flex-direction: column;
     }
-    #toolSearch:focus { border-color: var(--primary-color); background: #fff; }
-    #sidebar.collapsed #toolSearch, #sidebar.collapsed .home-btn { display: none; }
+    body.macro-mode #macroScreen { display: flex; }
+
+    .macro-titlebar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px; background: #161616;
+      border-bottom: 1px solid #1e1e1e; flex-shrink: 0;
+    }
+    .macro-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .macro-dot.r { background: #ff5f57; }
+    .macro-dot.y { background: #febc2e; }
+    .macro-dot.g { background: #28c840; }
+    .macro-titlebar span { color: #555; font-size: 11px; margin-left: 8px; letter-spacing: 0.5px; }
+
+    .macro-body {
+      flex: 1; display: flex; overflow: hidden;
+    }
+    .macro-gutter {
+      width: 44px; background: #111; border-right: 1px solid #1e1e1e;
+      display: flex; flex-direction: column; align-items: flex-end;
+      padding: 14px 10px 14px 0; color: #2e2e2e; font-size: 12px;
+      user-select: none; flex-shrink: 0; overflow: hidden;
+    }
+    .macro-gutter span { line-height: 1.7; display: block; }
+
+    .macro-code {
+      flex: 1; padding: 14px 20px; overflow-y: auto;
+      scrollbar-width: thin; scrollbar-color: #1e1e1e transparent;
+    }
+    .macro-code::-webkit-scrollbar { width: 4px; }
+    .macro-code::-webkit-scrollbar-thumb { background: #1e1e1e; border-radius: 4px; }
+
+    .mc-line { display: flex; align-items: baseline; gap: 6px; white-space: pre; }
+    .mc-kw  { color: #bb86fc; }
+    .mc-fn  { color: #82aaff; }
+    .mc-str { color: #c3e88d; }
+    .mc-num { color: #f78c6c; }
+    .mc-cmt { color: #3a3a3a; font-style: italic; }
+    .mc-op  { color: #89ddff; }
+    .mc-var { color: #eeffff; }
+    .mc-dim { color: #2a2a2a; }
+
+    .macro-cursor {
+      display: inline-block; width: 8px; height: 14px;
+      background: #00e676; vertical-align: middle;
+      animation: blink 1.1s step-end infinite;
+      margin-left: 2px;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    .macro-statusbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 3px 14px; background: #00e676; color: #000;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.3px; flex-shrink: 0;
+    }
+    .macro-statusbar .sb-right { display: flex; gap: 16px; opacity: 0.7; }
 
     .pc-toggle-btn {
       background: none; border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       color: var(--text-sub); padding: 4px; border-radius: 4px; flex-shrink: 0;
+      margin-left: auto;
     }
     .pc-toggle-btn:hover { background: var(--green-light); color: var(--primary-color); }
 
@@ -356,21 +448,25 @@
 
   <div id="sidebar">
     <div class="sidebar-header">
-      <button class="home-btn" title="메인으로 이동" onclick="goHome()">
-        <span class="material-symbols-outlined">home</span>
-      </button>
-      <input type="text" id="toolSearch" placeholder="도구 검색..." oninput="filterTools()">
+      <button class="home-btn active" title="홈으로" onclick="goHomeMode()">HOME</button>
+      <button class="macro-btn" title="매크로" onclick="goMacroMode()">MACRO</button>
       <button class="pc-toggle-btn" onclick="toggleSidebar()" title="사이드바 토글">
         <span id="pcToggleIcon" class="material-symbols-outlined">menu_open</span>
       </button>
     </div>
     <div class="scroll-area">
-      <div class="section-title">⭐ 자주 쓰는 도구</div>
-      <div id="favTools" class="section"></div>
-      <div class="section-title">🛠 사용 중</div>
-      <div id="activeTools" class="section"></div>
-      <div class="section-title">📦 미사용</div>
-      <div id="inactiveTools" class="section"></div>
+      <div id="normalToolsArea">
+        <div class="section-title">⭐ 자주 쓰는 도구</div>
+        <div id="favTools" class="section"></div>
+        <div class="section-title">🛠 사용 중</div>
+        <div id="activeTools" class="section"></div>
+        <div class="section-title">📦 미사용</div>
+        <div id="inactiveTools" class="section"></div>
+      </div>
+      <div id="macroToolsArea">
+        <div class="section-title">⚡ 매크로</div>
+        <div id="macroTools" class="section"></div>
+      </div>
     </div>
     <div class="sidebar-footer">
       <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
@@ -390,6 +486,29 @@
     <div id="tabBar"></div>
     <div id="iframeContainer">
       <div id="welcome">
+
+        <!-- 매크로 모드 코딩창 -->
+        <div id="macroScreen">
+          <div class="macro-titlebar">
+            <div class="macro-dot r"></div>
+            <div class="macro-dot y"></div>
+            <div class="macro-dot g"></div>
+            <span>macro / index.js — HigherAD</span>
+          </div>
+          <div class="macro-body">
+            <div class="macro-gutter" id="macroGutter"></div>
+            <div class="macro-code" id="macroCodeArea"></div>
+          </div>
+          <div class="macro-statusbar">
+            <span>⚡ MACRO MODE</span>
+            <div class="sb-right">
+              <span>JavaScript</span>
+              <span>UTF-8</span>
+              <span id="macroClockSb">00:00:00</span>
+            </div>
+          </div>
+        </div>
+
         <div class="welcome-inner">
         <h2>🍀 환영합니다!</h2>
         <p id="todayDisplay" style="margin-top: 0; color: var(--text-sub); font-size: 14px;"></p>
@@ -888,26 +1007,77 @@
       if(disp) disp.textContent = `${now.getFullYear()}. ${now.getMonth()+1}. ${now.getDate()} (${days[now.getDay()]})`;
     }
 
-    function getChosung(str) {
-      const cho = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
-      let result = "";
-      for(let i=0; i<str.length; i++) {
-        const code = str.charCodeAt(i) - 44032;
-        if (code > -1 && code < 11172) result += cho[Math.floor(code / 588)];
-        else result += str.charAt(i);
-      }
-      return result;
+    // 매크로 코딩창 코드 라인 정의
+    const MACRO_LINES = [
+      `<span class="mc-cmt">// HigherAD Macro Engine v1.0</span>`,
+      `<span class="mc-cmt">// initialized at <span class="mc-num">` + new Date().toLocaleDateString('ko-KR') + `</span></span>`,
+      ``,
+      `<span class="mc-kw">import</span> <span class="mc-op">{</span> <span class="mc-var">Macro</span><span class="mc-op">,</span> <span class="mc-var">Schedule</span><span class="mc-op">,</span> <span class="mc-var">Runner</span> <span class="mc-op">}</span> <span class="mc-kw">from</span> <span class="mc-str">'./macro/core.js'</span><span class="mc-op">;</span>`,
+      `<span class="mc-kw">import</span> <span class="mc-op">{</span> <span class="mc-var">db</span> <span class="mc-op">}</span> <span class="mc-kw">from</span> <span class="mc-str">'./ha-tools.js'</span><span class="mc-op">;</span>`,
+      ``,
+      `<span class="mc-kw">const</span> <span class="mc-var">config</span> <span class="mc-op">=</span> <span class="mc-op">{</span>`,
+      `  <span class="mc-var">env</span><span class="mc-op">:</span>      <span class="mc-str">'production'</span><span class="mc-op">,</span>`,
+      `  <span class="mc-var">version</span><span class="mc-op">:</span>  <span class="mc-str">'1.0.0'</span><span class="mc-op">,</span>`,
+      `  <span class="mc-var">timeout</span><span class="mc-op">:</span>  <span class="mc-num">5000</span><span class="mc-op">,</span>`,
+      `  <span class="mc-var">retry</span><span class="mc-op">:</span>    <span class="mc-num">3</span><span class="mc-op">,</span>`,
+      `<span class="mc-op">};</span>`,
+      ``,
+      `<span class="mc-cmt">// 매크로 목록 로드</span>`,
+      `<span class="mc-kw">async function</span> <span class="mc-fn">loadMacros</span><span class="mc-op">()</span> <span class="mc-op">{</span>`,
+      `  <span class="mc-kw">const</span> <span class="mc-var">list</span> <span class="mc-op">=</span> <span class="mc-kw">await</span> <span class="mc-fn">Runner</span><span class="mc-op">.</span><span class="mc-fn">fetch</span><span class="mc-op">(</span><span class="mc-str">'./macro/manifest.json'</span><span class="mc-op">);</span>`,
+      `  <span class="mc-kw">return</span> <span class="mc-var">list</span><span class="mc-op">.</span><span class="mc-fn">filter</span><span class="mc-op">(</span><span class="mc-var">m</span> <span class="mc-op">=></span> <span class="mc-var">m</span><span class="mc-op">.</span><span class="mc-var">enabled</span><span class="mc-op">);</span>`,
+      `<span class="mc-op">}</span>`,
+      ``,
+      `<span class="mc-cmt">// 스케줄 실행기</span>`,
+      `<span class="mc-kw">const</span> <span class="mc-var">schedule</span> <span class="mc-op">=</span> <span class="mc-kw">new</span> <span class="mc-fn">Schedule</span><span class="mc-op">({</span>`,
+      `  <span class="mc-var">cron</span><span class="mc-op">:</span>   <span class="mc-str">'0 14 * * 1-5'</span><span class="mc-op">,</span>`,
+      `  <span class="mc-var">tz</span><span class="mc-op">:</span>     <span class="mc-str">'Asia/Seoul'</span><span class="mc-op">,</span>`,
+      `  <span class="mc-var">onRun</span><span class="mc-op">:</span>  <span class="mc-fn">loadMacros</span><span class="mc-op">,</span>`,
+      `<span class="mc-op">});</span>`,
+      ``,
+      `<span class="mc-cmt">// 실행</span>`,
+      `<span class="mc-fn">schedule</span><span class="mc-op">.</span><span class="mc-fn">start</span><span class="mc-op">();</span>`,
+      `<span class="mc-var">console</span><span class="mc-op">.</span><span class="mc-fn">log</span><span class="mc-op">(</span><span class="mc-str">'⚡ macro engine ready'</span><span class="mc-op">);</span>`,
+      ``,
+      `<span class="mc-dim">~</span>`,
+      `<span class="mc-dim">~</span>`,
+      `<span class="mc-dim">~</span>`,
+    ];
+
+    function renderMacroScreen() {
+      const gutter = document.getElementById('macroGutter');
+      const code = document.getElementById('macroCodeArea');
+      if (!gutter || !code) return;
+      gutter.innerHTML = MACRO_LINES.map((_, i) =>
+        `<span>${i + 1}</span>`
+      ).join('');
+      code.innerHTML = MACRO_LINES.map((line, i) =>
+        `<div class="mc-line">${line || '&nbsp;'}${i === MACRO_LINES.length - 1 ? '<span class="macro-cursor"></span>' : ''}</div>`
+      ).join('');
     }
 
-    function filterTools() {
-      const query = document.getElementById('toolSearch').value.toLowerCase().replace(/\s/g, "");
-      const queryChosung = getChosung(query);
-      document.querySelectorAll('.tool-button').forEach(btn => {
-        const label = btn.textContent.toLowerCase().replace(/\s/g, "");
-        const labelChosung = getChosung(label);
-        if (label.includes(query) || labelChosung.includes(query)) btn.style.display = "flex";
-        else btn.style.display = "none";
-      });
+    function updateMacroClock() {
+      const el = document.getElementById('macroClockSb');
+      if (el) el.textContent = new Date().toTimeString().split(' ')[0];
+    }
+    setInterval(updateMacroClock, 1000);
+
+    function setActiveNavBtn(mode) {
+      document.querySelector('.home-btn').classList.toggle('active', mode === 'home');
+      document.querySelector('.macro-btn').classList.toggle('active', mode === 'macro');
+    }
+
+    window.goHomeMode = function() {
+      document.body.classList.remove('macro-mode');
+      setActiveNavBtn('home');
+      goHome();
+    }
+
+    window.goMacroMode = function() {
+      document.body.classList.add('macro-mode');
+      setActiveNavBtn('macro');
+      goHome();
+      renderMacroScreen();
     }
 
     window.toggleSidebar = function() {
