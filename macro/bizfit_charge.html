@@ -686,7 +686,7 @@ async function startCharge() {
 
     let ok = false, resultMsg = '';
     try {
-      const res  = await fetch('https://macro-1-bizfit-938928195180.asia-northeast3.run.app/charge', {
+      const res  = await fetch('https://macro-1-bizfit-charge-938928195180.asia-northeast3.run.app/charge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: acc.id, pw: acc.pw, amount })
@@ -791,7 +791,7 @@ renderList();
 // 서버 연결 상태 확인
 (async function checkServer() {
   try {
-    const res = await fetch('https://macro-1-bizfit-938928195180.asia-northeast3.run.app/ping', { signal: AbortSignal.timeout(3000) });
+    const res = await fetch('https://macro-1-bizfit-charge-938928195180.asia-northeast3.run.app/ping', { signal: AbortSignal.timeout(3000) });
     if (res.ok) {
       addLog('✅ 서버 연결됨 — 충전 준비 완료', 'success');
       return;
