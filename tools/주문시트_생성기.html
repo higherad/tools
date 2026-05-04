@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주문시트 생성기</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background: #f4f4f0; color: #1a1a1a; font-size: 14px; }
+
+  .wrap { max-width: 980px; margin: 0 auto; padding: 32px 20px 60px; }
+
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .sub { font-size: 13px; color: #888; margin-bottom: 32px; }
+
+  /* 섹션 카드 */
+  .card { background: #fff; border-radius: 12px; border: 1px solid #e8e8e8; padding: 24px; margin-bottom: 20px; }
+  .card-title { font-size: 13px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
+
+  /* 업로드 */
+  .upload-area { border: 2px dashed #d0d0d0; border-radius: 10px; padding: 36px 20px; text-align: center; cursor: pointer; transition: all 0.15s; }
+  .upload-area:hover, .upload-area.drag { border-color: #4a7cff; background: #f0f5ff; }
+  .upload-area svg { display: block; margin: 0 auto 10px; }
+  .upload-label { font-size: 15px; font-weight: 600; color: #333; }
+  .upload-hint { font-size: 12px; color: #aaa; margin-top: 4px; }
+  .file-badge { display: inline-flex; align-items: center; gap: 6px; background: #eaf2ff; color: #2563eb; border-radius: 6px; padding: 6px 12px; font-size: 13px; font-weight: 600; margin-top: 10px; }
+
+  /* 포맷 감지 */
+  .format-tag { display: inline-block; background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; border-radius: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; margin-left: 8px; }
+
+  /* 비율 설정 테이블 */
+  .day-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .day-tab { padding: 6px 14px; border-radius: 20px; border: 1.5px solid #e0e0e0; background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.12s; color: #555; }
+  .day-tab.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+
+  .ratio-table { width: 100%; border-collapse: collapse; }
+  .ratio-table th { font-size: 11px; font-weight: 600; color: #888; text-align: left; padding: 6px 8px; border-bottom: 1px solid #f0f0f0; }
+  .ratio-table td { padding: 5px 8px; border-bottom: 1px solid #f8f8f8; vertical-align: middle; }
+  .ratio-table tr:last-child td { border-bottom: none; }
+
+  .grade-name { font-weight: 600; font-size: 13px; min-width: 70px; }
+  .ratio-input { width: 70px; border: 1.5px solid #e0e0e0; border-radius: 6px; padding: 5px 8px; font-size: 13px; font-weight: 600; text-align: center; outline: none; transition: border-color 0.12s; }
+  .ratio-input:focus { border-color: #4a7cff; }
+  .ratio-bar-wrap { flex: 1; background: #f4f4f0; border-radius: 4px; height: 8px; overflow: hidden; margin: 0 8px; }
+  .ratio-bar { height: 100%; border-radius: 4px; background: #1a1a1a; transition: width 0.2s; }
+  .ratio-sum { font-size: 12px; font-weight: 700; }
+  .sum-ok { color: #16a34a; }
+  .sum-bad { color: #dc2626; }
+
+  .row-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .btn-sm { padding: 5px 12px; border-radius: 6px; border: 1.5px solid #e0e0e0; background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; color: #333; transition: all 0.12s; }
+  .btn-sm:hover { background: #f4f4f0; }
+  .btn-add { color: #2563eb; border-color: #bfdbfe; background: #eff6ff; }
+  .btn-add:hover { background: #dbeafe; }
+  .btn-del { color: #dc2626; border-color: #fecaca; background: #fff5f5; }
+  .btn-del:hover { background: #fee2e2; }
+
+  /* 일괄 적용 */
+  .copy-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .copy-row select, .copy-row button { padding: 6px 12px; border-radius: 6px; border: 1.5px solid #e0e0e0; background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .copy-row button { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .copy-row button:hover { background: #333; }
+
+  /* 생성 버튼 */
+  .btn-generate { width: 100%; padding: 14px; background: #1a1a1a; color: #fff; font-size: 15px; font-weight: 700; border: none; border-radius: 10px; cursor: pointer; letter-spacing: -0.3px; transition: background 0.12s; margin-top: 4px; }
+  .btn-generate:hover { background: #333; }
+  .btn-generate:disabled { background: #bbb; cursor: not-allowed; }
+
+  /* 알림 */
+  .alert { padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 12px; display: none; }
+  .alert.show { display: block; }
+  .alert-err { background: #fff5f5; color: #dc2626; border: 1px solid #fecaca; }
+  .alert-ok { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+
+  /* 빈 상태 */
+  .empty { text-align: center; padding: 40px; color: #bbb; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>주문시트 생성기</h1>
+  <p class="sub">접수 엑셀을 업로드하고 일차별 등급 비율을 설정하면 주문시트를 자동으로 생성합니다</p>
+
+  <!-- STEP 1: 파일 업로드 -->
+  <div class="card">
+    <div class="card-title">① 파일 업로드</div>
+    <div class="upload-area" id="uploadArea"
+      onclick="document.getElementById('fileInput').click()"
+      ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.5">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      <div class="upload-label">클릭 또는 드래그하여 파일 업로드</div>
+      <div class="upload-hint">접수일시 / 대행사 / 업체명 / URL / MID / 순위키워드 / 일 수 / 시작일 / 일 목표 / 검색키워드</div>
+      <div id="fileBadge" style="display:none"></div>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx" style="display:none" onchange="loadFile(this.files[0])">
+    <div id="alertErr" class="alert alert-err"></div>
+    <div id="alertOk" class="alert alert-ok"></div>
+    <div id="formatInfo" style="margin-top:12px; font-size:12px; color:#888; display:none;"></div>
+  </div>
+
+  <!-- STEP 2: 비율 설정 -->
+  <div class="card">
+    <div class="card-title">② 일차별 등급 비율 설정</div>
+
+    <div class="day-tabs" id="dayTabs"></div>
+
+    <div id="ratioEditor"></div>
+
+    <div style="margin-top:14px; padding-top:14px; border-top:1px solid #f0f0f0;">
+      <div class="copy-row">
+        <span style="font-size:12px; color:#888; font-weight:600;">일괄 적용 →</span>
+        <select id="copyFrom">
+          <option value="">현재 탭 기준으로</option>
+        </select>
+        <span style="font-size:12px; color:#888;">의 비율을</span>
+        <select id="copyTo">
+          <option value="all">모든 일차</option>
+        </select>
+        <span style="font-size:12px; color:#888;">에 적용</span>
+        <button onclick="applyBulk()">적용</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: 생성 -->
+  <button class="btn-generate" id="genBtn" onclick="generate()">주문시트 생성</button>
+
+
+
+</div>
+
+<script>
+// ─── 상태 ───────────────────────────────────────────────
+let parsedBiz = [];       // 업체 목록
+let fileFormat = '';      // 'random' | 'plan'
+let fileName = '';
+let generatedRows = [];
+
+// 일차별 비율 (최대 7일, 각 일차마다 [{name, ratio}] 배열)
+let dayRatios = [];
+let currentDay = 0;       // 현재 보고 있는 탭 인덱스
+
+const MAX_DAYS = 7;
+const DEFAULT_GRADES = [
+  [{name:'블랙',ratio:2},{name:'올리브',ratio:2},{name:'브라보',ratio:3},{name:'찰리',ratio:2},{name:'에코',ratio:1}],
+  [{name:'블랙',ratio:2},{name:'올리브',ratio:2},{name:'노벰버',ratio:1},{name:'골프',ratio:3},{name:'호텔',ratio:2}],
+  [{name:'블랙',ratio:2},{name:'올리브',ratio:2},{name:'인디아',ratio:2},{name:'아이보리',ratio:1},{name:'탱고',ratio:3}],
+  [{name:'블랙',ratio:2},{name:'올리브',ratio:2},{name:'베이지',ratio:3},{name:'레몬',ratio:1},{name:'마이크',ratio:2}],
+  [{name:'블랙',ratio:2},{name:'올리브',ratio:2},{name:'유니폼',ratio:1},{name:'알파',ratio:2},{name:'폭스트롯',ratio:3}],
+  [{name:'블랙',ratio:2},{name:'올리브',ratio:2},{name:'찰리',ratio:2},{name:'머스타드',ratio:3},{name:'탱고',ratio:1}],
+  [{name:'블랙',ratio:2},{name:'올리브',ratio:2},{name:'줄리엣',ratio:1},{name:'라임',ratio:1},{name:'에코',ratio:4}],
+];
+
+// ─── 초기화 ─────────────────────────────────────────────
+function init() {
+  dayRatios = DEFAULT_GRADES.map(day => day.map(g => ({...g})));
+  buildTabs(7);
+  renderEditor();
+  updateCopySelects();
+}
+
+// ─── 탭 ─────────────────────────────────────────────────
+function buildTabs(n) {
+  const tabs = document.getElementById('dayTabs');
+  tabs.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const t = document.createElement('div');
+    t.className = 'day-tab' + (i === currentDay ? ' active' : '');
+    t.textContent = (i+1) + '일차';
+    t.onclick = () => { currentDay = i; renderTabs(); renderEditor(); };
+    tabs.appendChild(t);
+  }
+}
+
+function renderTabs() {
+  document.querySelectorAll('.day-tab').forEach((t,i) => {
+    t.className = 'day-tab' + (i === currentDay ? ' active' : '');
+  });
+}
+
+// ─── 에디터 렌더 ─────────────────────────────────────────
+function renderEditor() {
+  const ed = document.getElementById('ratioEditor');
+  const rows = dayRatios[currentDay];
+  const total = rows.reduce((s,r) => s + (parseInt(r.ratio)||0), 0);
+
+  let html = `<table class="ratio-table">
+    <thead><tr>
+      <th style="width:90px">등급명</th>
+      <th style="width:80px">비율</th>
+      <th>분포</th>
+      <th style="width:60px;text-align:right">비중</th>
+      <th style="width:40px"></th>
+    </tr></thead><tbody>`;
+
+  rows.forEach((r, i) => {
+    const pct = total > 0 ? Math.round((parseInt(r.ratio)||0) / total * 100) : 0;
+    html += `<tr>
+      <td><input type="text" value="${r.name}" onchange="updateName(${i}, this.value)"
+        style="border:1.5px solid #e0e0e0;border-radius:6px;padding:5px 8px;font-size:13px;font-weight:600;width:80px;outline:none;" /></td>
+      <td><input class="ratio-input" type="number" min="0" value="${r.ratio}" oninput="updateRatio(${i}, this.value)" /></td>
+      <td><div style="display:flex;align-items:center;">
+        <div class="ratio-bar-wrap"><div class="ratio-bar" style="width:${pct}%"></div></div>
+      </div></td>
+      <td style="text-align:right;font-size:12px;font-weight:700;color:#555">${pct}%</td>
+      <td><button class="btn-sm btn-del" onclick="deleteRow(${i})" title="삭제">✕</button></td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+
+  const sumColor = total > 0 ? 'sum-ok' : 'sum-bad';
+  html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+    <div class="row-actions">
+      <button class="btn-sm btn-add" onclick="addRow()">+ 등급 추가</button>
+      <button class="btn-sm" onclick="resetDay()">초기값으로</button>
+    </div>
+    <div>비율 합계: <span class="ratio-sum ${sumColor}">${total}</span></div>
+  </div>`;
+
+  ed.innerHTML = html;
+}
+
+function updateName(i, val) { dayRatios[currentDay][i].name = val.trim(); }
+function updateRatio(i, val) { dayRatios[currentDay][i].ratio = parseInt(val)||0; renderEditor(); }
+
+function deleteRow(i) {
+  if (dayRatios[currentDay].length <= 1) return;
+  dayRatios[currentDay].splice(i, 1);
+  renderEditor();
+}
+
+function addRow() {
+  dayRatios[currentDay].push({name:'신규', ratio:1});
+  renderEditor();
+}
+
+function resetDay() {
+  dayRatios[currentDay] = DEFAULT_GRADES[currentDay].map(g => ({...g}));
+  renderEditor();
+}
+
+// ─── 일괄 적용 ──────────────────────────────────────────
+function updateCopySelects() {
+  const from = document.getElementById('copyFrom');
+  const to = document.getElementById('copyTo');
+  from.innerHTML = '';
+  to.innerHTML = '<option value="all">모든 일차</option>';
+  for (let i = 0; i < MAX_DAYS; i++) {
+    from.innerHTML += `<option value="${i}">${i+1}일차</option>`;
+    if (i !== currentDay) to.innerHTML += `<option value="${i}">${i+1}일차</option>`;
+  }
+  from.value = String(currentDay);
+}
+
+function applyBulk() {
+  const fromIdx = parseInt(document.getElementById('copyFrom').value);
+  const toVal = document.getElementById('copyTo').value;
+  const src = dayRatios[fromIdx].map(g => ({...g}));
+  if (toVal === 'all') {
+    for (let i = 0; i < MAX_DAYS; i++) dayRatios[i] = src.map(g => ({...g}));
+  } else {
+    dayRatios[parseInt(toVal)] = src.map(g => ({...g}));
+  }
+  renderEditor();
+}
+
+// ─── 파일 읽기 ──────────────────────────────────────────
+function onDragOver(e) { e.preventDefault(); document.getElementById('uploadArea').classList.add('drag'); }
+function onDragLeave(e) { document.getElementById('uploadArea').classList.remove('drag'); }
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) loadFile(f);
+}
+
+function showErr(msg) {
+  const el = document.getElementById('alertErr');
+  el.textContent = msg; el.className = 'alert alert-err show';
+  document.getElementById('alertOk').className = 'alert alert-ok';
+}
+function hideErr() {
+  document.getElementById('alertErr').className = 'alert alert-err';
+  document.getElementById('alertOk').className = 'alert alert-ok';
+}
+
+function loadFile(file) {
+  if (!file || !file.name.endsWith('.xlsx')) { showErr('xlsx 파일만 지원합니다.'); return; }
+  hideErr();
+  fileName = file.name.replace('.xlsx','');
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+      // 접수 시트 찾기
+      const sheetName = wb.SheetNames.find(s => s.includes('접수')) || wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, dateNF:'yyyy-mm-dd'});
+      parseData(data);
+    } catch(err) { showErr('파일 읽기 오류: ' + err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseDate(val) {
+  if (!val) return null;
+  if (val instanceof Date) return isNaN(val) ? null : val;
+  if (typeof val === 'string') {
+    const d = new Date(val);
+    return isNaN(d) ? null : d;
+  }
+  if (typeof val === 'number') {
+    return new Date(Math.round((val - 25569) * 86400000));
+  }
+  return null;
+}
+
+function addDays(d, n) {
+  const r = new Date(d); r.setDate(r.getDate() + n); return r;
+}
+function fmtDate(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function parseData(data) {
+  if (data.length < 2) { showErr('데이터가 없습니다.'); return; }
+  const hdr = data[0].map(h => (h||'').toString().trim());
+
+  // 컬럼 인덱스 찾기
+  const find = (...names) => { for (const n of names) { const i = hdr.indexOf(n); if (i !== -1) return i; } return -1; };
+  const ci = {
+    영업점명: find('영업점명'),
+    업체명:   find('업체명'),
+    url:      find('업체URL','URL'),
+    mid:      find('MID','업체PID번호','PID'),
+    키워드:   find('순위키워드'),
+    일목표:   find('일 목표','일목표'),
+    일수:     find('일 수','일수'),
+    시작일:   find('시작일','예약일'),
+    검색키:   find('검색키워드'),
+  };
+
+  // 포맷 판단
+  fileFormat = ci.영업점명 !== -1 ? 'plan' : 'random';
+  const hasYoung = fileFormat === 'plan';
+
+  // 업체 파싱 — random 포맷은 중복 행이 많으므로 업체별로 그룹핑
+  const seen = new Set();
+  parsedBiz = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const r = data[i];
+    if (!r || !r[ci.업체명]) continue;
+
+    const bizName = r[ci.업체명];
+    const url     = r[ci.url]   || '';
+    const mid     = r[ci.mid]   != null ? String(r[ci.mid]) : '';
+    const kw      = r[ci.키워드]|| '';
+    const key     = bizName + '|' + mid + '|' + kw;
+
+    if (seen.has(key)) continue;  // 중복 스킵
+    seen.add(key);
+
+    const 일목표 = parseInt(r[ci.일목표]) || 0;
+    const 일수   = parseInt(r[ci.일수])   || 7;
+    const 시작일 = parseDate(r[ci.시작일]);
+    const 검색키 = r[ci.검색키] || '';
+    const 영업점 = hasYoung ? (r[ci.영업점명] || '') : '';
+
+    parsedBiz.push({ 영업점, bizName, url, mid, kw, 일목표, 일수, 시작일, 검색키 });
+  }
+
+  if (parsedBiz.length === 0) { showErr('유효한 업체 데이터를 찾을 수 없습니다.'); return; }
+
+  // 최대 일수 계산해서 탭 업데이트
+  const maxDays = Math.min(Math.max(...parsedBiz.map(b => b.일수)), MAX_DAYS);
+  buildTabs(maxDays);
+  updateCopySelects();
+
+  // UI 업데이트
+  document.getElementById('fileBadge').style.display = 'inline-flex';
+  document.getElementById('fileBadge').innerHTML =
+    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> ${fileName}.xlsx`;
+
+  document.getElementById('formatInfo').style.display = 'block';
+  document.getElementById('formatInfo').innerHTML =
+    `포맷 감지: <span class="format-tag">${fileFormat === 'plan' ? 'Plan 형식 (영업점명 포함)' : '랜덤 형식'}</span>
+     &nbsp; 업체 <strong>${parsedBiz.length}개</strong> 확인 / 최대 <strong>${maxDays}일</strong>`;
+}
+
+// ─── 생성 ────────────────────────────────────────────────
+function generate() {
+  if (parsedBiz.length === 0) { showErr('먼저 파일을 업로드하세요.'); return; }
+
+  generatedRows = [];
+  const hasYoung = fileFormat === 'plan';
+
+  for (const biz of parsedBiz) {
+    const days = Math.min(biz.일수, dayRatios.length);
+    for (let d = 0; d < days; d++) {
+      const mission = dayRatios[d];
+      const total = mission.reduce((s, g) => s + (parseInt(g.ratio)||0), 0);
+      if (total === 0) continue;
+      const 예약일 = addDays(biz.시작일, d);
+
+      for (const g of mission) {
+        const 목표 = Math.round(biz.일목표 * (parseInt(g.ratio)||0) / total);
+        if (hasYoung) {
+          generatedRows.push([g.name, biz.영업점, biz.bizName, biz.url, biz.mid, biz.kw, 목표, 1, fmtDate(예약일), biz.검색키]);
+        } else {
+          generatedRows.push([g.name, biz.bizName, biz.url, biz.mid, biz.kw, 목표, 1, fmtDate(예약일), biz.검색키]);
+        }
+      }
+    }
+  }
+
+  if (generatedRows.length === 0) { showErr('생성된 데이터가 없습니다. 비율 합계를 확인해주세요.'); return; }
+
+  downloadExcel(hasYoung);
+}
+
+// ─── 다운로드 ────────────────────────────────────────────
+function downloadExcel(hasYoung) {
+  if (hasYoung === undefined) hasYoung = fileFormat === 'plan';
+  if (!generatedRows.length) return;
+
+  const headers = hasYoung
+    ? ['상품등급명','영업점명','업체명','URL','MID','순위키워드','일 목표','일 수','예약일','검색키워드']
+    : ['상품등급명','업체명','URL','MID','순위키워드','일 목표','일 수','예약일','검색키워드'];
+  const widths = hasYoung ? [14,12,20,40,14,14,10,8,14,55] : [14,20,40,14,14,10,8,14,55];
+
+  const wsData = [headers, ...generatedRows];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = widths.map(w => ({wch:w}));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '주문');
+
+  const today = new Date();
+  const ds = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
+  XLSX.writeFile(wb, `주문시트_${ds}.xlsx`);
+
+  const ok = document.getElementById('alertOk');
+  ok.textContent = `완료: 총 ${generatedRows.length.toLocaleString()}행 / 업체 ${parsedBiz.length}개 → 주문시트_${ds}.xlsx 다운로드됨`;
+  ok.className = 'alert alert-ok show';
+}
+
+// ─── 실행 ────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
