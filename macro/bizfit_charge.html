@@ -654,7 +654,16 @@ function addLog(msg, type = '') {
   area.scrollTop = area.scrollHeight;
 }
 
-// ── 충전 시작 (데모 시뮬레이션) ──
+const SERVER = 'https://macro-1-bizfit-charge-938928195180.asia-northeast3.run.app';
+
+function logType(msg) {
+  if (msg.startsWith('✅')) return 'success';
+  if (msg.startsWith('❌')) return 'fail';
+  if (msg.startsWith('⚠️') || msg.startsWith('⚠')) return 'warn';
+  if (/^[▶🔐💳💰✔️📤🗂🏁]/u.test(msg)) return 'info';
+  return '';
+}
+
 async function startCharge() {
   const selected = accounts.filter(a => a.checked);
   const noAmt    = selected.filter(a => !a.amount || parseInt(a.amount) <= 0);
@@ -682,33 +691,54 @@ async function startCharge() {
     acc.result = '';
     renderList();
 
-    addLog(`[${done+1}/${total}] ${acc.alias} (${acc.id}) — ${amount.toLocaleString()}캐시 처리 중...`);
+    addLog(`[${done+1}/${total}] ${acc.alias} (${acc.id}) — ${amount.toLocaleString()}캐시`, 'info');
 
     let ok = false, resultMsg = '';
     try {
-      const res  = await fetch('https://macro-1-bizfit-charge-938928195180.asia-northeast3.run.app/charge', {
+      const res = await fetch(`${SERVER}/charge-stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: acc.id, pw: acc.pw, amount })
+        body: JSON.stringify({ id: acc.id, pw: acc.pw, amount }),
+        signal: AbortSignal.timeout(120000),
       });
       if (!res.ok) throw new Error(`서버 응답 오류 (${res.status})`);
-      const data = await res.json();
-      ok        = data.success;
-      resultMsg = data.message || (ok ? '충전 완료' : '실패');
+
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      outer: while (true) {
+        const { done: streamDone, value } = await reader.read();
+        if (streamDone) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          let data;
+          try { data = JSON.parse(line.slice(6)); } catch { continue; }
+          if (data.ping) continue;
+
+          if (data.log !== undefined) {
+            addLog(`  ${data.log}`, logType(data.log));
+          }
+          if (data.done !== undefined) {
+            ok        = data.done.success;
+            resultMsg = data.done.message || (ok ? '충전 완료' : '실패');
+            break outer;
+          }
+        }
+      }
     } catch(e) {
       ok        = false;
       resultMsg = `서버 연결 실패: ${e.message}`;
+      addLog(`  ❌ ${resultMsg}`, 'fail');
     }
 
-    if (ok) {
-      acc.status = 'success';
-      acc.result = `${amount.toLocaleString()}캐시 완료`;
-      addLog(`  ✅ ${acc.alias} — ${resultMsg}`, 'success');
-    } else {
-      acc.status = 'fail';
-      acc.result = resultMsg;
-      addLog(`  ❌ ${acc.alias} — ${resultMsg}`, 'fail');
-    }
+    acc.status = ok ? 'success' : 'fail';
+    acc.result = resultMsg;
 
     done++;
     const pct = Math.round((done / total) * 100);
@@ -791,7 +821,7 @@ renderList();
 // 서버 연결 상태 확인
 (async function checkServer() {
   try {
-    const res = await fetch('https://macro-1-bizfit-charge-938928195180.asia-northeast3.run.app/ping', { signal: AbortSignal.timeout(3000) });
+    const res = await fetch(`${SERVER}/ping`, { signal: AbortSignal.timeout(3000) });
     if (res.ok) {
       addLog('✅ 서버 연결됨 — 충전 준비 완료', 'success');
       return;
