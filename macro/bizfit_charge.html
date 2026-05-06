@@ -364,6 +364,7 @@
         <span>전체 선택</span>
         <span style="color:#718096;font-weight:400;" id="selected-count-small">0개 선택됨</span>
         <button class="btn btn-danger btn-sm" style="margin-left:auto;" onclick="removeChecked()">선택 삭제</button>
+        <button class="btn btn-danger btn-sm" onclick="resetAmounts()">금액 초기화</button>
       </div>
 
       <!-- 테이블 -->
@@ -545,6 +546,19 @@ function matchChosung(text, query) {
   const isAllChosung = [...query].every(c => CHOSUNG.includes(c));
   if (!isAllChosung) return false;
   return getChosung(text).includes(query);
+}
+
+// ── 금액 초기화 ──
+function resetAmounts() {
+  const checked = accounts.filter(a => a.checked);
+  const targets = checked.length > 0 ? checked : accounts;
+  if (targets.length === 0) return;
+  const label = checked.length > 0 ? `선택한 ${targets.length}개` : `전체 ${targets.length}개`;
+  if (!confirm(`${label} 계정의 금액을 초기화하시겠습니까?`)) return;
+  targets.forEach(a => a.amount = '');
+  save();
+  renderList();
+  updateSummary();
 }
 
 // ── 선택 삭제 ──
