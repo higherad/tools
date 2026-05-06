@@ -106,6 +106,8 @@
   .btn-primary:hover { background: #245a8a; }
   .btn-danger  { background: #fff1f0; color: #e53e3e; border: 1.5px solid #fed7d7; padding: 5px 10px; font-size: 12px; border-radius: 6px; white-space: nowrap; }
   .btn-danger:hover { background: #ffe0de; }
+  .btn-warning { background: #fffbeb; color: #b45309; border: 1.5px solid #fde68a; padding: 5px 10px; font-size: 12px; border-radius: 6px; white-space: nowrap; }
+  .btn-warning:hover { background: #fef3c7; }
   .btn-success { background: #276749; color: #fff; font-size: 15px; padding: 13px 24px; border-radius: 10px; width: 100%; }
   .btn-success:hover { background: #1e5138; }
   .btn-success:disabled { background: #a0aec0; cursor: not-allowed; }
@@ -364,7 +366,7 @@
         <span>전체 선택</span>
         <span style="color:#718096;font-weight:400;" id="selected-count-small">0개 선택됨</span>
         <button class="btn btn-danger btn-sm" style="margin-left:auto;" onclick="removeChecked()">선택 삭제</button>
-        <button class="btn btn-danger btn-sm" onclick="resetAmounts()">금액 초기화</button>
+        <button class="btn btn-warning btn-sm" onclick="resetAmounts()">금액 초기화</button>
       </div>
 
       <!-- 테이블 -->
