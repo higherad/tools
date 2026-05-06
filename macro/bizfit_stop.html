@@ -251,6 +251,7 @@
     color: #2d3748;
     width: 140px;
     padding: 0;
+    ime-mode: active;
   }
   .search-wrap input::placeholder { color: #a0aec0; }
 
@@ -328,7 +329,7 @@
         <span class="card-title">📋 처리 목록 <span class="badge badge-purple" id="entry-count">0</span></span>
         <div class="search-wrap">
           <span style="font-size:12px;">🔍</span>
-          <input type="text" placeholder="MID / 캠페인명 검색" oninput="filterList(this.value)" />
+          <input type="text" placeholder="MID / 캠페인명 검색" oninput="filterList(this.value)" lang="ko" inputmode="text" />
         </div>
       </div>
       <div class="select-all-row">

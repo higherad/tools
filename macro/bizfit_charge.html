@@ -273,6 +273,7 @@
     color: #2d3748;
     width: 180px;
     padding: 0;
+    ime-mode: active;
   }
   .search-wrap input::placeholder { color: #a0aec0; }
 
@@ -353,7 +354,7 @@
         <span class="card-title">👥 계정 목록 <span class="badge badge-blue" id="account-count">0</span></span>
         <div class="search-wrap">
           <span class="search-icon">🔍</span>
-          <input type="text" id="inp-search" placeholder="영업점 / 아이디 검색" oninput="filterList(this.value)" />
+          <input type="text" id="inp-search" placeholder="영업점 / 아이디 검색" oninput="filterList(this.value)" lang="ko" inputmode="text" />
         </div>
       </div>
 
