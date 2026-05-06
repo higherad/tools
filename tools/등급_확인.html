@@ -31,6 +31,7 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
       outline: none;
       box-sizing: border-box;
+      ime-mode: active;
     }
 
     .grid-container {
@@ -66,7 +67,7 @@
 <body>
   <h1>등급명 검색</h1>
   <div class="search-container">
-    <input type="text" id="searchInput" placeholder="번호, 단어, 또는 초성(예: ㅇㅍ)을 입력하세요...">
+    <input type="text" id="searchInput" placeholder="번호, 단어, 또는 초성(예: ㅇㅍ)을 입력하세요..." lang="ko" inputmode="text">
   </div>
   <div class="grid-container" id="keywordGrid"></div>
 

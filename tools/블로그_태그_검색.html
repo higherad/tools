@@ -41,6 +41,7 @@
             background: #f8f9fa;
             outline: none;
             transition: all 0.2s;
+            ime-mode: active;
         }
 
         .input-group input:focus {
@@ -158,7 +159,7 @@
     <div class="header-title">🔍 블로그 태그 추출 도구</div>
     
     <div class="input-group">
-        <input type="text" id="keyword" placeholder="분석할 키워드를 입력하세요" onkeypress="if(event.keyCode==13) runExtract()">
+        <input type="text" id="keyword" placeholder="분석할 키워드를 입력하세요" onkeypress="if(event.keyCode==13) runExtract()" lang="ko" inputmode="text">
         <button class="btn-extract" onclick="runExtract()">추출하기</button>
     </div>
 
