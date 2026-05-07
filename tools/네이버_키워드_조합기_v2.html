@@ -2,441 +2,786 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>네이버 키워드 조합기 v2</title>
+<title>네이버 플레이스 키워드 자동 생성기 v2</title>
 <style>
-:root {
-    --primary: #4e73df; --success: #1cc88a; --danger: #e74a3b;
-    --gray-100: #f8f9fc; --gray-200: #eaecf4; --gray-600: #858796; --gray-800: #5a5c69;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Pretendard','Malgun Gothic',sans-serif; background:#f4f6f9; padding:20px; color:var(--gray-800); }
-.app { max-width:1100px; margin:0 auto; }
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
 
-/* ── 탭 ── */
-.tab-bar { display:flex; gap:2px; border-bottom:2px solid var(--primary); margin-bottom:0; }
-.tab-btn {
-    padding:10px 24px; border:none; border-radius:8px 8px 0 0;
-    background:var(--gray-200); color:var(--gray-600);
-    font-size:14px; font-weight:bold; cursor:pointer; transition:.15s;
+:root {
+    --primary: #3b5bdb;
+    --primary-light: #4263eb;
+    --primary-dark: #2f4ac7;
+    --primary-bg: #edf2ff;
+    --success: #2f9e44;
+    --success-bg: #ebfbee;
+    --danger: #e03131;
+    --danger-bg: #fff5f5;
+    --warning: #e67700;
+    --warning-bg: #fff9db;
+    --gray-50: #f8f9fa;
+    --gray-100: #f1f3f5;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-600: #868e96;
+    --gray-700: #495057;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+    --cat-main: #1971c2;
+    --cat-main-bg: #dbe4ff;
+    --cat-tpo: #2f9e44;
+    --cat-tpo-bg: #d3f9d8;
+    --cat-feat: #d9480f;
+    --cat-feat-bg: #ffe8cc;
+    --cat-menu: #7048e8;
+    --cat-menu-bg: #f3f0ff;
+    --cat-drop: #868e96;
+    --cat-drop-bg: #f1f3f5;
+    --radius: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,.1), 0 4px 8px rgba(0,0,0,.05);
 }
-.tab-btn.active { background:var(--primary); color:#fff; }
-.tab-panel { display:none; padding-top:20px; }
-.tab-panel.active { display:block; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    background: #f0f2f5;
+    min-height: 100vh;
+    color: var(--gray-800);
+    line-height: 1.6;
+}
+
+.app-wrapper {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+}
+
+/* ── 헤더 ── */
+.app-header {
+    background: linear-gradient(135deg, var(--primary) 0%, #5c7cfa 100%);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 8px 24px rgba(59,91,219,.3);
+}
+.app-header h1 { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; }
+.app-header p  { font-size: 13px; opacity: .85; margin-top: 4px; }
+.header-badge {
+    background: rgba(255,255,255,.18);
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
 
 /* ── 카드 ── */
-.v2-card { background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:20px; overflow:hidden; }
-.v2-hd {
-    padding:13px 20px; background:var(--gray-100); border-bottom:1px solid var(--gray-200);
-    font-weight:bold; font-size:14px; display:flex; align-items:center;
-    justify-content:space-between; gap:10px;
+.card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 16px;
+    overflow: hidden;
+    border: 1px solid var(--gray-200);
 }
-.v2-bd { padding:20px; }
+.card-header {
+    padding: 14px 20px;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.card-header .subtitle { font-size: 12px; color: var(--gray-500); font-weight: 400; }
+.card-body { padding: 20px; }
 
-/* ── 폼 ── */
-.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+/* ── 입력 그리드 ── */
+.input-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 14px; }
+.input-grid-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 14px; margin-bottom: 14px; }
+
+label.fl {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gray-700);
+    margin-bottom: 6px;
+}
 textarea.ta {
-    width:100%; height:120px; border:1px solid var(--gray-200); border-radius:8px;
-    padding:10px; font-size:13px; font-family:inherit; resize:none; outline:none;
-    line-height:1.7; transition:border-color .2s;
+    width: 100%;
+    height: 108px;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    line-height: 1.7;
+    color: var(--gray-800);
+    transition: border-color .2s, box-shadow .2s;
 }
-textarea.ta:focus { border-color:var(--primary); }
-.badge { display:inline-block; padding:1px 7px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:5px; }
-.req { background:#ffe3e3; color:#c92a2a; }
-.opt { background:#e3f2fd; color:#1565c0; }
-.filter-row {
-    display:flex; align-items:center; gap:16px; padding:11px 14px;
-    background:var(--gray-100); border-radius:8px; margin-bottom:16px;
-    font-size:13px; flex-wrap:wrap;
+textarea.ta:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59,91,219,.1);
 }
-.filter-row input[type=number] {
-    width:80px; padding:4px 8px; border:1px solid var(--gray-200);
-    border-radius:6px; font-size:13px; text-align:center; outline:none;
+textarea.ta.tall { height: 140px; }
+
+.badge {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 5px;
 }
+.badge-req { background: #ffe3e3; color: #c92a2a; }
+.badge-opt { background: #e3f2fd; color: #1565c0; }
+.badge-ai  { background: var(--primary-bg); color: var(--primary); }
+
+/* ── 설정 행 ── */
+.setting-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 16px;
+    background: var(--gray-50);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    flex-wrap: wrap;
+    border: 1px solid var(--gray-200);
+}
+.setting-row label { font-weight: 700; white-space: nowrap; }
+.setting-row input[type=number] {
+    width: 80px;
+    padding: 5px 8px;
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    font-size: 13px;
+    text-align: center;
+    outline: none;
+    font-family: inherit;
+}
+.setting-row input[type=number]:focus { border-color: var(--primary); }
+.setting-row .hint { font-size: 12px; color: var(--gray-500); }
+
+/* ── API 키 입력 ── */
+.api-key-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+}
+.api-key-row label { font-size: 13px; font-weight: 700; color: #92400e; white-space: nowrap; }
+.api-key-row input[type=text] {
+    flex: 1;
+    padding: 7px 12px;
+    border: 1px solid #fcd34d;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: monospace;
+    outline: none;
+    background: #fff;
+}
+.api-key-row input[type=text]:focus { border-color: var(--primary); }
 
 /* ── 버튼 ── */
-.btn { padding:9px 18px; border:none; border-radius:8px; font-size:13px; font-weight:bold; cursor:pointer; transition:.15s; white-space:nowrap; }
-.btn-primary { background:var(--primary); color:#fff; }
-.btn-primary:hover { background:#2e59d9; }
-.btn-success { background:var(--success); color:#fff; }
-.btn-success:hover { background:#17a673; }
-.btn-outline { background:#fff; color:var(--gray-800); border:1px solid var(--gray-200); }
-.btn-outline:hover { background:var(--gray-100); }
-.btn-sm { padding:5px 11px; font-size:12px; }
-.btn-full { width:100%; padding:14px; font-size:16px; }
+.btn {
+    padding: 9px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: .15s;
+    white-space: nowrap;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(59,91,219,.3); }
+.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+.btn-primary:active { transform: none; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { background: #267a38; }
+.btn-outline { background: #fff; color: var(--gray-700); border: 1px solid var(--gray-300); }
+.btn-outline:hover { background: var(--gray-50); }
+.btn-ai {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(102,126,234,.4);
+}
+.btn-ai:hover { opacity: .9; transform: translateY(-1px); }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+.btn-full { width: 100%; padding: 15px; font-size: 16px; justify-content: center; }
 
 /* ── 상태바 ── */
-.v2-status { padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:16px; display:none; }
-.v2-status.info    { background:#e3f2fd; color:#1565c0; border-left:4px solid #1565c0; display:block; }
-.v2-status.success { background:#e8f5e9; color:#2e7d32; border-left:4px solid #2e7d32; display:block; }
-.v2-status.error   { background:#ffebee; color:#c62828; border-left:4px solid #c62828; display:block; }
-
-/* ── 서브키워드 태그 ── */
-.tag-cloud { display:flex; flex-wrap:wrap; gap:8px; }
-.kw-tag {
-    display:flex; align-items:center; gap:5px; padding:5px 12px;
-    background:#e8f4fd; border:1px solid #bee3f8; border-radius:20px;
-    font-size:13px; cursor:pointer; user-select:none; transition:.15s;
+.status-bar {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.5;
 }
-.kw-tag.off { background:var(--gray-100); border-color:var(--gray-200); color:var(--gray-600); text-decoration:line-through; }
-.kw-tag .cnt { font-size:11px; color:#888; }
+.status-bar.info    { background: var(--primary-bg); color: var(--primary-dark); border-left: 4px solid var(--primary); display: flex; }
+.status-bar.success { background: var(--success-bg); color: var(--success); border-left: 4px solid var(--success); display: flex; }
+.status-bar.error   { background: var(--danger-bg); color: var(--danger); border-left: 4px solid var(--danger); display: flex; }
+.status-bar.warning { background: var(--warning-bg); color: var(--warning); border-left: 4px solid var(--warning); display: flex; }
 
-/* ── v2 결과 테이블 ── */
-.result-box { background:#fff; border-radius:12px; border:1px solid var(--gray-200); overflow:hidden; }
-.result-hd {
-    padding:11px 16px; background:var(--gray-100); border-bottom:1px solid var(--gray-200);
-    display:flex; justify-content:space-between; align-items:center; gap:10px;
+/* ── 진행 표시 ── */
+.progress-wrap { margin-bottom: 16px; display: none; }
+.progress-wrap.show { display: block; }
+.progress-steps {
+    display: flex;
+    gap: 0;
+    margin-bottom: 12px;
 }
-.result-scroll { height:430px; overflow-y:auto; }
-.result-scroll table { width:100%; border-collapse:collapse; }
-.result-scroll th, .result-scroll td { padding:8px 14px; font-size:13px; text-align:left; border-bottom:1px solid #f0f0f0; }
-.result-scroll th { background:var(--gray-100); font-weight:bold; color:var(--gray-600); position:sticky; top:0; z-index:1; }
-.result-scroll tr:hover { background:#f7f9ff; }
-.result-scroll tr.sel { background:#fff9db !important; }
+.p-step {
+    flex: 1;
+    padding: 10px 8px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gray-400);
+    background: var(--gray-100);
+    border-right: 1px solid var(--gray-200);
+    position: relative;
+    transition: .3s;
+}
+.p-step:first-child { border-radius: 8px 0 0 8px; }
+.p-step:last-child { border-radius: 0 8px 8px 0; border-right: none; }
+.p-step.done { background: var(--success-bg); color: var(--success); }
+.p-step.active { background: var(--primary-bg); color: var(--primary); }
 
-/* ── 패턴 배지 ── */
-.pbadge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:bold; }
-.p1 { background:#e3f2fd; color:#1565c0; }
-.p2 { background:#e8f5e9; color:#2e7d32; }
-.p3 { background:#fff3e0; color:#e65100; }
+/* ── 원본 데이터 뷰어 ── */
+.raw-collapse {
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+.raw-collapse-header {
+    padding: 10px 16px;
+    background: var(--gray-50);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+}
+.raw-collapse-header:hover { background: var(--gray-100); }
+.raw-collapse-body { display: none; padding: 12px 16px; }
+.raw-collapse.open .raw-collapse-body { display: block; }
+.raw-data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 12px;
+}
+.raw-item {
+    padding: 5px 10px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+}
+.raw-item .raw-vol { font-size: 11px; color: var(--gray-500); }
 
-/* ══════════════════════════════════════════════════════════
-   v1 스타일 (원본 유지 — 클래스명 충돌 방지를 위해 분리)
-══════════════════════════════════════════════════════════ */
-.save-manager { background:#fff; padding:25px; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,.05); margin-bottom:25px; }
-.save-header { display:flex; align-items:center; gap:10px; font-weight:bold; margin-bottom:15px; font-size:16px; }
-.slot-grid { display:flex; gap:12px; }
-.slot-box { display:flex; align-items:center; background:#fff; border:1px solid var(--gray-200); border-radius:8px; overflow:hidden; transition:.2s; flex:1; min-width:0; }
-.slot-box:focus-within { border-color:var(--primary); box-shadow:0 0 0 2px rgba(78,115,223,.1); }
-.slot-btn { width:45px; height:42px; border:none; background:var(--gray-100); cursor:pointer; font-weight:bold; border-right:1px solid var(--gray-200); flex-shrink:0; font-size:14px; }
-.slot-btn.active { background:var(--primary); color:#fff; border-right-color:var(--primary); }
-.slot-name { flex-grow:1; width:100%; padding:8px 12px; border:none; outline:none; font-size:14px; background:transparent; text-align:center; }
-.input-grid-v1 { display:grid; grid-template-columns:repeat(2,1fr); gap:20px; margin-bottom:25px; }
-.card-v1 { background:#fff; border-radius:12px; border:1px solid var(--gray-200); box-shadow:0 2px 4px rgba(0,0,0,.03); overflow:hidden; display:flex; flex-direction:column; }
-.card-hd-v1 { background:var(--gray-100); padding:12px 18px; border-bottom:1px solid var(--gray-200); display:flex; justify-content:space-between; align-items:center; }
-.card-hd-v1 strong { font-size:15px; color:#444; }
-.hdr-ctrl { display:flex; align-items:center; gap:15px; }
-.pos-sel { padding:4px 8px; border:1px solid #ccc; border-radius:6px; font-size:13px; background:#fff; cursor:pointer; outline:none; }
-.must-chk { font-size:13px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:5px; color:var(--danger) !important; }
-.card-bd-v1 { padding:15px; flex-grow:1; }
-textarea.words { width:100%; height:140px; border:1px solid #e0e0e0; border-radius:8px; padding:12px; box-sizing:border-box; resize:none; font-size:14px; font-family:inherit; line-height:1.5; outline:none; transition:.2s; }
-textarea.words:focus { border-color:var(--primary); }
-.ctrl-panel { background:#fff; padding:25px; border-radius:12px; margin-bottom:25px; display:flex; flex-direction:column; align-items:center; gap:15px; box-shadow:0 4px 6px rgba(0,0,0,.05); }
-.qty-row { display:flex; align-items:center; gap:12px; font-weight:bold; font-size:16px; }
-.qty-inp { width:90px; padding:8px; border:1px solid #ccc; border-radius:8px; text-align:center; font-size:16px; outline:none; }
-.btn-v1main { width:100%; max-width:600px; padding:18px; background:var(--primary); color:#fff; border:none; border-radius:10px; font-size:18px; font-weight:bold; cursor:pointer; transition:.2s; box-shadow:0 4px 10px rgba(78,115,223,.3); }
-.btn-v1main:hover { background:#2e59d9; transform:translateY(-1px); }
-.res-sec-v1 { background:#fff; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,.05); overflow:hidden; border:1px solid #ddd; }
-.res-hd-v1 { padding:15px 20px; border-bottom:1px solid #eee; background:#fff; display:flex; justify-content:space-between; align-items:center; }
-.res-hd-v1 span { font-size:14px; font-weight:bold; color:#555; }
-.hint { font-size:12px; color:#999; font-weight:normal; margin-left:10px; }
-.res-outer-v1 { position:relative; height:450px; overflow-y:auto; background:#fff; }
-.res-tbl { width:100%; border-collapse:collapse; table-layout:fixed; }
-.res-tbl tr { height:40px; border-bottom:1px solid #f8f9fc; transition:.1s; }
-.res-tbl tr:hover { background:#f1f4ff; }
-.res-tbl tr.checked { background:#fff9db !important; }
-.col-ck { width:50px; text-align:center; }
-.col-num { width:60px; text-align:center; color:#aaa; font-size:13px; border-right:1px solid #eee; }
-.col-txt { padding-left:20px; font-size:14px; color:#333; }
-input[type=checkbox] { cursor:pointer; width:16px; height:16px; }
+/* ── AI 결과 카테고리 ── */
+.ai-result-wrap { margin-bottom: 16px; }
+.category-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+.cat-tab {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: .15s;
+}
+.cat-tab.all     { background: var(--gray-200); color: var(--gray-700); }
+.cat-tab.main    { background: var(--cat-main-bg); color: var(--cat-main); }
+.cat-tab.tpo     { background: var(--cat-tpo-bg); color: var(--cat-tpo); }
+.cat-tab.feat    { background: var(--cat-feat-bg); color: var(--cat-feat); }
+.cat-tab.menu    { background: var(--cat-menu-bg); color: var(--cat-menu); }
+.cat-tab.drop    { background: var(--cat-drop-bg); color: var(--cat-drop); }
+.cat-tab.active  { border-color: currentColor; box-shadow: 0 0 0 3px rgba(0,0,0,.06); }
+
+/* ── 결과 테이블 ── */
+.result-box {
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.result-header {
+    padding: 12px 16px;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.result-header .result-title { font-weight: 700; font-size: 14px; }
+.result-header .result-count { font-size: 12px; color: var(--gray-500); margin-left: 8px; }
+.result-scroll { max-height: 480px; overflow-y: auto; }
+.result-scroll table { width: 100%; border-collapse: collapse; }
+.result-scroll th,
+.result-scroll td { padding: 9px 14px; font-size: 13px; text-align: left; border-bottom: 1px solid #f4f4f5; }
+.result-scroll th {
+    background: var(--gray-50);
+    font-weight: 700;
+    color: var(--gray-600);
+    font-size: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.result-scroll tr:hover td { background: #f7f9ff; }
+.result-scroll tr.sel td { background: #fff9db !important; }
+
+/* ── 카테고리 뱃지 ── */
+.cat-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.cb-main  { background: var(--cat-main-bg); color: var(--cat-main); }
+.cb-tpo   { background: var(--cat-tpo-bg); color: var(--cat-tpo); }
+.cb-feat  { background: var(--cat-feat-bg); color: var(--cat-feat); }
+.cb-menu  { background: var(--cat-menu-bg); color: var(--cat-menu); }
+.cb-drop  { background: var(--cat-drop-bg); color: var(--cat-drop); }
+
+/* ── AI 분석 요약 ── */
+.ai-summary {
+    background: linear-gradient(135deg, #f0f3ff 0%, #f5f0ff 100%);
+    border: 1px solid #c5d0ff;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--gray-700);
+}
+.ai-summary strong { color: var(--primary); }
+.ai-summary-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* ── 로딩 스피너 ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+    .input-grid { grid-template-columns: repeat(2, 1fr); }
+    .input-grid-2 { grid-template-columns: 1fr; }
+    .app-header { flex-direction: column; gap: 12px; text-align: center; }
+}
+@media (max-width: 540px) {
+    .input-grid { grid-template-columns: 1fr; }
+    .app-wrapper { padding: 12px 12px 40px; }
+}
 </style>
 </head>
 <body>
-<div class="app">
+<div class="app-wrapper">
 
-<!-- 탭 -->
-<div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('v2')">🤖 자동 추출 v2</button>
-    <button class="tab-btn" onclick="switchTab('v1')">🔑 수동 조합 v1</button>
+<!-- 헤더 -->
+<div class="app-header">
+    <div>
+        <h1>🗺️ 네이버 플레이스 키워드 자동 생성기</h1>
+        <p>Naver API 대량 수집 → Gemini AI 분류 → 플레이스 최적화 키워드</p>
+    </div>
+    <div class="header-badge">v2 · AI POWERED</div>
 </div>
 
-<!-- ════════════════════════════════════════
-     TAB v2 — 자동 추출
-════════════════════════════════════════ -->
-<div class="tab-panel active" id="tab-v2">
 
-    <!-- 키워드 입력 -->
-    <div class="v2-card">
-        <div class="v2-hd">📝 키워드 입력</div>
-        <div class="v2-bd">
-            <div class="grid3" style="margin-bottom:14px;">
+<!-- ══════════════════════════════════════════
+     TAB v2 — AI 자동 추출
+══════════════════════════════════════════ -->
+<div style="padding-top:16px;">
+
+    <!-- Gemini 모델 선택 -->
+    <div class="api-key-row" style="margin-bottom:16px;">
+        <label>🤖 Gemini 모델</label>
+        <select id="gemini-model" style="flex:1;padding:7px 12px;border:1px solid #fcd34d;border-radius:6px;font-size:13px;font-family:inherit;background:#fff;cursor:pointer;outline:none;">
+            <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite</option>
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+        </select>
+        <span style="font-size:12px;color:#92400e;">오류 시 다른 모델로 전환해보세요</span>
+    </div>
+
+    <!-- 입력 카드 -->
+    <div class="card">
+        <div class="card-header">
+            📝 매장 정보 입력
+            <span class="subtitle">정확할수록 AI 분류 품질이 높아집니다</span>
+        </div>
+        <div class="card-body">
+            <div class="input-grid">
                 <div>
-                    <label class="fl">지역명 <span class="badge req">필수</span></label>
-                    <textarea class="ta" id="inp-loc" placeholder="강남역&#10;역삼동&#10;강남구"></textarea>
+                    <label class="fl">지역명 <span class="badge badge-req">필수</span></label>
+                    <textarea class="ta" id="inp-loc" placeholder="강남역&#10;역삼동&#10;신논현역"></textarea>
                 </div>
                 <div>
-                    <label class="fl">업종 / 카테고리 <span class="badge req">필수</span></label>
-                    <textarea class="ta" id="inp-biz" placeholder="삼겹살&#10;고기집"></textarea>
+                    <label class="fl">업종 / 카테고리 <span class="badge badge-req">필수</span></label>
+                    <textarea class="ta" id="inp-biz" placeholder="고기집&#10;삼겹살 전문점&#10;한우 레스토랑"></textarea>
                 </div>
                 <div>
-                    <label class="fl">대표 메뉴 <span class="badge opt">선택</span></label>
-                    <textarea class="ta" id="inp-menu" placeholder="항정살&#10;갈매기살"></textarea>
+                    <label class="fl">대표 메뉴 <span class="badge badge-opt">선택</span></label>
+                    <textarea class="ta" id="inp-menu" placeholder="돼지 특수부위&#10;숙성 삼겹살&#10;살치살"></textarea>
+                </div>
+                <div>
+                    <label class="fl">매장 특징 <span class="badge badge-ai">AI 활용</span></label>
+                    <textarea class="ta" id="inp-feature" placeholder="직접 구워주는 서비스&#10;콜키지 프리&#10;룸 식당 (단체 회식)&#10;애견 동반 가능&#10;주차 2시간 무료"></textarea>
                 </div>
             </div>
-            <div class="filter-row">
-                <span style="font-weight:bold;">최소 모바일 검색량</span>
-                <input type="number" id="inp-min" value="100" min="0">
-                <span style="color:#aaa; font-size:12px;">미만 연관 키워드는 서브 키워드 추출에서 제외됩니다.</span>
+            <div class="setting-row">
+                <label>최소 모바일 검색량</label>
+                <input type="number" id="inp-min" value="0" min="0">
+                <span class="hint">0으로 설정하면 모든 연관 키워드를 수집합니다 (AI 필터링 전 최대 수집 권장)</span>
             </div>
-            <button class="btn btn-primary btn-full" onclick="runV2()">🔍 API 조회 &amp; 자동 조합 생성</button>
+            <button class="btn btn-primary btn-full" onclick="runV2()">
+                <span id="run-btn-text">🔍 API 수집 후 AI 분류 시작</span>
+            </button>
         </div>
     </div>
 
     <!-- 상태바 -->
-    <div class="v2-status" id="v2-status"></div>
+    <div class="status-bar" id="v2-status"></div>
 
-    <!-- 서브키워드 태그 -->
-    <div class="v2-card" id="subkw-card" style="display:none;">
-        <div class="v2-hd">
-            🏷️ 추출된 서브 키워드 <span id="subkw-cnt" style="font-weight:normal; font-size:12px; color:#aaa;"></span>
-            <span style="font-size:11px; color:#bbb; font-weight:normal;">클릭으로 포함 / 제외</span>
-        </div>
-        <div class="v2-bd">
-            <div class="tag-cloud" id="tag-cloud"></div>
-            <div style="margin-top:12px; display:flex; gap:8px;">
-                <button class="btn btn-outline btn-sm" onclick="allTags(true)">전체 포함</button>
-                <button class="btn btn-outline btn-sm" onclick="allTags(false)">전체 제외</button>
-                <button class="btn btn-primary btn-sm" onclick="regenV2()">✨ 조합 재생성</button>
-            </div>
+    <!-- 진행 단계 -->
+    <div class="progress-wrap" id="progress-wrap">
+        <div class="progress-steps">
+            <div class="p-step" id="pstep-1">① Naver API 수집</div>
+            <div class="p-step" id="pstep-2">② 중복 제거</div>
+            <div class="p-step" id="pstep-3">③ Gemini AI 분류</div>
+            <div class="p-step" id="pstep-4">④ 결과 출력</div>
         </div>
     </div>
 
-    <!-- 결과 -->
+    <!-- 결과 영역 -->
     <div id="v2-result"></div>
 
 </div><!-- /tab-v2 -->
 
-<!-- ════════════════════════════════════════
-     TAB v1 — 수동 조합 (원본 유지)
-════════════════════════════════════════ -->
-<div class="tab-panel" id="tab-v1">
-    <div class="save-manager">
-        <div class="save-header">📁 저장 캠페인 (서버 동기화)</div>
-        <div id="slot-grid" class="slot-grid"></div>
-    </div>
-    <div class="input-grid-v1" id="v1-input-container"></div>
-    <div class="ctrl-panel">
-        <div class="qty-row">추출 수량: <input type="number" id="limitCount" value="100" class="qty-inp" oninput="autoSave()"></div>
-        <button class="btn-v1main" onclick="generate()">⚡ 키워드 조합 생성하기</button>
-        <div id="gen-count" style="color:var(--primary); font-weight:bold; font-size:14px;">조합 대기 중...</div>
-    </div>
-    <div class="res-sec-v1">
-        <div class="res-hd-v1">
-            <div>
-                <span>📋 생성 결과</span>
-                <span class="hint">(Shift+클릭: 범위 선택 / Ctrl+C: 선택항목 복사)</span>
-            </div>
-            <label style="font-size:13px; cursor:pointer; display:flex; align-items:center; gap:5px; font-weight:bold;">
-                <input type="checkbox" id="all-check" onclick="toggleAll(this.checked)"> 전체 선택
-            </label>
-        </div>
-        <div class="res-outer-v1">
-            <table class="res-tbl"><tbody id="result-body"></tbody></table>
-        </div>
-    </div>
-</div><!-- /tab-v1 -->
 
-</div><!-- /.app -->
+
+</div><!-- /.app-wrapper -->
 
 <script>
 /* ============================================================
-   공통
+   공통 유틸
    ============================================================ */
-const sleep     = ms => new Promise(r => setTimeout(r, ms));
-const splitLines = t => t.split('\n').map(s => s.trim()).filter(Boolean);
+/* ── Gemini API 키 (고정) ── */
+const GEMINI_API_KEY = 'AIzaSyAP8CUhFByDFLuqw_JUTS0ONCBjm2FQ71w';
 
-function switchTab(t) {
-    document.querySelectorAll('.tab-btn').forEach((b, i) =>
-        b.classList.toggle('active', (i === 0 && t === 'v2') || (i === 1 && t === 'v1')));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('tab-' + t).classList.add('active');
+const sleep      = ms => new Promise(r => setTimeout(r, ms));
+const splitLines = t  => t.split('\n').map(s => s.trim()).filter(Boolean);
+
+
+function setStatus(type, msg) {
+    const el = document.getElementById('v2-status');
+    el.className = 'status-bar ' + type;
+    el.innerHTML = msg;
 }
 
-/* ============================================================
-   V2 — 상수 (불용어 / 화이트리스트)
-   ============================================================ */
-// 진짜 쓸모없는 토큰만 (의존명사·방향사·행정단위)
-// 맛집·추천·가격 등은 유효한 서브키워드이므로 제외하지 않음
-const STOPWORDS = new Set([
-    '동','구','시','군','읍','면','리',
-    '앞','옆','뒤','안','위','아래',
-    '것','거','게','데','수','줄','때','곳',
-]);
-
-const NOUN_HINTS = [
-    '주차','루프탑','단체석','룸','프라이빗','테라스','야외',
-    '포장','배달','예약','웨이팅','대기','오마카세','코스',
-    '뷔페','셀프','바베큐','바비큐','브런치','해산물','랍스터',
-    '와인','칵테일','소주','맥주','전통주','보드게임','노래방',
-    '당구','볼링','키즈','어린이','반려동물','펫','강아지','고양이',
-    '흡연','금연','와이파이','콘센트','충전','화장실',
-    '엘리베이터','장애인','유모차','주차장','발레파킹',
-];
-
-const SENT_END = /(가능|있는|없는|되는|하는|인|한|된|좋은|나쁜|높은|낮은|넓은|좁은|많은|적은|큰|작은|빠른|느린|됩니다|합니다|해요|이에요|예요|아요|어요|거리|미만|이상|이하|초과)$/;
-
-/* ============================================================
-   V2 — 프록시 설정 (naver-keyword-bot Cloud Run)
-   ============================================================ */
-const PROXY_URL = 'https://naver-keyword-bot-938928195180.asia-northeast3.run.app/relkwd';
+function setStep(n) {
+    for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById('pstep-' + i);
+        el.className = 'p-step' + (i < n ? ' done' : i === n ? ' active' : '');
+    }
+}
 
 /* ============================================================
    V2 — 상태
    ============================================================ */
-let v2SubData = [];            // {noun, rawKw, mobile, included}
-let v2Locs = [], v2Biz = [], v2Menus = [];
-let v2Combined = [];           // 최종 조합 결과
-let v2LastCk  = null;
+let v2RawList   = [];    // API 수신 원본
+let v2AiResult  = [];    // {keyword, category, reason}
+let v2Locs = [], v2Biz = [], v2Menus = [], v2Features = [];
+let v2LastCk = null;
+let currentFilter = 'all';
+let isRunning = false;
 
 /* ============================================================
-   V2 — Naver API 호출 (프록시 경유)
+   V2 — Naver API (프록시)
    ============================================================ */
-async function callAPI(hints) {
+const PROXY_URL = 'https://naver-keyword-bot-938928195180.asia-northeast3.run.app/relkwd';
+
+async function callNaverAPI(hints) {
     const qs   = new URLSearchParams({ hintKeywords: hints.join(',') });
     const resp = await fetch(`${PROXY_URL}?${qs}`);
-    if (!resp.ok) throw new Error(`API ${resp.status}: ${(await resp.text()).slice(0, 160)}`);
+    if (!resp.ok) throw new Error(`Naver API 오류 ${resp.status}: ${(await resp.text()).slice(0, 160)}`);
     return (await resp.json()).keywordList || [];
 }
 
 /* ============================================================
-   V2 — 서브 키워드 명사 추출
+   V2 — Gemini API
    ============================================================ */
-function extractNoun(kw, dynStop) {
-    kw = kw.trim();
-    for (const h of NOUN_HINTS) if (kw.includes(h)) return h;   // 화이트리스트 최우선
-
-    const stop  = new Set([...STOPWORDS, ...dynStop]);
-    const valid = w => w && w.length >= 2 && !stop.has(w) && !SENT_END.test(w);
-    const tokens = kw.split(/\s+/);
-
-    if (tokens.length === 1) return valid(kw) ? kw : null;
-
-    for (const t of tokens) {
-        const c = t.replace(/(이|가|은|는|을|를|에|의|와|과|도|만|로|으로)$/, '');
-        if (valid(c)) return c;
-    }
-    return null;
+// 사용 가능한 모델 목록 (드롭다운에서 선택)
+const GEMINI_MODELS = [
+    { id: 'gemini-3.1-flash-lite-preview', label: 'Gemini 3.1 Flash Lite' },
+    { id: 'gemini-2.5-flash',              label: 'Gemini 2.5 Flash' },
+];
+function getGeminiURL() {
+    const sel = document.getElementById('gemini-model');
+    const model = sel ? sel.value : 'gemini-3.1-flash-lite-preview';
+    return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 }
 
-function filterKwList(list, minMobile, dynStop) {
-    const seen = new Set(), out = [];
+async function callGeminiAPI(kwList, storeInfo) {
+    const apiKey = GEMINI_API_KEY;
+    if (!apiKey) throw new Error('GEMINI_API_KEY가 설정되지 않았습니다.');
 
-    // 지역 어근 — 길이 내림차순(긴 것부터 제거해야 "강남"이 "강남역"보다 먼저 제거되는 오작동 방지)
-    const locStems = new Set(v2Locs);
-    for (const loc of v2Locs) {
-        const stem = loc.replace(/(역|동|구|시|군|읍|면|리|가)$/, '');
-        if (stem.length >= 2) locStems.add(stem);
-    }
-    const locStemArr = [...locStems].sort((a, b) => b.length - a.length);
+    const kwLines = kwList.map((k, i) =>
+        `${i + 1}. ${k.relKeyword} (모바일검색량:${k.monthlyMobileQcCnt || 0})`
+    ).join('\n');
 
-    // 업종 동의어 집합 (조합 결과에 중복 방지)
-    const BIZ_WORDS = new Set([
-        ...v2Biz,
-        '고깃집','소고기집','돼지고기집','일식집','한식집',
-        '음식점','식당','밥집','분식집','이자카야',
-        '술집','주점','갈빗집','고기',
-    ]);
+    // ── 시스템 프롬프트 (반복 지시사항 분리 → 응답 속도 향상) ──
+    const systemInstruction = {
+        parts: [{ text: `당신은 네이버 플레이스 마케팅 전문가입니다.
+키워드를 아래 5개 카테고리 중 하나로 분류하세요.
+- MAIN: 지역+업종 조합의 핵심 키워드
+- TPO: 방문 목적/상황 (회식, 데이트, 모임, 기념일 등)
+- FEAT: 매장 특징/시설 (주차, 룸, 단체석, 야외, 뷰 등)
+- MENU: 메뉴/음식 관련 세부 키워드
+- DROP: 해당 매장과 무관한 키워드
 
-    // 지역 접미사 패턴 (OO역, OO동, OO구 등)
-    const IS_REGION = /^[가-힣]{2,}(역|동|구|시|군|읍|면|리)$/;
+출력 규칙:
+- 순수 JSON만 출력하라. 설명·백틱·마크다운 절대 금지.
+- 모든 문자열은 큰따옴표(")를 사용하라.
+- trailing comma 금지.
+- category는 반드시 MAIN/TPO/FEAT/MENU/DROP 중 하나.
+- 입력된 모든 키워드를 빠짐없이 완전하게 출력하라.
+스키마: {"summary":"2-3문장 한국어 요약","keywords":[{"id":1,"keyword":"...","category":"MAIN","searchVolume":12000}]}` }]
+    };
 
-    // 업종/장소 접미어 복합어 패턴 (압구정고기집→압구정, 삼겹살맛집→삼겹살)
-    const BIZ_SUFFIX_RE = new RegExp(
-        `^(.{2,}?)(${[...BIZ_WORDS, '맛집', '맛자랑'].join('|')})$`
-    );
+    const userPrompt = `[매장 정보]
+- 지역: ${storeInfo.locs.join(', ')}
+- 업종: ${storeInfo.biz.join(', ')}
+- 대표 메뉴: ${storeInfo.menus.join(', ') || '없음'}
+- 매장 특징: ${storeInfo.features.join(', ') || '없음'}
 
-    // 지역 접두 복합어 패턴 (선릉역회식, 역삼역근처 등)
-    const REGION_PREFIX_RE = /^([가-힣]{2,}(?:역|동|구|시|군|읍|면|리))(.+)$/;
+[분류할 키워드 목록]
+${kwLines}`;
 
-    // 명백히 무관한 패턴
-    const BLOCK_RE = /여행|놀만|가볼만|뭐먹지|배민|쿠팡|리뷰|후기/;
-
-    for (const item of list) {
-        const raw    = (item.relKeyword || '').trim();
-        const mobile = parseInt(item.monthlyMobileQcCnt) || 0;
-        if (!raw || mobile < minMobile) continue;
-
-        // ① 원시 토큰 중 타 지역어(역/동 suffix) 차단
-        const hasForeignRegion = raw.split(/\s+/).some(t =>
-            IS_REGION.test(t) && !locStemArr.some(s => t.includes(s))
-        );
-        if (hasForeignRegion) continue;
-
-        // ② 명사 추출
-        let noun = extractNoun(raw, dynStop);
-        if (!noun) continue;
-
-        // ③ 지역 어근 제거 — 긴 stem부터 순서대로 (강남역고기집→고기집, 강남맛집→맛집)
-        for (const stem of locStemArr) {
-            noun = noun.replace(new RegExp(stem, 'g'), '').trim();
+    const body = {
+        system_instruction: systemInstruction,
+        contents: [{ parts: [{ text: userPrompt }] }],
+        generationConfig: {
+            temperature: 0.1,
+            topP: 0.8,
+            maxOutputTokens: 16384,
+            responseMimeType: "application/json",
         }
-        // "서울" prefix 제거 (서울삼겹살→삼겹살, 서울여행→여행)
-        if (noun.startsWith('서울') && noun.length > 2) noun = noun.slice(2).trim();
+    };
 
-        // ④ 업종 접미어 분리 (삼겹살맛집→삼겹살, 압구정고기집→압구정)
-        const bm = noun.match(BIZ_SUFFIX_RE);
-        if (bm) noun = bm[1].trim();
-
-        // ⑤ 지역 접두 복합어 차단 (선릉역회식: "선릉역"이 타 지역 → 차단)
-        const rp = noun.match(REGION_PREFIX_RE);
-        if (rp && !locStemArr.some(s => rp[1].includes(s))) continue;
-
-        noun = noun.trim();
-
-        // ⑥ 최종 유효성
-        if (!noun || noun.length < 2) continue;
-        if (IS_REGION.test(noun) && !locStemArr.some(s => noun.includes(s))) continue; // 타 지역
-        if (BIZ_WORDS.has(noun)) continue;          // 업종 동의어 중복
-        if (BLOCK_RE.test(noun)) continue;           // 무관 패턴
-        if (/^(역|동|구|시|군|읍|면|리|가)$/.test(noun)) continue; // 접미사 단독
-        if (noun.length > 12) continue;             // 지나치게 긴 복합어
-        if (seen.has(noun)) continue;
-
-        seen.add(noun);
-        out.push({ noun, rawKw: raw, mobile, included: true });
+    // 429 시 최대 3회 자동 재시도
+    let resp, retries = 0;
+    while (true) {
+        resp = await fetch(`${getGeminiURL()}?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        if (resp.status === 429 && retries < 3) {
+            retries++;
+            const retryAfter = parseInt(resp.headers.get('Retry-After') || '65') + 5;
+            for (let t = retryAfter; t > 0; t--) {
+                setStatus('warning', `⏳ Gemini 요청 한도 초과 — ${t}초 후 자동 재시도 (${retries}/3)...`);
+                await sleep(1000);
+            }
+            continue;
+        }
+        break;
     }
-    return out.sort((a, b) => b.mobile - a.mobile);
+
+    if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        const msg = err?.error?.message || '알 수 없는 오류';
+        if (resp.status === 429) throw new Error('⏱ Gemini 무료 한도 초과(429). 잠시 후 다시 시도하거나 다른 모델을 선택해보세요.');
+        if (resp.status === 404) throw new Error('❌ 모델을 찾을 수 없습니다(404). 다른 Gemini 모델을 선택해보세요.\n상세: ' + msg.slice(0, 100));
+        throw new Error('Gemini API 오류 ' + resp.status + ': ' + msg);
+    }
+
+    const data = await resp.json();
+
+    // finishReason 확인 — MAX_TOKENS면 응답이 잘린 것
+    const finishReason = data?.candidates?.[0]?.finishReason;
+    if (finishReason === 'MAX_TOKENS') {
+        throw new Error('응답이 토큰 한도로 잘렸습니다. 배치 크기가 너무 큽니다.');
+    }
+
+    // ── 파싱 (5단계 폴백) ──
+    let parsed;
+    try {
+        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? JSON.stringify(data);
+
+        // 1단계: 코드블록·trailing comma 정제
+        let cleaned = raw
+            .replace(/^```(?:json)?\s*/i, '')
+            .replace(/\s*```\s*$/, '')
+            .replace(/,\s*([\}\]])/g, '$1')
+            .trim();
+
+        // 2단계: 최외곽 {} 추출
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('JSON 블록 없음: ' + cleaned.slice(0, 200));
+        cleaned = jsonMatch[0];
+
+        // 3단계: 직접 파싱
+        try {
+            parsed = JSON.parse(cleaned);
+        } catch (e1) {
+            // 4단계: 제어문자 이스케이프 후 재시도
+            const sanitized = cleaned
+                .replace(/[\u0000-\u001F\u007F]/g, m =>
+                    ({ '\n': '\\n', '\r': '\\r', '\t': '\\t' }[m] || ''))
+                .replace(/,\s*([\}\]])/g, '$1');
+            try {
+                parsed = JSON.parse(sanitized);
+            } catch (e2) {
+                // 5단계: keywords 배열 부분 추출
+                const summaryMatch = cleaned.match(/"summary"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+                const kwStart = cleaned.indexOf('"keywords"');
+                if (kwStart === -1) throw new Error('keywords 키 없음: ' + e2.message);
+                const arrStart = cleaned.indexOf('[', kwStart);
+                if (arrStart === -1) throw new Error('keywords 배열 시작 없음');
+                const partialArr = cleaned.slice(arrStart);
+                const objects = [];
+                const objRe = /\{[^{}]*"id"\s*:\s*\d+[^{}]*\}/g;
+                let m2;
+                while ((m2 = objRe.exec(partialArr)) !== null) {
+                    try { objects.push(JSON.parse(m2[0])); } catch (_) {}
+                }
+                if (objects.length === 0) throw new Error('파싱 최종 실패: ' + e2.message);
+                parsed = { summary: summaryMatch ? summaryMatch[1] : '', keywords: objects };
+                setStatus('warning', `⚠️ JSON 일부 손상 — ${objects.length}개 키워드만 복구했습니다.`);
+            }
+        }
+    } catch (parseErr) {
+        throw new Error('Gemini 응답 파싱 실패: ' + parseErr.message
+            + '\n원문 앞부분: ' + JSON.stringify(data).slice(0, 300));
+    }
+
+    if (!Array.isArray(parsed.keywords)) {
+        throw new Error('Gemini 응답에 keywords 배열이 없습니다: ' + JSON.stringify(parsed).slice(0, 200));
+    }
+
+    return parsed;
 }
 
 /* ============================================================
-   V2 — 검색 의도(Intent) 기반 조합 엔진
+   V2 — 배치 Gemini 호출 (500개 초과시 분할)
    ============================================================ */
-function combine3(locs, biz, subs, menus) {
-    const seen = new Set(), res = [];
-    const add = (kw, pat) => {
-        kw = kw.trim().replace(/\s+/g, ' ');
-        if (kw && !seen.has(kw)) { seen.add(kw); res.push({ keyword: kw, pattern: pat }); }
-    };
-    for (const loc of locs) {
-        // 패턴1: 기본형
-        for (const b of biz)  add(`${loc} ${b}`, '패턴1(메인)');
-        for (const m of menus) add(`${loc} ${m}`, '패턴1(메뉴)');
+async function callGeminiBatched(dedupedList, storeInfo) {
+    const BATCH       = 50;   // 배치당 키워드 수 (Promise.all 병렬 처리)
+    const CONCURRENCY = 3;    // 무료 티어 RPM 안전선: 동시 요청 3개
 
-        // 패턴2: 특징형 — {지역} + {서브} + {업종} (의도형 롱테일)
-        for (const s of subs) {
-            if (s.length > 8) continue;
-            for (const b of biz) add(`${loc} ${s} ${b}`, '패턴2(특징)');
-            add(`${loc} ${s}`, '패턴2(서비스)');     // 서브 단독 조합도 유지
-        }
-
-        // 패턴3: 심화형 — {지역} + {메뉴} + {서브}
-        for (const m of menus) {
-            for (const s of subs) add(`${loc} ${m} ${s}`, '패턴3(심화)');
-        }
+    // 50개씩 청크 분할
+    const chunks = [];
+    for (let i = 0; i < dedupedList.length; i += BATCH) {
+        chunks.push(dedupedList.slice(i, i + BATCH));
     }
-    return res;
+
+    setStatus('info', `🤖 Gemini AI 병렬 분류 시작 — ${chunks.length}개 배치 (배치당 ${BATCH}개, 동시 ${CONCURRENCY}개)`);
+
+    let mergedKeywords = [];
+    let lastSummary    = '';
+    let done           = 0;
+
+    // CONCURRENCY 단위로 묶어서 Promise.all 병렬 실행
+    for (let i = 0; i < chunks.length; i += CONCURRENCY) {
+        const group = chunks.slice(i, i + CONCURRENCY);
+        const results = await Promise.all(
+            group.map(chunk => callGeminiAPI(chunk, storeInfo))
+        );
+        for (const result of results) {
+            mergedKeywords.push(...(result.keywords || []));
+            lastSummary = result.summary || lastSummary;
+        }
+        done += group.length;
+        setStatus('info', `🤖 AI 분류 진행 중... [${done}/${chunks.length}배치 완료 — ${mergedKeywords.length}개 처리됨]`);
+        // 다음 그룹 전 짧은 딜레이 (Rate Limit 보호)
+        if (i + CONCURRENCY < chunks.length) await sleep(500);
+    }
+
+    // ID 재정렬
+    mergedKeywords = mergedKeywords.map((k, idx) => ({ ...k, id: idx + 1 }));
+    return { summary: lastSummary, keywords: mergedKeywords };
 }
 
 /* ============================================================
    V2 — 메인 실행
    ============================================================ */
 async function runV2() {
-    v2Locs  = splitLines(document.getElementById('inp-loc').value);
-    v2Biz   = splitLines(document.getElementById('inp-biz').value);
-    v2Menus = splitLines(document.getElementById('inp-menu').value);
-    const minM = parseInt(document.getElementById('inp-min').value) || 100;
+    if (isRunning) return;
+
+    v2Locs     = splitLines(document.getElementById('inp-loc').value);
+    v2Biz      = splitLines(document.getElementById('inp-biz').value);
+    v2Menus    = splitLines(document.getElementById('inp-menu').value);
+    v2Features = splitLines(document.getElementById('inp-feature').value);
+    const minM = parseInt(document.getElementById('inp-min').value) || 0;
 
     if (!v2Locs.length || !v2Biz.length)
         return setStatus('error', '❌ 지역명과 업종은 필수 입력입니다.');
+
+    // API 키는 코드에 고정
+
+    isRunning = true;
+    const runBtn = document.getElementById('run-btn-text');
+    runBtn.innerHTML = '<span class="spinner"></span> 처리 중...';
+
+    document.getElementById('v2-result').innerHTML = '';
+    document.getElementById('progress-wrap').classList.add('show');
 
     // 시드 키워드 구성
     const seeds = [];
@@ -444,120 +789,215 @@ async function runV2() {
         for (const b of v2Biz)   seeds.push(`${l} ${b}`);
         for (const m of v2Menus) seeds.push(`${l} ${m}`);
     }
-
-    // UI 초기화
-    document.getElementById('subkw-card').style.display = 'none';
-    document.getElementById('v2-result').innerHTML = '';
-
+    // 지역+업종 단독도 추가
+    for (const b of v2Biz)   seeds.push(b);
+    const uniqueSeeds = [...new Set(seeds)];
     const chunks = [];
-    for (let i = 0; i < seeds.length; i += 5) chunks.push(seeds.slice(i, i + 5));
+    for (let i = 0; i < uniqueSeeds.length; i += 5) chunks.push(uniqueSeeds.slice(i, i + 5));
+
+    // ─ STEP 1: Naver API 수집 ─
+    setStep(1);
+    setStatus('info', `⏳ Naver API 수집 시작... 시드 키워드 ${uniqueSeeds.length}개 / ${chunks.length}개 배치`);
 
     const allKwList = [];
     try {
         for (let i = 0; i < chunks.length; i++) {
-            setStatus('info', `⏳ API 조회 중... [${i + 1}/${chunks.length}]  ${chunks[i].join(', ')}`);
-            allKwList.push(...await callAPI(chunks[i]));
-            if (i < chunks.length - 1) await sleep(500);
+            setStatus('info', `⏳ Naver API 수집 중... [${i + 1}/${chunks.length}] ${chunks[i].join(', ')}`);
+            allKwList.push(...await callNaverAPI(chunks[i]));
+            if (i < chunks.length - 1) await sleep(400);
         }
     } catch (err) {
-        setStatus('error', `❌ ${err.message}`);
+        setStatus('error', `❌ Naver API 오류: ${err.message}`);
+        resetBtn();
         return;
     }
 
-    processResults(allKwList, minM);
-}
+    // ─ STEP 2: 중복 제거 (최소 필터링) ─
+    setStep(2);
+    setStatus('info', `🔄 중복 제거 중... (수집: ${allKwList.length}개)`);
+    await sleep(200);
 
-function processResults(list, minM) {
-    if (!list.length) {
-        setStatus('error', '❌ API 응답이 비어 있습니다. 시드 키워드를 확인하세요.');
+    const seen = new Set();
+    const dedupedList = [];
+    for (const item of allKwList) {
+        const kw  = (item.relKeyword || '').trim();
+        const mob = parseInt(item.monthlyMobileQcCnt) || 0;
+        if (!kw || seen.has(kw)) continue;
+        if (mob < minM) continue;      // 최소 검색량 필터 (기본값 0 = 전체)
+        seen.add(kw);
+        dedupedList.push({ relKeyword: kw, monthlyMobileQcCnt: mob });
+    }
+
+    v2RawList = dedupedList;
+    setStatus('info', `✅ 중복 제거 완료 — ${allKwList.length}개 수집 → ${dedupedList.length}개 정리`);
+
+    // ─ STEP 3: Gemini AI 분류 ─
+    setStep(3);
+    let geminiResult;
+    try {
+        setStatus('info', `🤖 Gemini AI 분류 중... (${dedupedList.length}개 키워드 분석)`);
+        const storeInfo = { locs: v2Locs, biz: v2Biz, menus: v2Menus, features: v2Features };
+        geminiResult = await callGeminiBatched(dedupedList, storeInfo);
+    } catch (err) {
+        setStatus('error', `❌ Gemini AI 오류: ${err.message}`);
+        resetBtn();
         return;
     }
-    const dynStop = new Set([...v2Locs, ...v2Biz, ...v2Menus]);
-    v2SubData = filterKwList(list, minM, dynStop);
-    renderTags();
-    const subs = v2SubData.filter(d => d.included).map(d => d.noun);
-    v2Combined = combine3(v2Locs, v2Biz, subs, v2Menus);
-    renderResult();
+
+    v2AiResult = geminiResult.keywords || [];
+
+    // ─ STEP 4: 결과 렌더링 ─
+    setStep(4);
+    renderV2Result(geminiResult);
     setStatus('success',
-        `✅ 완료 — API 수신 ${list.length}개 → 서브키워드 ${v2SubData.length}개 추출 → 조합 ${v2Combined.length}개 생성`);
+        `✅ 완료 — Naver 수집 ${allKwList.length}개 → 정리 ${dedupedList.length}개 → AI 분류 ${v2AiResult.length}개`);
+    resetBtn();
+}
+
+function resetBtn() {
+    isRunning = false;
+    document.getElementById('run-btn-text').innerHTML = '🔍 API 수집 후 AI 분류 시작';
 }
 
 /* ============================================================
-   V2 — 서브키워드 태그 렌더링
+   V2 — 결과 렌더링
    ============================================================ */
-function renderTags() {
-    const cloud = document.getElementById('tag-cloud');
-    document.getElementById('subkw-card').style.display = '';
-    cloud.innerHTML = '';
-    v2SubData.forEach(d => {
-        const tag = document.createElement('div');
-        tag.className = 'kw-tag' + (d.included ? '' : ' off');
-        tag.innerHTML = `${d.noun} <span class="cnt">${d.mobile.toLocaleString()}</span>`;
-        tag.onclick = () => { d.included = !d.included; tag.classList.toggle('off', !d.included); };
-        cloud.appendChild(tag);
-    });
-    document.getElementById('subkw-cnt').textContent = `(${v2SubData.length}개)`;
-}
-
-function allTags(on) { v2SubData.forEach(d => d.included = on); renderTags(); }
-
-function regenV2() {
-    const subs = v2SubData.filter(d => d.included).map(d => d.noun);
-    v2Combined = combine3(v2Locs, v2Biz, subs, v2Menus);
-    renderResult();
-    setStatus('success', `✅ 재생성 완료 — ${v2Combined.length}개`);
-}
-
-/* ============================================================
-   V2 — 결과 테이블
-   ============================================================ */
-const PAT_META = {
-    '패턴1(메인)':  ['p1', '메인'],
-    '패턴1(메뉴)':  ['p1', '메뉴'],
-    '패턴2(특징)':  ['p2', '특징'],
-    '패턴2(서비스)':['p2', '서비스'],
-    '패턴3(심화)':  ['p3', '심화'],
+const CAT_META = {
+    MAIN: { cls: 'cb-main', label: '메인',   tabCls: 'main',  name: '🔵 메인 키워드' },
+    TPO:  { cls: 'cb-tpo',  label: 'TPO',    tabCls: 'tpo',   name: '🟢 방문목적(TPO)' },
+    FEAT: { cls: 'cb-feat', label: '시설/특징', tabCls: 'feat', name: '🟠 시설·특징' },
+    MENU: { cls: 'cb-menu', label: '메뉴',   tabCls: 'menu',  name: '🟣 메뉴 특화' },
+    DROP: { cls: 'cb-drop', label: '제외',   tabCls: 'drop',  name: '⚫ 제외 키워드' },
 };
 
-function renderResult() {
-    const rows = v2Combined.map((item, i) => {
-        const [cls, lbl] = PAT_META[item.pattern] || ['p1', item.pattern];
+function renderV2Result(geminiResult) {
+    currentFilter = 'all';
+    const allKws = v2AiResult;
+
+    // 카테고리별 카운트
+    const counts = { all: allKws.length, MAIN: 0, TPO: 0, FEAT: 0, MENU: 0, DROP: 0 };
+    allKws.forEach(k => { if (counts[k.category] !== undefined) counts[k.category]++; });
+
+    // 카테고리 탭
+    const tabsHTML = `
+        <div class="category-tabs" id="cat-tabs">
+            <div class="cat-tab all active" onclick="filterCat('all')">전체 <b>${counts.all}</b></div>
+            <div class="cat-tab main" onclick="filterCat('MAIN')">🔵 메인 <b>${counts.MAIN}</b></div>
+            <div class="cat-tab tpo"  onclick="filterCat('TPO')">🟢 TPO <b>${counts.TPO}</b></div>
+            <div class="cat-tab feat" onclick="filterCat('FEAT')">🟠 시설·특징 <b>${counts.FEAT}</b></div>
+            <div class="cat-tab menu" onclick="filterCat('MENU')">🟣 메뉴 <b>${counts.MENU}</b></div>
+            <div class="cat-tab drop" onclick="filterCat('DROP')">⚫ 제외 <b>${counts.DROP}</b></div>
+        </div>`;
+
+    // AI 요약
+    const summaryHTML = geminiResult.summary ? `
+        <div class="ai-summary">
+            <div class="ai-summary-title">🤖 AI 분석 요약</div>
+            ${geminiResult.summary}
+        </div>` : '';
+
+    // 원본 데이터 뷰어
+    const rawItemsHTML = v2RawList.map(k =>
+        `<div class="raw-item"><span>${k.relKeyword}</span><span class="raw-vol">${Number(k.monthlyMobileQcCnt).toLocaleString()}</span></div>`
+    ).join('');
+
+    const rawViewHTML = `
+        <div class="raw-collapse" id="raw-collapse">
+            <div class="raw-collapse-header" onclick="toggleRaw()">
+                📦 Naver 수집 원본 데이터 (${v2RawList.length}개) — 클릭하여 펼치기/접기
+                <span id="raw-arrow">▼</span>
+            </div>
+            <div class="raw-collapse-body">
+                <div class="raw-data-grid">${rawItemsHTML}</div>
+            </div>
+        </div>`;
+
+    // 결과 테이블
+    const tableHTML = buildTable(allKws);
+
+    document.getElementById('v2-result').innerHTML = `
+        ${summaryHTML}
+        ${rawViewHTML}
+        <div class="ai-result-wrap">
+            ${tabsHTML}
+            <div class="result-box" id="result-box">
+                <div class="result-header">
+                    <div>
+                        <span class="result-title">📋 AI 분류 결과</span>
+                        <span class="result-count" id="result-count">${allKws.length}개</span>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        <label style="font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;font-weight:bold;">
+                            <input type="checkbox" id="v2-all" onchange="v2AllToggle(this.checked)"> 전체
+                        </label>
+                        <button class="btn btn-outline btn-sm" onclick="v2Copy()">📋 복사</button>
+                        <button class="btn btn-success btn-sm" onclick="v2CSV()">⬇️ CSV</button>
+                    </div>
+                </div>
+                <div class="result-scroll" id="result-table-wrap">
+                    ${tableHTML}
+                </div>
+            </div>
+        </div>`;
+}
+
+function buildTable(kws) {
+    const filtered = currentFilter === 'all' ? kws : kws.filter(k => k.category === currentFilter);
+    document.getElementById('result-count') && (document.getElementById('result-count').textContent = filtered.length + '개');
+
+    const rows = filtered.map((k, i) => {
+        const meta = CAT_META[k.category] || CAT_META.DROP;
         return `<tr id="vr${i}">
-            <td style="width:40px;text-align:center;"><input type="checkbox" class="v2ck" data-i="${i}" onclick="v2Ck(event,this)"></td>
-            <td style="width:46px;color:#bbb;font-size:12px;">${i + 1}</td>
-            <td>${item.keyword}</td>
-            <td><span class="pbadge ${cls}">${lbl}</span></td>
+            <td style="width:40px;text-align:center;"><input type="checkbox" class="v2ck" data-i="${i}" data-kw="${escHtml(k.keyword)}" onclick="v2Ck(event,this)"></td>
+            <td style="width:44px;color:#bbb;font-size:12px;">${i + 1}</td>
+            <td><strong>${escHtml(k.keyword)}</strong></td>
+            <td style="width:80px;text-align:right;color:var(--gray-600);font-size:12px;">${Number(k.searchVolume || 0).toLocaleString()}</td>
+            <td style="width:110px;"><span class="cat-badge ${meta.cls}">${meta.label}</span></td>
         </tr>`;
     }).join('');
 
-    document.getElementById('v2-result').innerHTML = `
-    <div class="result-box">
-        <div class="result-hd">
-            <div>
-                <b>📋 조합 결과</b>
-                <span style="font-size:12px;color:#888;margin-left:8px;">${v2Combined.length}개</span>
-                <span style="font-size:11px;color:#bbb;margin-left:6px;">(Shift+클릭: 범위 선택)</span>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-                <label style="font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;font-weight:bold;">
-                    <input type="checkbox" id="v2-all" onchange="v2AllToggle(this.checked)"> 전체
-                </label>
-                <button class="btn btn-outline btn-sm" onclick="v2Copy()">📋 복사</button>
-                <button class="btn btn-success btn-sm" onclick="v2CSV()">⬇️ CSV</button>
-            </div>
-        </div>
-        <div class="result-scroll">
-            <table>
-                <thead><tr>
-                    <th style="width:40px;"></th><th style="width:46px;">번호</th>
-                    <th>키워드</th><th style="width:120px;">패턴</th>
-                </tr></thead>
-                <tbody>${rows}</tbody>
-            </table>
-        </div>
-    </div>`;
+    return `<table>
+        <thead><tr>
+            <th style="width:40px;"></th>
+            <th style="width:44px;">번호</th>
+            <th>키워드</th>
+            <th style="width:80px;text-align:right;">검색량</th>
+            <th style="width:110px;">카테고리</th>
+        </tr></thead>
+        <tbody>${rows || '<tr><td colspan="5" style="text-align:center;padding:30px;color:#aaa;">해당 카테고리의 키워드가 없습니다.</td></tr>'}</tbody>
+    </table>`;
 }
 
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function filterCat(cat) {
+    currentFilter = cat;
+    v2LastCk = null;
+    // 탭 active 업데이트
+    document.querySelectorAll('.cat-tab').forEach(el => {
+        const elCat = el.getAttribute('onclick').match(/'([^']+)'/)?.[1];
+        el.classList.toggle('active', elCat === cat);
+    });
+    const wrap = document.getElementById('result-table-wrap');
+    if (wrap) {
+        wrap.innerHTML = buildTable(v2AiResult);
+        document.getElementById('result-count').textContent =
+            (currentFilter === 'all' ? v2AiResult : v2AiResult.filter(k => k.category === cat)).length + '개';
+    }
+}
+
+function toggleRaw() {
+    const el = document.getElementById('raw-collapse');
+    const ar = document.getElementById('raw-arrow');
+    el.classList.toggle('open');
+    ar.textContent = el.classList.contains('open') ? '▲' : '▼';
+}
+
+/* ============================================================
+   V2 — 체크 / 복사 / CSV
+   ============================================================ */
 function v2Ck(e, cb) {
     const all = [...document.querySelectorAll('.v2ck')];
     if (e.shiftKey && v2LastCk) {
@@ -574,194 +1014,33 @@ function v2AllToggle(on) {
     document.querySelectorAll('.v2ck').forEach(cb => { cb.checked = on; v2RowSel(cb); });
 }
 function v2SelKws() {
-    return [...document.querySelectorAll('.v2ck:checked')].map(cb => v2Combined[+cb.dataset.i]);
+    return [...document.querySelectorAll('.v2ck:checked')].map(cb => cb.dataset.kw);
 }
 function v2Copy() {
     const sel = v2SelKws();
     if (!sel.length) { alert('선택된 항목이 없습니다.'); return; }
-    navigator.clipboard.writeText(sel.map(g => g.keyword).join('\n'));
-    alert(`${sel.length}개 복사 완료!`);
+    navigator.clipboard.writeText(sel.join('\n')).then(() => alert(`${sel.length}개 복사 완료!`));
 }
 function v2CSV() {
+    const filtered = currentFilter === 'all' ? v2AiResult : v2AiResult.filter(k => k.category === currentFilter);
     const sel = v2SelKws();
-    const src = sel.length ? sel : v2Combined;
-    const csv = [['키워드','패턴'], ...src.map(g => [g.keyword, g.pattern])]
+    let src;
+    if (sel.length) {
+        const selSet = new Set(sel);
+        src = filtered.filter(k => selSet.has(k.keyword));
+    } else {
+        src = filtered;
+    }
+    const csv = [['키워드','카테고리','검색량(모바일)'],
+        ...src.map(k => [k.keyword, k.category, k.searchVolume || 0])]
         .map(r => r.map(c => `"${c}"`).join(',')).join('\n');
     const a = Object.assign(document.createElement('a'), {
-        href: URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })),
-        download: `조합키워드_${new Date().toISOString().slice(0, 10)}.csv`,
+        href: URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv' })),
+        download: `플레이스키워드_${new Date().toISOString().slice(0, 10)}.csv`,
     });
     a.click();
 }
 
-function setStatus(type, msg) {
-    const el = document.getElementById('v2-status');
-    el.className = 'v2-status ' + type;
-    el.textContent = msg;
-}
-
-/* ============================================================
-   V1 — 수동 조합기 (원본 로직 완전 보존)
-   ============================================================ */
-let currentSlot = 1, lastChecked = null, generatedKeywords = [], isInitialLoading = false;
-
-// 입력 카드 생성
-const labelsV1 = ['지역', '업체명', '서비스', '의도'];
-const v1Container = document.getElementById('v1-input-container');
-labelsV1.forEach((L, i) => {
-    v1Container.innerHTML += `
-    <div class="card-v1">
-        <div class="card-hd-v1">
-            <strong>${i + 1}. ${L}</strong>
-            <div class="hdr-ctrl">
-                <select id="pos${i}" class="pos-sel" onchange="autoSave()">
-                    <option value="any">랜덤 위치</option>
-                    <option value="0">1번 고정</option><option value="1">2번 고정</option>
-                    <option value="2">3번 고정</option><option value="3" ${i===3?'selected':''}>4번 고정</option>
-                </select>
-                <label class="must-chk"><input type="checkbox" id="must${i}" onchange="autoSave()"> 필수</label>
-            </div>
-        </div>
-        <div class="card-bd-v1">
-            <textarea id="words${i}" class="words" oninput="autoSave()" placeholder="${L} 키워드를 줄바꿈으로 입력하세요..."></textarea>
-        </div>
-    </div>`;
-});
-
-function createSlots() {
-    const grid = document.getElementById('slot-grid');
-    grid.innerHTML = '';
-    for (let i = 1; i <= 5; i++) {
-        grid.innerHTML += `
-        <div class="slot-box">
-            <button id="slot_btn_${i}" class="slot-btn" onclick="switchSlot(${i})">${i}</button>
-            <input type="text" id="slot_name_${i}" class="slot-name" value="캠페인 ${i}" oninput="autoSave()" placeholder="이름">
-        </div>`;
-    }
-}
-
-function autoSave() {
-    if (isInitialLoading) return;
-    const data = { limit: document.getElementById('limitCount').value, groups: [] };
-    for (let i = 0; i < 4; i++) {
-        data.groups.push({
-            words: document.getElementById('words' + i).value,
-            must:  document.getElementById('must' + i).checked,
-            pos:   document.getElementById('pos' + i).value,
-        });
-    }
-    const slotNames = {};
-    for (let i = 1; i <= 5; i++) slotNames[i] = document.getElementById('slot_name_' + i).value;
-    if (window.parent?.saveSeoData) window.parent.saveSeoData(currentSlot, data, slotNames);
-}
-
-function switchSlot(n) {
-    currentSlot = n;
-    document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('slot_btn_' + n).classList.add('active');
-    if (window.parent?.loadSeoData) window.parent.loadSeoData(n);
-}
-
-window.applyServerData = function(slotNum, data, slotNames) {
-    isInitialLoading = true;
-    if (slotNames) for (let i = 1; i <= 5; i++) {
-        if (slotNames[i]) document.getElementById('slot_name_' + i).value = slotNames[i];
-    }
-    if (data) {
-        document.getElementById('limitCount').value = data.limit || 100;
-        data.groups.forEach((g, i) => {
-            document.getElementById('words' + i).value = g.words || '';
-            document.getElementById('must' + i).checked = g.must || false;
-            document.getElementById('pos' + i).value = g.pos || (i === 3 ? '3' : 'any');
-        });
-    } else {
-        for (let i = 0; i < 4; i++) {
-            document.getElementById('words' + i).value = '';
-            document.getElementById('must' + i).checked = false;
-            document.getElementById('pos' + i).value = i === 3 ? '3' : 'any';
-        }
-    }
-    isInitialLoading = false;
-};
-
-function generate() {
-    const limit = parseInt(document.getElementById('limitCount').value);
-    const groups = [];
-    for (let i = 0; i < 4; i++) {
-        groups.push({
-            data: document.getElementById('words' + i).value.split('\n').map(s => s.trim()).filter(x => x),
-            must: document.getElementById('must' + i).checked,
-            pos:  document.getElementById('pos' + i).value,
-        });
-    }
-    const pool = [];
-    function build(idx, cur) {
-        if (idx === 4) {
-            for (let i = 0; i < 4; i++) if (groups[i].must && !cur.some(c => c.gid === i)) return;
-            if (!cur.length) return;
-            const res = new Array(cur.length).fill(null), flex = [];
-            cur.forEach(item => {
-                const p = groups[item.gid].pos;
-                if (p !== 'any' && parseInt(p) < res.length) res[parseInt(p)] = item.val;
-                else flex.push(item.val);
-            });
-            for (let i = 0; i < res.length; i++) if (!res[i]) res[i] = flex.shift();
-            pool.push(res.join(' '));
-            return;
-        }
-        groups[idx].data.forEach(w => build(idx + 1, [...cur, { gid: idx, val: w }]));
-        if (!groups[idx].must) build(idx + 1, cur);
-    }
-    build(0, []);
-    generatedKeywords = [...new Set(pool)].sort(() => Math.random() - 0.5).slice(0, limit);
-    const tbody = document.getElementById('result-body');
-    tbody.innerHTML = '';
-    generatedKeywords.forEach((kw, i) => {
-        tbody.innerHTML += `
-        <tr id="row_${i}">
-            <td class="col-ck"><input type="checkbox" class="kw-check" data-idx="${i}" onclick="handleCheck(event, this)"></td>
-            <td class="col-num">${i + 1}</td>
-            <td class="col-txt">${kw}</td>
-        </tr>`;
-    });
-    document.getElementById('gen-count').innerText = `✨ ${generatedKeywords.length}개의 키워드가 생성되었습니다!`;
-    document.getElementById('all-check').checked = false;
-}
-
-function handleCheck(e, cb) {
-    const cbs = [...document.querySelectorAll('.kw-check')];
-    if (e.shiftKey && lastChecked) {
-        const a = cbs.indexOf(lastChecked), b = cbs.indexOf(cb);
-        cbs.slice(Math.min(a, b), Math.max(a, b) + 1).forEach(c => { c.checked = lastChecked.checked; updateRowClass(c); });
-    }
-    lastChecked = cb;
-    updateRowClass(cb);
-}
-function updateRowClass(cb) {
-    const row = document.getElementById('row_' + cb.getAttribute('data-idx'));
-    if (row) row.classList.toggle('checked', cb.checked);
-}
-function toggleAll(on) {
-    document.querySelectorAll('.kw-check').forEach(cb => { cb.checked = on; updateRowClass(cb); });
-}
-
-document.addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-        const sel = [];
-        document.querySelectorAll('.kw-check:checked').forEach(cb =>
-            sel.push(generatedKeywords[cb.getAttribute('data-idx')]));
-        if (sel.length) {
-            e.preventDefault();
-            const ta = document.createElement('textarea');
-            ta.value = sel.join('\n');
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
-            alert(sel.length + '개의 키워드가 복사되었습니다!');
-        }
-    }
-});
 
 /* ============================================================
    INIT
