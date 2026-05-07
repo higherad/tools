@@ -254,14 +254,12 @@ function switchTab(t) {
 /* ============================================================
    V2 — 상수 (불용어 / 화이트리스트)
    ============================================================ */
+// 진짜 쓸모없는 토큰만 (의존명사·방향사·행정단위)
+// 맛집·추천·가격 등은 유효한 서브키워드이므로 제외하지 않음
 const STOPWORDS = new Set([
-    '맛집','추천','맛있는','유명','인기','최고','맛','음식',
-    '식당','카페','가게','업소','음식점','한식','양식','중식','일식','분식',
-    '치킨','피자','버거','근처','주변','앞','옆','뒤','안',
-    '동네','지역','우리','동','구','시',
-    '좋은','깔끔한','깨끗한','넓은','작은','큰','특별한',
-    '할인','이벤트','프로모션','쿠폰','포인트','서비스',
-    '가격','금액','비용','요금','가성비','가심비',
+    '동','구','시','군','읍','면','리',
+    '앞','옆','뒤','안','위','아래',
+    '것','거','게','데','수','줄','때','곳',
 ]);
 
 const NOUN_HINTS = [
@@ -395,13 +393,18 @@ async function runV2() {
 }
 
 function processResults(list, minM) {
+    if (!list.length) {
+        setStatus('error', '❌ API 응답이 비어 있습니다. 시드 키워드를 확인하세요.');
+        return;
+    }
     const dynStop = new Set([...v2Locs, ...v2Biz, ...v2Menus]);
     v2SubData = filterKwList(list, minM, dynStop);
     renderTags();
     const subs = v2SubData.filter(d => d.included).map(d => d.noun);
     v2Combined = combine3(v2Locs, v2Biz, subs, v2Menus);
     renderResult();
-    setStatus('success', `✅ 완료 — 서브키워드 ${v2SubData.length}개 / 조합 ${v2Combined.length}개 생성`);
+    setStatus('success',
+        `✅ 완료 — API 수신 ${list.length}개 → 서브키워드 ${v2SubData.length}개 추출 → 조합 ${v2Combined.length}개 생성`);
 }
 
 /* ============================================================
