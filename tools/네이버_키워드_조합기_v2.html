@@ -451,77 +451,6 @@ textarea.ta.tall { height: 140px; }
     animation: spin .7s linear infinite;
 }
 
-/* ── 사용 설명서 모달 ── */
-.modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.45);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
-.modal-overlay.open { display: flex; }
-.modal-box {
-    background: #fff;
-    border-radius: 14px;
-    width: 100%;
-    max-width: 640px;
-    max-height: 85vh;
-    overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,.2);
-}
-.modal-head {
-    position: sticky;
-    top: 0;
-    background: linear-gradient(135deg, var(--primary) 0%, #5c7cfa 100%);
-    color: #fff;
-    padding: 18px 24px;
-    border-radius: 14px 14px 0 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.modal-head h2 { font-size: 16px; font-weight: 900; }
-.modal-close {
-    background: rgba(255,255,255,.2);
-    border: none;
-    color: #fff;
-    font-size: 18px;
-    width: 30px; height: 30px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: .15s;
-}
-.modal-close:hover { background: rgba(255,255,255,.35); }
-.modal-body { padding: 24px; }
-.modal-section { margin-bottom: 22px; }
-.modal-section:last-child { margin-bottom: 0; }
-.modal-section h3 {
-    font-size: 13px;
-    font-weight: 900;
-    color: var(--primary);
-    margin-bottom: 10px;
-    padding-bottom: 6px;
-    border-bottom: 2px solid var(--primary-bg);
-}
-.modal-section p, .modal-section li {
-    font-size: 13px;
-    color: var(--gray-700);
-    line-height: 1.8;
-}
-.modal-section ul { padding-left: 18px; }
-.modal-tag {
-    display: inline-block;
-    padding: 1px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 700;
-    margin-right: 4px;
-}
-
 /* ── 반응형 ── */
 @media (max-width: 768px) {
     .input-grid { grid-template-columns: repeat(2, 1fr); }
@@ -546,68 +475,6 @@ textarea.ta.tall { height: 140px; }
     <button onclick="openManual()" style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;transition:.15s;" onmouseover="this.style.background='rgba(255,255,255,.3)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">📖 사용 설명서</button>
 </div>
 
-<!-- 사용 설명서 모달 -->
-<div class="modal-overlay" id="manual-modal" onclick="closeManualOutside(event)">
-    <div class="modal-box">
-        <div class="modal-head">
-            <h2>📖 사용 설명서</h2>
-            <button class="modal-close" onclick="closeManual()">✕</button>
-        </div>
-        <div class="modal-body">
-
-            <div class="modal-section">
-                <h3>🏪 1단계 — 업종 카테고리 선택</h3>
-                <ul>
-                    <li><b>음식점/카페</b> — 맛집·메뉴·회식 관련 키워드 필터 적용</li>
-                    <li><b>미용/뷰티</b> — 헤어·네일·피부 관련 키워드 필터 적용</li>
-                    <li><b>병원/의료</b> — 진료·시술·클리닉 관련 키워드 필터 적용</li>
-                    <li><b>필터 X</b> — 필터 없이 AI가 전체 판별 (기타 업종에 사용)</li>
-                </ul>
-            </div>
-
-            <div class="modal-section">
-                <h3>📝 2단계 — 매장 정보 입력</h3>
-                <ul>
-                    <li><b>지역명</b> <span class="modal-tag" style="background:#ffe3e3;color:#c92a2a;">필수</span> — 매장 주변 지역명을 한 줄에 하나씩 입력 (예: 강남역 / 역삼동)</li>
-                    <li><b>업종/카테고리</b> <span class="modal-tag" style="background:#ffe3e3;color:#c92a2a;">필수</span> — 업종명을 한 줄에 하나씩 입력 (예: 삼겹살 / 고기집)</li>
-                    <li><b>상세 주소</b> — 도로명 주소 입력 시 AI가 주변 랜드마크 기준으로 타 지역 키워드를 걸러냄</li>
-                    <li><b>주요 메뉴 키워드</b> — 핵심 메뉴·서비스를 한 줄에 하나씩 입력. 이 단어와 연관된 키워드를 우선 선별</li>
-                    <li><b>매장 특징</b> — 주차, 룸, 단체석 등 시설·특징 입력 (FEAT 분류에 활용)</li>
-                </ul>
-            </div>
-
-            <div class="modal-section">
-                <h3>⚙️ 3단계 — 수집 설정</h3>
-                <ul>
-                    <li><b>최소 모바일 검색량</b> — 설정값 미만의 키워드 제외. 0 = 전체 수집 (기본값 권장)</li>
-                    <li><b>목표 키워드 수</b> — AI가 선별해서 반환할 최대 수량. 목표 달성 시 남은 배치 자동 스킵. 0 = 무제한</li>
-                    <li><b>Gemini 모델</b> — 오류 발생 시 다른 모델로 전환 후 재실행</li>
-                </ul>
-            </div>
-
-            <div class="modal-section">
-                <h3>📋 결과 카테고리</h3>
-                <ul>
-                    <li><span class="modal-tag" style="background:#dbe4ff;color:#1971c2;">MAIN</span> 지역 + 업종 조합의 핵심 플레이스 키워드</li>
-                    <li><span class="modal-tag" style="background:#d3f9d8;color:#2f9e44;">TPO</span> 방문 목적·상황 (회식, 데이트, 기념일 등)</li>
-                    <li><span class="modal-tag" style="background:#ffe8cc;color:#d9480f;">FEAT</span> 매장 특징·시설 (주차, 룸, 단체석 등)</li>
-                    <li><span class="modal-tag" style="background:#f3f0ff;color:#7048e8;">MENU</span> 세부 메뉴·서비스 관련 키워드</li>
-                    <li><span class="modal-tag" style="background:#f1f3f5;color:#868e96;">DROP</span> 매장과 무관한 키워드 (참고용)</li>
-                </ul>
-            </div>
-
-            <div class="modal-section">
-                <h3>💾 결과 활용</h3>
-                <ul>
-                    <li>체크박스로 원하는 키워드만 선택 후 <b>📋 복사</b> 또는 <b>⬇️ CSV</b> 다운로드</li>
-                    <li>Shift+클릭으로 범위 선택 가능</li>
-                    <li>카테고리 탭 클릭 시 해당 분류만 필터링하여 표시</li>
-                </ul>
-            </div>
-
-        </div>
-    </div>
-</div>
 
 
 <!-- ══════════════════════════════════════════
@@ -711,9 +578,84 @@ const GEMINI_PROXY = 'https://naver-keyword-bot-938928195180.asia-northeast3.run
 
 const sleep      = ms => new Promise(r => setTimeout(r, ms));
 
-function openManual()  { document.getElementById('manual-modal').classList.add('open'); }
-function closeManual() { document.getElementById('manual-modal').classList.remove('open'); }
-function closeManualOutside(e) { if (e.target === document.getElementById('manual-modal')) closeManual(); }
+function openManual() {
+    const w = window.open('', '_blank', 'width=660,height=780,scrollbars=yes,resizable=yes');
+    w.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
+<title>사용 설명서 — 네이버 플레이스 키워드 생성기</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic',sans-serif;background:#f0f2f5;color:#343a40;line-height:1.7}
+.head{background:linear-gradient(135deg,#3b5bdb,#5c7cfa);color:#fff;padding:24px 28px}
+.head h1{font-size:17px;font-weight:900}
+.head p{font-size:12px;opacity:.85;margin-top:4px}
+.body{padding:24px 28px}
+.sec{background:#fff;border-radius:10px;border:1px solid #e9ecef;margin-bottom:16px;overflow:hidden}
+.sec-head{padding:12px 18px;background:#f8f9fa;border-bottom:1px solid #e9ecef;font-size:13px;font-weight:900;color:#3b5bdb}
+.sec-body{padding:16px 18px}
+ul{padding-left:18px}
+li{font-size:13px;color:#495057;margin-bottom:6px}
+li b{color:#212529}
+.tag{display:inline-block;padding:1px 8px;border-radius:4px;font-size:11px;font-weight:700;margin-right:4px;vertical-align:middle}
+</style></head><body>
+<div class="head">
+  <h1>📖 사용 설명서</h1>
+  <p>네이버 플레이스 키워드 자동 생성기 사용 방법</p>
+</div>
+<div class="body">
+
+  <div class="sec">
+    <div class="sec-head">🏪 1단계 — 업종 카테고리 선택</div>
+    <div class="sec-body"><ul>
+      <li><b>음식점/카페</b> — 맛집·메뉴·회식 관련 키워드 필터 적용</li>
+      <li><b>미용/뷰티</b> — 헤어·네일·피부 관련 키워드 필터 적용</li>
+      <li><b>병원/의료</b> — 진료·시술·클리닉 관련 키워드 필터 적용</li>
+      <li><b>필터 X</b> — 필터 없이 AI가 전체 판별 (기타 업종에 사용)</li>
+    </ul></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-head">📝 2단계 — 매장 정보 입력</div>
+    <div class="sec-body"><ul>
+      <li><b>지역명</b> <span class="tag" style="background:#ffe3e3;color:#c92a2a;">필수</span> — 매장 주변 지역명을 한 줄에 하나씩 입력 (예: 강남역 / 역삼동)</li>
+      <li><b>업종/카테고리</b> <span class="tag" style="background:#ffe3e3;color:#c92a2a;">필수</span> — 업종명을 한 줄에 하나씩 입력 (예: 삼겹살 / 고기집)</li>
+      <li><b>상세 주소</b> — 도로명 주소 입력 시 AI가 주변 랜드마크 기준으로 타 지역 키워드를 걸러냄</li>
+      <li><b>주요 메뉴 키워드</b> — 핵심 메뉴·서비스를 한 줄에 하나씩 입력. 이 단어와 연관된 키워드 우선 선별</li>
+      <li><b>매장 특징</b> — 주차, 룸, 단체석 등 시설·특징 입력 (FEAT 분류에 활용)</li>
+    </ul></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-head">⚙️ 3단계 — 수집 설정</div>
+    <div class="sec-body"><ul>
+      <li><b>최소 모바일 검색량</b> — 설정값 미만 키워드 제외. 0 = 전체 수집 (기본값 권장)</li>
+      <li><b>목표 키워드 수</b> — AI가 선별해서 반환할 최대 수량. 목표 달성 시 남은 배치 자동 스킵. 0 = 무제한</li>
+      <li><b>Gemini 모델</b> — 오류 발생 시 다른 모델로 전환 후 재실행</li>
+    </ul></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-head">📋 결과 카테고리</div>
+    <div class="sec-body"><ul>
+      <li><span class="tag" style="background:#dbe4ff;color:#1971c2;">MAIN</span> 지역 + 업종 조합의 핵심 플레이스 키워드</li>
+      <li><span class="tag" style="background:#d3f9d8;color:#2f9e44;">TPO</span> 방문 목적·상황 (회식, 데이트, 기념일 등)</li>
+      <li><span class="tag" style="background:#ffe8cc;color:#d9480f;">FEAT</span> 매장 특징·시설 (주차, 룸, 단체석 등)</li>
+      <li><span class="tag" style="background:#f3f0ff;color:#7048e8;">MENU</span> 세부 메뉴·서비스 관련 키워드</li>
+      <li><span class="tag" style="background:#f1f3f5;color:#868e96;">DROP</span> 매장과 무관한 키워드 (참고용)</li>
+    </ul></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-head">💾 결과 활용</div>
+    <div class="sec-body"><ul>
+      <li>체크박스로 원하는 키워드만 선택 후 <b>📋 복사</b> 또는 <b>⬇️ CSV</b> 다운로드</li>
+      <li>Shift+클릭으로 범위 선택 가능</li>
+      <li>카테고리 탭 클릭 시 해당 분류만 필터링하여 표시</li>
+    </ul></div>
+  </div>
+
+</div></body></html>`);
+    w.document.close();
+}
 const splitLines = t  => t.split('\n').map(s => s.trim()).filter(Boolean);
 
 
