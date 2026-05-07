@@ -144,6 +144,20 @@
   });
 
   render();
+
+  // ── 한글 IME 유지 — 외부 앱 클릭 후 복귀 시 검색창 자동 재포커스 ──
+  (function() {
+    const search = document.getElementById('searchInput');
+    let searchWasFocused = false;
+    window.addEventListener('blur', function() {
+      searchWasFocused = (document.activeElement === search);
+    });
+    window.addEventListener('focus', function() {
+      if (searchWasFocused) {
+        setTimeout(function() { search.focus({ preventScroll: true }); }, 50);
+      }
+    });
+  })();
 </script>
 </body>
 </html>

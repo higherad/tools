@@ -175,7 +175,7 @@
         <span class="card-title">📋 처리 목록 <span class="badge badge-blue" id="entry-count">0</span></span>
         <div class="search-wrap">
           <span style="font-size:12px;">🔍</span>
-          <input type="text" placeholder="pcode / 캠페인명 검색" oninput="filterList(this.value)" lang="ko" inputmode="text" />
+          <input type="text" id="inp-search" placeholder="pcode / 캠페인명 검색" oninput="filterList(this.value)" lang="ko" inputmode="text" />
         </div>
       </div>
       <div class="select-all-row">
@@ -481,6 +481,20 @@ function handleExcelFile(file) {
 }
 
 renderList();
+
+// ── 한글 IME 유지 — 외부 앱 클릭 후 복귀 시 검색창 자동 재포커스 ──
+(function() {
+  const search = document.getElementById('inp-search');
+  let searchWasFocused = false;
+  window.addEventListener('blur', function() {
+    searchWasFocused = (document.activeElement === search);
+  });
+  window.addEventListener('focus', function() {
+    if (searchWasFocused) {
+      setTimeout(function() { search.focus({ preventScroll: true }); }, 50);
+    }
+  });
+})();
 
 (async function checkServer() {
   try {
