@@ -200,21 +200,36 @@ textarea.ta.tall { height: 140px; }
 }
 .api-key-row input[type=text]:focus { border-color: var(--primary); }
 
+/* ── 업종 카테고리 행 (파란 계열) ── */
+.cat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: #edf2ff;
+    border: 1px solid #bac8ff;
+    border-radius: 8px;
+    flex-wrap: wrap;
+}
+.cat-row label { font-size: 13px; font-weight: 700; color: #1e3a8a; white-space: nowrap; }
+.cat-row span  { font-size: 12px; color: #3b5bdb; }
+
 /* ── 업종 카테고리 버튼 ── */
 .cat-sel-btn {
     padding: 6px 16px;
-    border: 1px solid #fcd34d;
+    border: 1px solid #bac8ff;
     border-radius: 6px;
     font-size: 13px;
     font-family: inherit;
     font-weight: 700;
     background: #fff;
-    color: #92400e;
+    color: #3b5bdb;
     cursor: pointer;
     transition: .15s;
     white-space: nowrap;
 }
-.cat-sel-btn:hover:not(.active) { background: var(--gray-100); }
+.cat-sel-btn:hover:not(.active) { background: #dbe4ff; }
 .cat-sel-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 
 /* ── 버튼 ── */
@@ -467,7 +482,7 @@ textarea.ta.tall { height: 140px; }
 <div style="padding-top:16px;">
 
     <!-- 업종 카테고리 선택 -->
-    <div class="api-key-row" style="margin-bottom:16px;">
+    <div class="cat-row">
         <label>🏪 업종 카테고리</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="cat-sel-btn active" onclick="selectCat('food',this)">음식점/카페</button>
@@ -475,7 +490,7 @@ textarea.ta.tall { height: 140px; }
             <button class="cat-sel-btn" onclick="selectCat('medical',this)">병원/의료</button>
             <button class="cat-sel-btn" onclick="selectCat('none',this)">필터 X</button>
         </div>
-        <span style="font-size:12px;color:#92400e;">업종에 맞는 키워드 필터와 AI 분류 기준이 자동 적용됩니다</span>
+        <span>업종에 맞는 키워드 필터와 AI 분류 기준이 자동 적용됩니다</span>
     </div>
 
     <!-- Gemini 모델 선택 -->
