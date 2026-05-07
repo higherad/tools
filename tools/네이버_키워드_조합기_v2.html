@@ -524,7 +524,7 @@ textarea.ta.tall { height: 140px; }
                 </div>
                 <div>
                     <label class="fl">주요 메뉴 키워드 <span class="badge badge-ai">AI 매칭</span></label>
-                    <textarea class="ta" id="inp-menu-kws" placeholder="오겹살, 꽃목살, 한우육회&#10;(단어 위주로 입력 가능)"></textarea>
+                    <textarea class="ta" id="inp-menu-kws" placeholder="오겹살&#10;꽃목살&#10;한우육회"></textarea>
                 </div>
             </div>
             <div style="margin-bottom:14px;">
@@ -856,7 +856,7 @@ async function runV2() {
     v2Biz      = splitLines(document.getElementById('inp-biz').value);
     v2Features = splitLines(document.getElementById('inp-feature').value);
     const v2Address  = document.getElementById('inp-address').value.trim();
-    const v2MenuKws  = document.getElementById('inp-menu-kws').value.split(',').map(s => s.trim()).filter(Boolean);
+    const v2MenuKws  = splitLines(document.getElementById('inp-menu-kws').value);
     const minM       = parseInt(document.getElementById('inp-min').value)    || 0;
     const targetCount = parseInt(document.getElementById('inp-target').value) || 0;
 
