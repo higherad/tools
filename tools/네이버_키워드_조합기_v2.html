@@ -484,6 +484,16 @@ textarea.ta.tall { height: 140px; }
                     <textarea class="ta" id="inp-feature" placeholder="직접 구워주는 서비스&#10;콜키지 프리&#10;룸 식당 (단체 회식)&#10;애견 동반 가능&#10;주차 2시간 무료"></textarea>
                 </div>
             </div>
+            <div class="input-grid-2" style="margin-bottom:14px;">
+                <div>
+                    <label class="fl">상세 주소 <span class="badge badge-ai">AI 분석</span></label>
+                    <textarea class="ta" id="inp-address" placeholder="예: 서울 강남구 역삼동 825-1 (정확한 위치 분석용)"></textarea>
+                </div>
+                <div>
+                    <label class="fl">주요 메뉴 키워드 <span class="badge badge-ai">AI 매칭</span></label>
+                    <textarea class="ta" id="inp-menu-kws" placeholder="매장의 핵심 메뉴 단어를 콤마(,)로 구분해서 입력하세요&#10;예: 삼겹살, 오겹살, 꽃등심, 냉면"></textarea>
+                </div>
+            </div>
             <div class="setting-row">
                 <label>최소 모바일 검색량</label>
                 <input type="number" id="inp-min" value="0" min="0">
@@ -584,13 +594,19 @@ async function callGeminiAPI(kwList, storeInfo) {
 
     // ── 시스템 프롬프트 (반복 지시사항 분리 → 응답 속도 향상) ──
     const systemInstruction = {
-        parts: [{ text: `당신은 네이버 플레이스 마케팅 전문가입니다.
+        parts: [{ text: `당신은 네이버 플레이스 검색 최적화 전문가입니다.
+사용자가 제공한 [상세 주소]와 [메뉴 키워드]를 분석하여, 수집된 키워드들의 '매장 적합도'를 판별하세요.
+
+위치 필터링: 상세 주소를 기반으로 도보 10분 내외 지역 키워드에 가중치를 부여하고, 너무 먼 지역 키워드는 DROP으로 처리하세요.
+메뉴 매칭: 입력된 메뉴 키워드와 연관성이 높은 검색어(예: '오겹살' 입력 시 '제주 돼지 맛집')는 점수를 높게 부여하고, 매장에서 취급하지 않는 메뉴 관련 키워드는 DROP으로 처리하세요.
+적합도 기준: 점수가 높은 순서대로 MAIN → TPO → FEAT → MENU 순으로 배치하고, 매장과 무관한 키워드는 과감히 DROP으로 분류하세요.
+
 키워드를 아래 5개 카테고리 중 하나로 분류하세요.
-- MAIN: 지역+업종 조합의 핵심 키워드
+- MAIN: 지역+업종 조합의 핵심 키워드 (도보 10분 내 지역 + 업종/메뉴 매칭)
 - TPO: 방문 목적/상황 (회식, 데이트, 모임, 기념일 등)
 - FEAT: 매장 특징/시설 (주차, 룸, 단체석, 야외, 뷰 등)
-- MENU: 메뉴/음식 관련 세부 키워드
-- DROP: 해당 매장과 무관한 키워드
+- MENU: 메뉴/음식 관련 세부 키워드 (입력된 메뉴 키워드와 연관성 높은 것 우선)
+- DROP: 매장과 무관하거나 너무 먼 지역의 키워드
 
 출력 규칙:
 - 순수 JSON만 출력하라. 설명·백틱·마크다운 절대 금지.
@@ -604,7 +620,9 @@ async function callGeminiAPI(kwList, storeInfo) {
     const userPrompt = `[매장 정보]
 - 지역: ${storeInfo.locs.join(', ')}
 - 업종: ${storeInfo.biz.join(', ')}
+- 상세 주소: ${storeInfo.address || '없음'}
 - 대표 메뉴: ${storeInfo.menus.join(', ') || '없음'}
+- AI 매칭 메뉴 키워드: ${storeInfo.menuKws.join(', ') || '없음'}
 - 매장 특징: ${storeInfo.features.join(', ') || '없음'}
 
 [분류할 키워드 목록]
@@ -766,6 +784,8 @@ async function runV2() {
     v2Biz      = splitLines(document.getElementById('inp-biz').value);
     v2Menus    = splitLines(document.getElementById('inp-menu').value);
     v2Features = splitLines(document.getElementById('inp-feature').value);
+    const v2Address  = document.getElementById('inp-address').value.trim();
+    const v2MenuKws  = document.getElementById('inp-menu-kws').value.split(',').map(s => s.trim()).filter(Boolean);
     const minM = parseInt(document.getElementById('inp-min').value) || 0;
 
     if (!v2Locs.length || !v2Biz.length)
@@ -833,7 +853,7 @@ async function runV2() {
     let geminiResult;
     try {
         setStatus('info', `🤖 Gemini AI 분류 중... (${dedupedList.length}개 키워드 분석)`);
-        const storeInfo = { locs: v2Locs, biz: v2Biz, menus: v2Menus, features: v2Features };
+        const storeInfo = { locs: v2Locs, biz: v2Biz, menus: v2Menus, features: v2Features, address: v2Address, menuKws: v2MenuKws };
         geminiResult = await callGeminiBatched(dedupedList, storeInfo);
     } catch (err) {
         setStatus('error', `❌ Gemini AI 오류: ${err.message}`);
