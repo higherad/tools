@@ -521,8 +521,8 @@ textarea.ta.tall { height: 140px; }
 /* ============================================================
    공통 유틸
    ============================================================ */
-/* ── Gemini API 키 (고정) ── */
-const GEMINI_API_KEY = 'AIzaSyAP8CUhFByDFLuqw_JUTS0ONCBjm2FQ71w';
+/* ── Gemini 프록시 (키는 서버에서 관리) ── */
+const GEMINI_PROXY = 'https://naver-keyword-bot-938928195180.asia-northeast3.run.app/gemini';
 
 const sleep      = ms => new Promise(r => setTimeout(r, ms));
 const splitLines = t  => t.split('\n').map(s => s.trim()).filter(Boolean);
@@ -571,15 +571,12 @@ const GEMINI_MODELS = [
     { id: 'gemini-3.1-flash-lite-preview', label: 'Gemini 3.1 Flash Lite' },
     { id: 'gemini-2.5-flash',              label: 'Gemini 2.5 Flash' },
 ];
-function getGeminiURL() {
+function getGeminiModel() {
     const sel = document.getElementById('gemini-model');
-    const model = sel ? sel.value : 'gemini-3.1-flash-lite-preview';
-    return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+    return sel ? sel.value : 'gemini-2.0-flash-lite';
 }
 
 async function callGeminiAPI(kwList, storeInfo) {
-    const apiKey = GEMINI_API_KEY;
-    if (!apiKey) throw new Error('GEMINI_API_KEY가 설정되지 않았습니다.');
 
     const kwLines = kwList.map((k, i) =>
         `${i + 1}. ${k.relKeyword} (모바일검색량:${k.monthlyMobileQcCnt || 0})`
@@ -627,10 +624,10 @@ ${kwLines}`;
     // 429 시 최대 3회 자동 재시도
     let resp, retries = 0;
     while (true) {
-        resp = await fetch(`${getGeminiURL()}?key=${apiKey}`, {
+        resp = await fetch(GEMINI_PROXY, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
+            body: JSON.stringify({ ...body, model: getGeminiModel() }),
         });
         if (resp.status === 429 && retries < 3) {
             retries++;
