@@ -320,25 +320,42 @@ function extractNoun(kw, dynStop) {
 function filterKwList(list, minMobile, dynStop) {
     const seen = new Set(), out = [];
 
-    // 입력 지역명의 어근 집합 (강남역 → 강남역+강남, 역삼동 → 역삼동+역삼)
+    // 지역 어근 — 길이 내림차순(긴 것부터 제거해야 "강남"이 "강남역"보다 먼저 제거되는 오작동 방지)
     const locStems = new Set(v2Locs);
     for (const loc of v2Locs) {
         const stem = loc.replace(/(역|동|구|시|군|읍|면|리|가)$/, '');
         if (stem.length >= 2) locStems.add(stem);
     }
-    const locStemArr = [...locStems];
+    const locStemArr = [...locStems].sort((a, b) => b.length - a.length);
 
-    // 지역 접미사 패턴 (OO역, OO동 등)
+    // 업종 동의어 집합 (조합 결과에 중복 방지)
+    const BIZ_WORDS = new Set([
+        ...v2Biz,
+        '고깃집','소고기집','돼지고기집','일식집','한식집',
+        '음식점','식당','밥집','분식집','이자카야',
+        '술집','주점','갈빗집','고기',
+    ]);
+
+    // 지역 접미사 패턴 (OO역, OO동, OO구 등)
     const IS_REGION = /^[가-힣]{2,}(역|동|구|시|군|읍|면|리)$/;
-    // 복합어 접미사 (삼겹살맛집 → 삼겹살)
-    const COMPOUND = /^(.{2,}?)(맛집|음식점|식당|카페|술집|주점|횟집|고깃집)$/;
+
+    // 업종/장소 접미어 복합어 패턴 (압구정고기집→압구정, 삼겹살맛집→삼겹살)
+    const BIZ_SUFFIX_RE = new RegExp(
+        `^(.{2,}?)(${[...BIZ_WORDS, '맛집', '맛자랑'].join('|')})$`
+    );
+
+    // 지역 접두 복합어 패턴 (선릉역회식, 역삼역근처 등)
+    const REGION_PREFIX_RE = /^([가-힣]{2,}(?:역|동|구|시|군|읍|면|리))(.+)$/;
+
+    // 명백히 무관한 패턴
+    const BLOCK_RE = /여행|놀만|가볼만|뭐먹지|배민|쿠팡|리뷰|후기/;
 
     for (const item of list) {
         const raw    = (item.relKeyword || '').trim();
         const mobile = parseInt(item.monthlyMobileQcCnt) || 0;
         if (!raw || mobile < minMobile) continue;
 
-        // ① 타 지역 차단: 입력하지 않은 지역어 토큰이 있으면 스킵
+        // ① 원시 토큰 중 타 지역어(역/동 suffix) 차단
         const hasForeignRegion = raw.split(/\s+/).some(t =>
             IS_REGION.test(t) && !locStemArr.some(s => t.includes(s))
         );
@@ -348,20 +365,30 @@ function filterKwList(list, minMobile, dynStop) {
         let noun = extractNoun(raw, dynStop);
         if (!noun) continue;
 
-        // ③ 지역 어근 제거 (강남맛집 → 맛집)
+        // ③ 지역 어근 제거 — 긴 stem부터 순서대로 (강남역고기집→고기집, 강남맛집→맛집)
         for (const stem of locStemArr) {
             noun = noun.replace(new RegExp(stem, 'g'), '').trim();
         }
+        // "서울" prefix 제거 (서울삼겹살→삼겹살, 서울여행→여행)
+        if (noun.startsWith('서울') && noun.length > 2) noun = noun.slice(2).trim();
 
-        // ④ 복합어 접미사 분리 (삼겹살맛집 → 삼겹살)
-        const cm = noun.match(COMPOUND);
-        if (cm) noun = cm[1];
+        // ④ 업종 접미어 분리 (삼겹살맛집→삼겹살, 압구정고기집→압구정)
+        const bm = noun.match(BIZ_SUFFIX_RE);
+        if (bm) noun = bm[1].trim();
+
+        // ⑤ 지역 접두 복합어 차단 (선릉역회식: "선릉역"이 타 지역 → 차단)
+        const rp = noun.match(REGION_PREFIX_RE);
+        if (rp && !locStemArr.some(s => rp[1].includes(s))) continue;
 
         noun = noun.trim();
 
-        // ⑤ 유효성: 2글자 미만, 지역 접미사 단독, 중복 제거
+        // ⑥ 최종 유효성
         if (!noun || noun.length < 2) continue;
-        if (/^(역|동|구|시|군|읍|면|리)$/.test(noun)) continue;
+        if (IS_REGION.test(noun) && !locStemArr.some(s => noun.includes(s))) continue; // 타 지역
+        if (BIZ_WORDS.has(noun)) continue;          // 업종 동의어 중복
+        if (BLOCK_RE.test(noun)) continue;           // 무관 패턴
+        if (/^(역|동|구|시|군|읍|면|리|가)$/.test(noun)) continue; // 접미사 단독
+        if (noun.length > 12) continue;             // 지나치게 긴 복합어
         if (seen.has(noun)) continue;
 
         seen.add(noun);
