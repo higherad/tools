@@ -371,7 +371,7 @@
         <div class="search-wrap">
           <span class="search-icon">🔍</span>
           <input type="text" id="inp-search" placeholder="영업점 / 아이디 검색" oninput="filterList(this.value)" lang="ko" inputmode="text" />
-          <button class="btn-del-filtered" id="btn-del-filtered" onclick="removeFiltered()" title="검색 결과 삭제" style="display:none;">−</button>
+          <button class="btn-del-filtered" id="btn-del-filtered" onclick="removeFiltered()" title="검색어 지우기" style="visibility:hidden;">−</button>
         </div>
       </div>
 
@@ -586,7 +586,7 @@ function removeChecked() {
 let searchQuery = '';
 function filterList(val) {
   searchQuery = val.trim().toLowerCase();
-  document.getElementById('btn-del-filtered').style.display = searchQuery ? 'flex' : 'none';
+  document.getElementById('btn-del-filtered').style.visibility = searchQuery ? 'visible' : 'hidden';
   renderList();
 }
 
