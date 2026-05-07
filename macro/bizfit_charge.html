@@ -275,7 +275,6 @@
     color: #2d3748;
     width: 180px;
     padding: 0;
-    ime-mode: active;
   }
   .search-wrap input::placeholder { color: #a0aec0; }
   .btn-del-filtered {
@@ -493,13 +492,6 @@ function clearAll() {
   renderList();
 }
 
-// ── 계정 삭제 ──
-function removeAccount(i) {
-  if (!confirm(`'${accounts[i].alias}' 계정을 삭제하시겠습니까?`)) return;
-  accounts.splice(i, 1);
-  save();
-  renderList();
-}
 
 // ── 체크박스 ──
 function toggleItem(i, el) {
