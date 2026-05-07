@@ -375,7 +375,6 @@ async function runV2() {
     // UI 초기화
     document.getElementById('subkw-card').style.display = 'none';
     document.getElementById('v2-result').innerHTML = '';
-    document.getElementById('paste-panel').style.display = 'none';
 
     const chunks = [];
     for (let i = 0; i < seeds.length; i += 5) chunks.push(seeds.slice(i, i + 5));
