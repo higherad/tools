@@ -200,6 +200,23 @@ textarea.ta.tall { height: 140px; }
 }
 .api-key-row input[type=text]:focus { border-color: var(--primary); }
 
+/* ── 업종 카테고리 버튼 ── */
+.cat-sel-btn {
+    padding: 6px 16px;
+    border: 1px solid #fcd34d;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 700;
+    background: #fff;
+    color: #92400e;
+    cursor: pointer;
+    transition: .15s;
+    white-space: nowrap;
+}
+.cat-sel-btn:hover:not(.active) { background: var(--gray-100); }
+.cat-sel-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
 /* ── 버튼 ── */
 .btn {
     padding: 9px 18px;
@@ -449,6 +466,18 @@ textarea.ta.tall { height: 140px; }
 ══════════════════════════════════════════ -->
 <div style="padding-top:16px;">
 
+    <!-- 업종 카테고리 선택 -->
+    <div class="api-key-row" style="margin-bottom:16px;">
+        <label>🏪 업종 카테고리</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="cat-sel-btn active" onclick="selectCat('food',this)">음식점/카페</button>
+            <button class="cat-sel-btn" onclick="selectCat('beauty',this)">미용/뷰티</button>
+            <button class="cat-sel-btn" onclick="selectCat('medical',this)">병원/의료</button>
+            <button class="cat-sel-btn" onclick="selectCat('none',this)">필터 X</button>
+        </div>
+        <span style="font-size:12px;color:#92400e;">업종에 맞는 키워드 필터와 AI 분류 기준이 자동 적용됩니다</span>
+    </div>
+
     <!-- Gemini 모델 선택 -->
     <div class="api-key-row" style="margin-bottom:16px;">
         <label>🤖 Gemini 모델</label>
@@ -557,6 +586,37 @@ let v2Locs = [], v2Biz = [], v2Features = [];
 let v2LastCk = null;
 let currentFilter = 'all';
 let isRunning = false;
+let selectedCat = 'food';
+
+function selectCat(cat, el) {
+    selectedCat = cat;
+    document.querySelectorAll('.cat-sel-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+}
+
+/* ── 업종별 필터 설정 ── */
+const CATEGORY_CONFIG = {
+    food: {
+        whitelist: /맛집|식당|음식|밥|먹|요리|메뉴|술|안주|회식|모임|데이트|브런치|런치|디너|점심|저녁|아침|카페|베이커리|빵|커피|디저트|케이크|아이스크림|치킨|피자|버거|파스타|스테이크|초밥|스시|라멘|우동|냉면|국밥|찌개|전골|구이|바베큐|bbq|훈제|삼겹|목살|항정|갈비|불고기|곱창|막창|대창|족발|보쌈|순대|떡볶이|튀김|전|부침|죽|국수|만두|샐러드|샌드위치|타코|쌀국수|팟타이|커리|짜장|짬뽕|탕수육|마라|훠궈|샤브|양꼬치|오마카세|코스|뷔페|무한리필|혼밥|포장|배달|테이크아웃|주류|와인|막걸리|소주|맥주|칵테일|하이볼|위스키/i,
+        blacklist: /부동산|공인중개|아파트|빌라|오피스텔|분양|임대|학원|과외|입시|독서실|스터디카페|병원|의원|치과|한의원|약국|클리닉|성형|피부과|안과|이비인후과|소아과|내과|외과|정형외과|산부인과|비뇨기과|정신건강|요양원|보험|대출|금융|은행|증권|펀드|택시|버스|지하철|주차장|세차|자동차|중고차|렌터카|카센터|미용실|네일|왁싱|눈썹|속눈썹|마사지|피시방|오락실|헬스장|필라테스|요가|골프|테니스|배드민턴|볼링|당구|쇼핑몰|백화점|마트|편의점|세탁소|철물점|꽃집|장례/,
+        label: '음식점/카페',
+    },
+    beauty: {
+        whitelist: /헤어|미용|네일|왁싱|눈썹|속눈썹|피부|관리|케어|트리트먼트|펌|염색|커트|드라이|뷰티|살롱|샵|스타일|메이크업|마사지|아로마|스파|제모|리프팅|보톡스|필러|레이저|박피|디자이너|원장|예약|시술|패키지|이벤트|두피|탈모|클리닉/i,
+        blacklist: /부동산|공인중개|아파트|빌라|오피스텔|분양|임대|학원|과외|입시|독서실|스터디카페|보험|대출|금융|은행|증권|펀드|택시|버스|주차장|세차|자동차|중고차|렌터카|피시방|오락실|골프|테니스|배드민턴|볼링|당구|쇼핑몰|백화점|마트|편의점|세탁소|철물점|장례|맛집|식당|국밥|찌개|삼겹|갈비/,
+        label: '미용/뷰티',
+    },
+    medical: {
+        whitelist: /병원|의원|클리닉|한의원|치과|피부과|안과|이비인후과|소아과|내과|외과|정형외과|산부인과|비뇨기과|정신건강|요양|진료|시술|수술|검진|치료|처방|상담|전문의|재활|물리치료|교정|임플란트|스케일링|도수|추나|침|탈모|다이어트|비만|영양|건강|증상|통증/i,
+        blacklist: /부동산|공인중개|아파트|빌라|오피스텔|분양|임대|학원|과외|입시|독서실|스터디카페|보험|대출|금융|은행|증권|펀드|택시|버스|피시방|오락실|골프|테니스|쇼핑몰|백화점|마트|세탁소|장례|맛집|식당|삼겹|갈비|미용실|네일|왁싱/,
+        label: '병원/의료',
+    },
+    none: {
+        whitelist: null,
+        blacklist: null,
+        label: null,
+    },
+};
 
 /* ============================================================
    V2 — Naver API (프록시)
@@ -591,18 +651,18 @@ async function callGeminiAPI(kwList, storeInfo, batchTarget = 0) {
 
     // ── 시스템 프롬프트 (반복 지시사항 분리 → 응답 속도 향상) ──
     const systemInstruction = {
-        parts: [{ text: `당신은 네이버 플레이스 검색 최적화 전문가입니다.
-사용자가 제공한 [상세 주소]와 [메뉴 키워드]를 분석하여, 수집된 키워드들의 '매장 적합도'를 판별하세요.
+        parts: [{ text: `당신은 네이버 플레이스 검색 최적화 전문가입니다.${storeInfo.catLabel ? `\n이 매장의 업종은 [${storeInfo.catLabel}]입니다. 해당 업종에 최적화된 기준으로 키워드를 판별하세요.` : ''}
+사용자가 제공한 [상세 주소]와 [주요 키워드]를 분석하여, 수집된 키워드들의 '매장 적합도'를 판별하세요.
 
 위치 필터링: 상세 주소를 기반으로 도보 10분 내외 지역 키워드에 가중치를 부여하고, 너무 먼 지역 키워드는 DROP으로 처리하세요.
-메뉴 매칭: 입력된 메뉴 키워드와 연관성이 높은 검색어(예: '오겹살' 입력 시 '제주 돼지 맛집')는 점수를 높게 부여하고, 매장에서 취급하지 않는 메뉴 관련 키워드는 DROP으로 처리하세요.
+키워드 매칭: 입력된 주요 키워드와 연관성이 높은 검색어는 점수를 높게 부여하고, 매장에서 취급하지 않는 키워드는 DROP으로 처리하세요.
 적합도 기준: 점수가 높은 순서대로 MAIN → TPO → FEAT → MENU 순으로 배치하고, 매장과 무관한 키워드는 과감히 DROP으로 분류하세요.
 
 키워드를 아래 5개 카테고리 중 하나로 분류하세요.
-- MAIN: 지역+업종 조합의 핵심 키워드 (도보 10분 내 지역 + 업종/메뉴 매칭)
-- TPO: 방문 목적/상황 (회식, 데이트, 모임, 기념일 등)
-- FEAT: 매장 특징/시설 (주차, 룸, 단체석, 야외, 뷰 등)
-- MENU: 메뉴/음식 관련 세부 키워드 (입력된 메뉴 키워드와 연관성 높은 것 우선)
+- MAIN: 지역+업종 조합의 핵심 키워드 (도보 10분 내 지역 + 업종 매칭)
+- TPO: 방문 목적/상황 (회식, 데이트, 모임, 기념일 등 업종별 상황)
+- FEAT: 매장 특징/시설 (주차, 룸, 단체, 야외 등 업종별 특징)
+- MENU: 세부 서비스/메뉴 키워드 (입력된 주요 키워드와 연관성 높은 것 우선)
 - DROP: 매장과 무관하거나 너무 먼 지역의 키워드
 
 출력 규칙:
@@ -885,11 +945,10 @@ async function runV2() {
     });
     const foreignRegionRe = new RegExp(foreignRegions.map(r => r.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'));
 
-    // ── 음식점 화이트리스트 (포함 시 블랙리스트 무시) ──
-    const FOOD_WHITELIST = /맛집|식당|음식|밥|먹|요리|메뉴|술|안주|회식|모임|데이트|브런치|런치|디너|점심|저녁|아침|카페|베이커리|빵|커피|디저트|케이크|아이스크림|치킨|피자|버거|파스타|스테이크|초밥|스시|라멘|우동|냉면|국밥|찌개|전골|구이|바베큐|bbq|훈제|삼겹|목살|항정|갈비|불고기|곱창|막창|대창|족발|보쌈|순대|떡볶이|튀김|전|부침|죽|국수|만두|샐러드|샌드위치|타코|쌀국수|팟타이|커리|짜장|짬뽕|탕수육|마라|훠궈|샤브|양꼬치|오마카세|코스|뷔페|무한리필|혼밥|포장|배달|테이크아웃|주류|와인|막걸리|소주|맥주|칵테일|하이볼|위스키/i;
-
-    // ── 무관 업종 블랙리스트 ──
-    const UNRELATED_PATTERNS = /부동산|공인중개|아파트|빌라|오피스텔|분양|임대|학원|과외|입시|독서실|스터디카페|병원|의원|치과|한의원|약국|클리닉|성형|피부과|안과|이비인후과|소아과|내과|외과|정형외과|산부인과|비뇨기과|정신건강|요양원|보험|대출|금융|은행|증권|펀드|택시|버스|지하철|주차장|세차|자동차|중고차|렌터카|카센터|미용실|네일|왁싱|눈썹|속눈썹|마사지|피시방|오락실|헬스장|필라테스|요가|골프|테니스|배드민턴|볼링|당구|쇼핑몰|백화점|마트|편의점|세탁소|철물점|꽃집|장례/;
+    // ── 업종 카테고리 필터 설정 로드 ──
+    const catCfg    = CATEGORY_CONFIG[selectedCat] || CATEGORY_CONFIG.none;
+    const catWhite  = catCfg.whitelist;
+    const catBlack  = catCfg.blacklist;
 
     const seen = new Set();
     const dedupedList = [];
@@ -901,8 +960,8 @@ async function runV2() {
         if (mob < minM) continue;
         // 타 지역 필터
         if (foreignRegions.length && foreignRegionRe.test(kw)) { filteredRegion++; continue; }
-        // 무관 업종 필터 — 음식 관련 단어 포함 시 블랙리스트 무시
-        if (!FOOD_WHITELIST.test(kw) && UNRELATED_PATTERNS.test(kw)) { filteredUnrelated++; continue; }
+        // 무관 업종 필터 — 화이트리스트 단어 포함 시 블랙리스트 무시
+        if (catBlack && (!catWhite || !catWhite.test(kw)) && catBlack.test(kw)) { filteredUnrelated++; continue; }
         seen.add(kw);
         dedupedList.push({ relKeyword: kw, monthlyMobileQcCnt: mob });
     }
@@ -916,7 +975,7 @@ async function runV2() {
     try {
         const targetLabel = targetCount > 0 ? ` (목표: ${targetCount}개)` : '';
         setStatus('info', `🤖 Gemini AI 분류 중... (${dedupedList.length}개 키워드 분석${targetLabel})`);
-        const storeInfo = { locs: v2Locs, biz: v2Biz, features: v2Features, address: v2Address, menuKws: v2MenuKws };
+        const storeInfo = { locs: v2Locs, biz: v2Biz, features: v2Features, address: v2Address, menuKws: v2MenuKws, catLabel: catCfg.label };
         geminiResult = await callGeminiBatched(dedupedList, storeInfo, targetCount);
     } catch (err) {
         setStatus('error', `❌ Gemini AI 오류: ${err.message}`);
