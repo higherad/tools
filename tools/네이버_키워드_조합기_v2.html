@@ -99,13 +99,6 @@ textarea.ta:focus { border-color:var(--primary); }
 .p2 { background:#e8f5e9; color:#2e7d32; }
 .p3 { background:#fff3e0; color:#e65100; }
 
-/* ── CORS 패널 코드블록 ── */
-.code-block {
-    background:#1e1e1e; color:#d4d4d4; border-radius:6px; padding:12px 14px;
-    font-size:12px; font-family:monospace; margin-bottom:12px;
-    white-space:pre-wrap; word-break:break-all; user-select:all;
-}
-
 /* ══════════════════════════════════════════════════════════
    v1 스타일 (원본 유지 — 클래스명 충돌 방지를 위해 분리)
 ══════════════════════════════════════════════════════════ */
@@ -190,24 +183,6 @@ input[type=checkbox] { cursor:pointer; width:16px; height:16px; }
 
     <!-- 상태바 -->
     <div class="v2-status" id="v2-status"></div>
-
-    <!-- CORS 오류 시 JSON 붙여넣기 패널 -->
-    <div class="v2-card" id="paste-panel" style="display:none;">
-        <div class="v2-hd" style="color:var(--danger);">
-            ⚠️ CORS 차단 — API JSON 직접 붙여넣기
-            <button class="btn btn-outline btn-sm" onclick="document.getElementById('paste-panel').style.display='none'">닫기</button>
-        </div>
-        <div class="v2-bd">
-            <p style="font-size:13px; color:#555; margin-bottom:10px;">
-                브라우저 보안 정책(CORS)으로 인해 직접 호출이 차단되었습니다.<br>
-                아래 curl 명령어로 API를 호출하고 응답 JSON을 붙여넣으세요.
-            </p>
-            <div class="code-block" id="curl-cmd"></div>
-            <textarea class="ta" id="paste-json" style="height:120px; font-family:monospace; font-size:12px;"
-                placeholder='{"keywordList":[{"relKeyword":"강남역 삼겹살 주차","monthlyMobileQcCnt":500,...}]}'></textarea>
-            <button class="btn btn-primary" style="margin-top:10px;" onclick="processPasted()">📥 JSON 처리하기</button>
-        </div>
-    </div>
 
     <!-- 서브키워드 태그 -->
     <div class="v2-card" id="subkw-card" style="display:none;">
@@ -302,11 +277,9 @@ const NOUN_HINTS = [
 const SENT_END = /(가능|있는|없는|되는|하는|인|한|된|좋은|나쁜|높은|낮은|넓은|좁은|많은|적은|큰|작은|빠른|느린|됩니다|합니다|해요|이에요|예요|아요|어요|거리|미만|이상|이하|초과)$/;
 
 /* ============================================================
-   V2 — API 인증 상수
+   V2 — 프록시 설정 (naver-keyword-bot Cloud Run)
    ============================================================ */
-const API_CID  = '3679807';
-const API_KEY  = '0100000000db55d6ccb2aa38a9712024d3cc2e84aebfc15e1e584ab63c73d23e2cf1b77d3a';
-const API_SKEY = 'AQAAAADbVdbMsqo4qXEgJNPMLoSuIDkkRHdWBc0ExNIACzR75A==';
+const PROXY_URL = 'https://naver-keyword-bot-938928195180.asia-northeast3.run.app/relkwd';
 
 /* ============================================================
    V2 — 상태
@@ -317,36 +290,11 @@ let v2Combined = [];           // 최종 조합 결과
 let v2LastCk  = null;
 
 /* ============================================================
-   V2 — HMAC-SHA256 (Web Crypto API — 서버리스 서명)
+   V2 — Naver API 호출 (프록시 경유)
    ============================================================ */
-async function hmacB64(secret, msg) {
-    const enc = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-        'raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-    );
-    const buf = await crypto.subtle.sign('HMAC', key, enc.encode(msg));
-    return btoa(String.fromCharCode(...new Uint8Array(buf)));
-}
-
-async function makeHeaders(cid, akey, skey, method, uri) {
-    const ts = String(Date.now());
-    return {
-        'X-Timestamp': ts,
-        'X-API-KEY':   akey,
-        'X-Customer':  cid,
-        'X-Signature': await hmacB64(skey, `${ts}.${method}.${uri}`),
-    };
-}
-
-/* ============================================================
-   V2 — Naver API 호출
-   ============================================================ */
-async function callAPI(cid, akey, skey, hints) {
-    const uri  = '/keywordstool';
-    const base = 'https://api.searchad.naver.com';
-    const qs   = new URLSearchParams({ hintKeywords: hints.join(','), showDetail: '1' });
-    const hdrs = await makeHeaders(cid, akey, skey, 'GET', uri);
-    const resp = await fetch(`${base}${uri}?${qs}`, { headers: hdrs });
+async function callAPI(hints) {
+    const qs   = new URLSearchParams({ hintKeywords: hints.join(',') });
+    const resp = await fetch(`${PROXY_URL}?${qs}`);
     if (!resp.ok) throw new Error(`API ${resp.status}: ${(await resp.text()).slice(0, 160)}`);
     return (await resp.json()).keywordList || [];
 }
@@ -409,10 +357,6 @@ function combine3(locs, biz, subs, menus) {
    V2 — 메인 실행
    ============================================================ */
 async function runV2() {
-    const cid  = API_CID;
-    const akey = API_KEY;
-    const skey = API_SKEY;
-
     v2Locs  = splitLines(document.getElementById('inp-loc').value);
     v2Biz   = splitLines(document.getElementById('inp-biz').value);
     v2Menus = splitLines(document.getElementById('inp-menu').value);
@@ -440,17 +384,11 @@ async function runV2() {
     try {
         for (let i = 0; i < chunks.length; i++) {
             setStatus('info', `⏳ API 조회 중... [${i + 1}/${chunks.length}]  ${chunks[i].join(', ')}`);
-            allKwList.push(...await callAPI(cid, akey, skey, chunks[i]));
+            allKwList.push(...await callAPI(chunks[i]));
             if (i < chunks.length - 1) await sleep(500);
         }
     } catch (err) {
-        const isCors = err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('CORS');
-        if (isCors) {
-            setStatus('error', '❌ CORS 차단 — 아래 패널에서 API JSON을 직접 붙여넣으세요.');
-            showPastePanel(cid, akey, seeds);
-        } else {
-            setStatus('error', `❌ ${err.message}`);
-        }
+        setStatus('error', `❌ ${err.message}`);
         return;
     }
 
@@ -465,36 +403,6 @@ function processResults(list, minM) {
     v2Combined = combine3(v2Locs, v2Biz, subs, v2Menus);
     renderResult();
     setStatus('success', `✅ 완료 — 서브키워드 ${v2SubData.length}개 / 조합 ${v2Combined.length}개 생성`);
-}
-
-/* ============================================================
-   V2 — CORS 대체 패널
-   ============================================================ */
-function showPastePanel(cid, akey, seeds) {
-    document.getElementById('paste-panel').style.display = '';
-    const ex = seeds.slice(0, 5).join(',');
-    document.getElementById('curl-cmd').textContent =
-`curl -H "X-API-KEY: ${akey}" \\
-     -H "X-Customer: ${cid}" \\
-     "https://api.searchad.naver.com/keywordstool?hintKeywords=${encodeURIComponent(ex)}&showDetail=1"`;
-}
-
-function processPasted() {
-    const raw = document.getElementById('paste-json').value.trim();
-    let list;
-    try {
-        const p = JSON.parse(raw);
-        list = Array.isArray(p) ? p : (p.keywordList || []);
-    } catch {
-        return setStatus('error', '❌ JSON 파싱 오류. 형식을 다시 확인하세요.');
-    }
-    if (!v2Locs.length) {
-        v2Locs  = splitLines(document.getElementById('inp-loc').value);
-        v2Biz   = splitLines(document.getElementById('inp-biz').value);
-        v2Menus = splitLines(document.getElementById('inp-menu').value);
-    }
-    const minM = parseInt(document.getElementById('inp-min').value) || 100;
-    processResults(list, minM);
 }
 
 /* ============================================================
