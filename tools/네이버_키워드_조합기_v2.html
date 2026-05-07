@@ -469,30 +469,24 @@ textarea.ta.tall { height: 140px; }
             <div class="input-grid">
                 <div>
                     <label class="fl">지역명 <span class="badge badge-req">필수</span></label>
-                    <textarea class="ta" id="inp-loc" placeholder="강남역&#10;역삼동&#10;신논현역"></textarea>
+                    <textarea class="ta" id="inp-loc" placeholder="강남역&#10;역삼동"></textarea>
                 </div>
                 <div>
                     <label class="fl">업종 / 카테고리 <span class="badge badge-req">필수</span></label>
-                    <textarea class="ta" id="inp-biz" placeholder="고기집&#10;삼겹살 전문점&#10;한우 레스토랑"></textarea>
+                    <textarea class="ta" id="inp-biz" placeholder="삼겹살&#10;고기집"></textarea>
                 </div>
-                <div>
-                    <label class="fl">대표 메뉴 <span class="badge badge-opt">선택</span></label>
-                    <textarea class="ta" id="inp-menu" placeholder="돼지 특수부위&#10;숙성 삼겹살&#10;살치살"></textarea>
-                </div>
-                <div>
-                    <label class="fl">매장 특징 <span class="badge badge-ai">AI 활용</span></label>
-                    <textarea class="ta" id="inp-feature" placeholder="직접 구워주는 서비스&#10;콜키지 프리&#10;룸 식당 (단체 회식)&#10;애견 동반 가능&#10;주차 2시간 무료"></textarea>
-                </div>
-            </div>
-            <div class="input-grid-2" style="margin-bottom:14px;">
                 <div>
                     <label class="fl">상세 주소 <span class="badge badge-ai">AI 분석</span></label>
-                    <textarea class="ta" id="inp-address" placeholder="예: 서울 강남구 역삼동 825-1 (정확한 위치 분석용)"></textarea>
+                    <textarea class="ta" id="inp-address" placeholder="서울 강남구 역삼동 825-1&#10;(정확한 랜드마크 분석용)"></textarea>
                 </div>
                 <div>
                     <label class="fl">주요 메뉴 키워드 <span class="badge badge-ai">AI 매칭</span></label>
-                    <textarea class="ta" id="inp-menu-kws" placeholder="매장의 핵심 메뉴 단어를 콤마(,)로 구분해서 입력하세요&#10;예: 삼겹살, 오겹살, 꽃등심, 냉면"></textarea>
+                    <textarea class="ta" id="inp-menu-kws" placeholder="오겹살, 꽃목살, 한우육회&#10;(단어 위주로 입력 가능)"></textarea>
                 </div>
+            </div>
+            <div style="margin-bottom:14px;">
+                <label class="fl">매장 특징 <span class="badge badge-opt">선택</span></label>
+                <textarea class="ta" id="inp-feature" placeholder="직접 구워주는 서비스&#10;콜키지 프리&#10;룸 식당 (단체 회식)&#10;애견 동반 가능&#10;주차 2시간 무료"></textarea>
             </div>
             <div class="setting-row">
                 <label>최소 모바일 검색량</label>
@@ -556,7 +550,7 @@ function setStep(n) {
    ============================================================ */
 let v2RawList   = [];    // API 수신 원본
 let v2AiResult  = [];    // {keyword, category, reason}
-let v2Locs = [], v2Biz = [], v2Menus = [], v2Features = [];
+let v2Locs = [], v2Biz = [], v2Features = [];
 let v2LastCk = null;
 let currentFilter = 'all';
 let isRunning = false;
@@ -618,12 +612,16 @@ async function callGeminiAPI(kwList, storeInfo) {
     };
 
     const userPrompt = `[매장 정보]
-- 지역: ${storeInfo.locs.join(', ')}
-- 업종: ${storeInfo.biz.join(', ')}
+- 지역(중심): ${storeInfo.locs.join(', ')}
 - 상세 주소: ${storeInfo.address || '없음'}
-- 대표 메뉴: ${storeInfo.menus.join(', ') || '없음'}
-- AI 매칭 메뉴 키워드: ${storeInfo.menuKws.join(', ') || '없음'}
+- 업종: ${storeInfo.biz.join(', ')}
+- 주요 메뉴: ${storeInfo.menuKws.join(', ') || '없음'}
 - 매장 특징: ${storeInfo.features.join(', ') || '없음'}
+
+[분류 지시사항]
+1. 상세 주소를 기반으로 반경 내 랜드마크와 무관한 지역 키워드는 DROP 하라.
+2. 입력된 메뉴 키워드와 식재료/요리 방식이 일치하지 않는 키워드는 DROP 하라.
+3. 적합도가 높은 키워드만 MAIN, TPO, FEAT, MENU로 분류하라.
 
 [분류할 키워드 목록]
 ${kwLines}`;
@@ -782,7 +780,6 @@ async function runV2() {
 
     v2Locs     = splitLines(document.getElementById('inp-loc').value);
     v2Biz      = splitLines(document.getElementById('inp-biz').value);
-    v2Menus    = splitLines(document.getElementById('inp-menu').value);
     v2Features = splitLines(document.getElementById('inp-feature').value);
     const v2Address  = document.getElementById('inp-address').value.trim();
     const v2MenuKws  = document.getElementById('inp-menu-kws').value.split(',').map(s => s.trim()).filter(Boolean);
@@ -803,8 +800,8 @@ async function runV2() {
     // 시드 키워드 구성
     const seeds = [];
     for (const l of v2Locs) {
-        for (const b of v2Biz)   seeds.push(`${l} ${b}`);
-        for (const m of v2Menus) seeds.push(`${l} ${m}`);
+        for (const b of v2Biz)     seeds.push(`${l} ${b}`);
+        for (const m of v2MenuKws) seeds.push(`${l} ${m}`);
     }
     // 지역+업종 단독도 추가
     for (const b of v2Biz)   seeds.push(b);
@@ -853,7 +850,7 @@ async function runV2() {
     let geminiResult;
     try {
         setStatus('info', `🤖 Gemini AI 분류 중... (${dedupedList.length}개 키워드 분석)`);
-        const storeInfo = { locs: v2Locs, biz: v2Biz, menus: v2Menus, features: v2Features, address: v2Address, menuKws: v2MenuKws };
+        const storeInfo = { locs: v2Locs, biz: v2Biz, features: v2Features, address: v2Address, menuKws: v2MenuKws };
         geminiResult = await callGeminiBatched(dedupedList, storeInfo);
     } catch (err) {
         setStatus('error', `❌ Gemini AI 오류: ${err.message}`);
