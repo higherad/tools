@@ -491,7 +491,10 @@ textarea.ta.tall { height: 140px; }
             <div class="setting-row">
                 <label>최소 모바일 검색량</label>
                 <input type="number" id="inp-min" value="0" min="0">
-                <span class="hint">0으로 설정하면 모든 연관 키워드를 수집합니다 (AI 필터링 전 최대 수집 권장)</span>
+                <span class="hint" style="margin-right:24px;">0 = 전체 수집</span>
+                <label>목표 키워드 수</label>
+                <input type="number" id="inp-target" value="50" min="0">
+                <span class="hint">0으로 설정하면 수량 제한 없이 전체 분류합니다</span>
             </div>
             <button class="btn btn-primary btn-full" onclick="runV2()">
                 <span id="run-btn-text">🔍 API 수집 후 AI 분류 시작</span>
@@ -580,7 +583,7 @@ function getGeminiModel() {
     return sel ? sel.value : 'gemini-2.0-flash-lite';
 }
 
-async function callGeminiAPI(kwList, storeInfo) {
+async function callGeminiAPI(kwList, storeInfo, batchTarget = 0) {
 
     const kwLines = kwList.map((k, i) =>
         `${i + 1}. ${k.relKeyword} (모바일검색량:${k.monthlyMobileQcCnt || 0})`
@@ -619,9 +622,10 @@ async function callGeminiAPI(kwList, storeInfo) {
 - 매장 특징: ${storeInfo.features.join(', ') || '없음'}
 
 [분류 지시사항]
-1. 상세 주소를 기반으로 반경 내 랜드마크와 무관한 지역 키워드는 DROP 하라.
-2. 입력된 메뉴 키워드와 식재료/요리 방식이 일치하지 않는 키워드는 DROP 하라.
-3. 적합도가 높은 키워드만 MAIN, TPO, FEAT, MENU로 분류하라.
+1. 상세 주소를 기반으로 반경 내 랜드마크와 무관한 지역 키워드는 제외하라.
+2. 입력된 메뉴 키워드와 식재료/요리 방식이 일치하지 않는 키워드는 제외하라.
+3. 적합도가 높은 키워드만 MAIN, TPO, FEAT, MENU로 분류하라.${batchTarget > 0 ? `
+4. 이 배치에서 적합한 키워드를 최대 ${batchTarget}개만 선별하라. 나머지는 응답에 포함하지 마라. DROP 카테고리는 출력하지 마라.` : ''}
 
 [분류할 키워드 목록]
 ${kwLines}`;
@@ -748,35 +752,42 @@ ${kwLines}`;
 /* ============================================================
    V2 — 배치 Gemini 호출 (500개 초과시 분할)
    ============================================================ */
-async function callGeminiBatched(dedupedList, storeInfo) {
-    const BATCH       = 50;   // 배치당 키워드 수 (Promise.all 병렬 처리)
-    const CONCURRENCY = 3;    // 무료 티어 RPM 안전선: 동시 요청 3개
+async function callGeminiBatched(dedupedList, storeInfo, targetCount = 0) {
+    const BATCH       = 50;
+    const CONCURRENCY = 3;
 
-    // 50개씩 청크 분할
     const chunks = [];
     for (let i = 0; i < dedupedList.length; i += BATCH) {
         chunks.push(dedupedList.slice(i, i + BATCH));
     }
 
-    setStatus('info', `🤖 Gemini AI 병렬 분류 시작 — ${chunks.length}개 배치 (배치당 ${BATCH}개, 동시 ${CONCURRENCY}개)`);
+    const targetLabel = targetCount > 0 ? ` / 목표 ${targetCount}개` : '';
+    setStatus('info', `🤖 Gemini AI 분류 시작 — ${chunks.length}개 배치 (배치당 ${BATCH}개${targetLabel})`);
 
     let mergedKeywords = [];
     let lastSummary    = '';
     let done           = 0;
 
-    // CONCURRENCY 단위로 묶어서 Promise.all 병렬 실행
     for (let i = 0; i < chunks.length; i += CONCURRENCY) {
+        // 목표 달성 시 조기 종료
+        if (targetCount > 0 && mergedKeywords.length >= targetCount) {
+            setStatus('info', `✅ 목표 ${targetCount}개 달성 — 나머지 배치 건너뜀`);
+            break;
+        }
+
+        const alreadyHave = mergedKeywords.length;
+        const remaining   = targetCount > 0 ? Math.max(1, targetCount - alreadyHave) : 0;
+
         const group = chunks.slice(i, i + CONCURRENCY);
         const results = await Promise.all(
-            group.map(chunk => callGeminiAPI(chunk, storeInfo))
+            group.map(chunk => callGeminiAPI(chunk, storeInfo, remaining))
         );
         for (const result of results) {
             mergedKeywords.push(...(result.keywords || []));
             lastSummary = result.summary || lastSummary;
         }
         done += group.length;
-        setStatus('info', `🤖 AI 분류 진행 중... [${done}/${chunks.length}배치 완료 — ${mergedKeywords.length}개 처리됨]`);
-        // 다음 그룹 전 짧은 딜레이 (Rate Limit 보호)
+        setStatus('info', `🤖 AI 분류 진행 중... [${done}/${chunks.length}배치 — ${mergedKeywords.length}개 확보${targetLabel}]`);
         if (i + CONCURRENCY < chunks.length) await sleep(500);
     }
 
@@ -796,7 +807,8 @@ async function runV2() {
     v2Features = splitLines(document.getElementById('inp-feature').value);
     const v2Address  = document.getElementById('inp-address').value.trim();
     const v2MenuKws  = document.getElementById('inp-menu-kws').value.split(',').map(s => s.trim()).filter(Boolean);
-    const minM = parseInt(document.getElementById('inp-min').value) || 0;
+    const minM       = parseInt(document.getElementById('inp-min').value)    || 0;
+    const targetCount = parseInt(document.getElementById('inp-target').value) || 0;
 
     if (!v2Locs.length || !v2Biz.length)
         return setStatus('error', '❌ 지역명과 업종은 필수 입력입니다.');
@@ -839,32 +851,73 @@ async function runV2() {
         return;
     }
 
-    // ─ STEP 2: 중복 제거 (최소 필터링) ─
+    // ─ STEP 2: 중복 제거 + 사전 필터링 ─
     setStep(2);
-    setStatus('info', `🔄 중복 제거 중... (수집: ${allKwList.length}개)`);
+    setStatus('info', `🔄 중복 제거 및 필터링 중... (수집: ${allKwList.length}개)`);
     await sleep(200);
+
+    // ── 타 지역 필터: 입력 지역 외 지역명 포함 키워드 제거 ──
+    const ALL_REGIONS = [
+        '서울','부산','대구','인천','광주','대전','울산','세종','수원','고양','용인','창원','성남','부천','화성','안산','안양','남양주','천안','전주','청주','김해','시흥','파주','원주','평택','의정부','포항','제주','춘천','목포','군산','여수','순천','구미','경주','거제','통영','양산','김포','하남','광명','광주시','이천','태안','아산','논산','공주','보령','충주','제천','강릉','동해','속초','삼척','태백','정선','의왕','과천','오산','안성','양주','구리','광양','나주','익산','정읍','남원','김제','완주','진주','사천','밀양','함안','합천','거창','고성','남해','하동','산청','의령','함양','창녕','고령','성주','칠곡','영천','경산','군위','의성','청송','영양','영덕','청도','고령','성주','칠곡','예천','봉화','울진','울릉','강화','옹진',
+        // 서울 구
+        '강남','강동','강북','강서','관악','광진','구로','금천','노원','도봉','동대문','동작','마포','서대문','서초','성동','성북','송파','양천','영등포','용산','은평','종로','중구','중랑',
+        // 부산 구
+        '해운대','수영','연제','동래','남구','북구','사하','사상','강서','기장','금정','동구','서구','영도','중구',
+        // 주요 역/동 (수도권)
+        '홍대','신촌','합정','망원','연남','상수','이태원','한남','압구정','청담','신사','논현','반포','잠원','방배','사당','낙성대','봉천','신림','여의도','영등포','구로디지털','가산','독산','시흥','금천','석촌','송리단','잠실','문정','가락','천호','성내','둔촌','고덕','명일','길동','강일','미사','하남','위례','판교','분당','정자','수내','미금','오리','야탑','모란','복정','수서','일원','대치','도곡','개포','구룡','학동','역삼','선릉','삼성','봉은사','코엑스','교대','방배','이수','총신대','사당','낙성대','서울대입구','신대방','신림','보라매','대림','구로','신도림','문래','영등포구청','당산','합정','망원','마포','공덕','애오개','충정로','서울역','남영','용산','이촌','동작','노량진','대방','신길','여의도','샛강','당산','선유도','양평','영등포','신도림',
+        // 경기 주요 시
+        '수원','성남','안양','부천','광명','평택','동두천','안산','고양','과천','구리','남양주','오산','시흥','군포','의왕','하남','용인','파주','이천','안성','김포','화성','광주','양주','포천','여주','연천','가평','양평',
+        // 인천 구
+        '계양','남동','동구','미추홀','부평','서구','연수','중구','강화','옹진',
+    ];
+
+    // 입력 지역 토큰 (공백 분리 + 개별 단어)
+    const inputRegionTokens = new Set(
+        v2Locs.flatMap(r => r.split(/\s+/)).map(r => r.replace(/[역동구시군]$/, '').trim()).filter(Boolean)
+    );
+    // 입력 지역 원본도 포함
+    v2Locs.forEach(r => inputRegionTokens.add(r.trim()));
+
+    // 입력 지역과 무관한 지역명 목록
+    const foreignRegions = ALL_REGIONS.filter(r => {
+        const base = r.replace(/[역동구시군]$/, '');
+        return ![...inputRegionTokens].some(t => t.includes(base) || base.includes(t));
+    });
+    const foreignRegionRe = new RegExp(foreignRegions.map(r => r.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'));
+
+    // ── 음식점 화이트리스트 (포함 시 블랙리스트 무시) ──
+    const FOOD_WHITELIST = /맛집|식당|음식|밥|먹|요리|메뉴|술|안주|회식|모임|데이트|브런치|런치|디너|점심|저녁|아침|카페|베이커리|빵|커피|디저트|케이크|아이스크림|치킨|피자|버거|파스타|스테이크|초밥|스시|라멘|우동|냉면|국밥|찌개|전골|구이|바베큐|bbq|훈제|삼겹|목살|항정|갈비|불고기|곱창|막창|대창|족발|보쌈|순대|떡볶이|튀김|전|부침|죽|국수|만두|샐러드|샌드위치|타코|쌀국수|팟타이|커리|짜장|짬뽕|탕수육|마라|훠궈|샤브|양꼬치|오마카세|코스|뷔페|무한리필|혼밥|포장|배달|테이크아웃|주류|와인|막걸리|소주|맥주|칵테일|하이볼|위스키/i;
+
+    // ── 무관 업종 블랙리스트 ──
+    const UNRELATED_PATTERNS = /부동산|공인중개|아파트|빌라|오피스텔|분양|임대|학원|과외|입시|독서실|스터디카페|병원|의원|치과|한의원|약국|클리닉|성형|피부과|안과|이비인후과|소아과|내과|외과|정형외과|산부인과|비뇨기과|정신건강|요양원|보험|대출|금융|은행|증권|펀드|택시|버스|지하철|주차장|세차|자동차|중고차|렌터카|카센터|미용실|네일|왁싱|눈썹|속눈썹|마사지|피시방|오락실|헬스장|필라테스|요가|골프|테니스|배드민턴|볼링|당구|쇼핑몰|백화점|마트|편의점|세탁소|철물점|꽃집|장례/;
 
     const seen = new Set();
     const dedupedList = [];
+    let filteredRegion = 0, filteredUnrelated = 0;
     for (const item of allKwList) {
         const kw  = (item.relKeyword || '').trim();
         const mob = parseInt(item.monthlyMobileQcCnt) || 0;
         if (!kw || seen.has(kw)) continue;
-        if (mob < minM) continue;      // 최소 검색량 필터 (기본값 0 = 전체)
+        if (mob < minM) continue;
+        // 타 지역 필터
+        if (foreignRegions.length && foreignRegionRe.test(kw)) { filteredRegion++; continue; }
+        // 무관 업종 필터 — 음식 관련 단어 포함 시 블랙리스트 무시
+        if (!FOOD_WHITELIST.test(kw) && UNRELATED_PATTERNS.test(kw)) { filteredUnrelated++; continue; }
         seen.add(kw);
         dedupedList.push({ relKeyword: kw, monthlyMobileQcCnt: mob });
     }
 
     v2RawList = dedupedList;
-    setStatus('info', `✅ 중복 제거 완료 — ${allKwList.length}개 수집 → ${dedupedList.length}개 정리`);
+    setStatus('info', `✅ 필터링 완료 — 수집 ${allKwList.length}개 → 타지역 제거 ${filteredRegion}개 / 무관업종 제거 ${filteredUnrelated}개 → ${dedupedList.length}개 AI 전송`);
 
     // ─ STEP 3: Gemini AI 분류 ─
     setStep(3);
     let geminiResult;
     try {
-        setStatus('info', `🤖 Gemini AI 분류 중... (${dedupedList.length}개 키워드 분석)`);
+        const targetLabel = targetCount > 0 ? ` (목표: ${targetCount}개)` : '';
+        setStatus('info', `🤖 Gemini AI 분류 중... (${dedupedList.length}개 키워드 분석${targetLabel})`);
         const storeInfo = { locs: v2Locs, biz: v2Biz, features: v2Features, address: v2Address, menuKws: v2MenuKws };
-        geminiResult = await callGeminiBatched(dedupedList, storeInfo);
+        geminiResult = await callGeminiBatched(dedupedList, storeInfo, targetCount);
     } catch (err) {
         setStatus('error', `❌ Gemini AI 오류: ${err.message}`);
         resetBtn();
