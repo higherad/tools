@@ -319,12 +319,51 @@ function extractNoun(kw, dynStop) {
 
 function filterKwList(list, minMobile, dynStop) {
     const seen = new Set(), out = [];
+
+    // 입력 지역명의 어근 집합 (강남역 → 강남역+강남, 역삼동 → 역삼동+역삼)
+    const locStems = new Set(v2Locs);
+    for (const loc of v2Locs) {
+        const stem = loc.replace(/(역|동|구|시|군|읍|면|리|가)$/, '');
+        if (stem.length >= 2) locStems.add(stem);
+    }
+    const locStemArr = [...locStems];
+
+    // 지역 접미사 패턴 (OO역, OO동 등)
+    const IS_REGION = /^[가-힣]{2,}(역|동|구|시|군|읍|면|리)$/;
+    // 복합어 접미사 (삼겹살맛집 → 삼겹살)
+    const COMPOUND = /^(.{2,}?)(맛집|음식점|식당|카페|술집|주점|횟집|고깃집)$/;
+
     for (const item of list) {
         const raw    = (item.relKeyword || '').trim();
         const mobile = parseInt(item.monthlyMobileQcCnt) || 0;
         if (!raw || mobile < minMobile) continue;
-        const noun = extractNoun(raw, dynStop);
-        if (!noun || seen.has(noun)) continue;
+
+        // ① 타 지역 차단: 입력하지 않은 지역어 토큰이 있으면 스킵
+        const hasForeignRegion = raw.split(/\s+/).some(t =>
+            IS_REGION.test(t) && !locStemArr.some(s => t.includes(s))
+        );
+        if (hasForeignRegion) continue;
+
+        // ② 명사 추출
+        let noun = extractNoun(raw, dynStop);
+        if (!noun) continue;
+
+        // ③ 지역 어근 제거 (강남맛집 → 맛집)
+        for (const stem of locStemArr) {
+            noun = noun.replace(new RegExp(stem, 'g'), '').trim();
+        }
+
+        // ④ 복합어 접미사 분리 (삼겹살맛집 → 삼겹살)
+        const cm = noun.match(COMPOUND);
+        if (cm) noun = cm[1];
+
+        noun = noun.trim();
+
+        // ⑤ 유효성: 2글자 미만, 지역 접미사 단독, 중복 제거
+        if (!noun || noun.length < 2) continue;
+        if (/^(역|동|구|시|군|읍|면|리)$/.test(noun)) continue;
+        if (seen.has(noun)) continue;
+
         seen.add(noun);
         out.push({ noun, rawKw: raw, mobile, included: true });
     }
@@ -332,20 +371,29 @@ function filterKwList(list, minMobile, dynStop) {
 }
 
 /* ============================================================
-   V2 — 3패턴 조합 엔진
+   V2 — 검색 의도(Intent) 기반 조합 엔진
    ============================================================ */
 function combine3(locs, biz, subs, menus) {
     const seen = new Set(), res = [];
     const add = (kw, pat) => {
-        kw = kw.trim();
+        kw = kw.trim().replace(/\s+/g, ' ');
         if (kw && !seen.has(kw)) { seen.add(kw); res.push({ keyword: kw, pattern: pat }); }
     };
     for (const loc of locs) {
-        for (const b of biz)  add(`${loc} ${b}`,          '패턴1');   // 기본형
-        for (const s of subs) add(`${loc} ${s}`,          '패턴2');   // 시설/서비스형
+        // 패턴1: 기본형
+        for (const b of biz)  add(`${loc} ${b}`, '패턴1(메인)');
+        for (const m of menus) add(`${loc} ${m}`, '패턴1(메뉴)');
+
+        // 패턴2: 특징형 — {지역} + {서브} + {업종} (의도형 롱테일)
+        for (const s of subs) {
+            if (s.length > 8) continue;
+            for (const b of biz) add(`${loc} ${s} ${b}`, '패턴2(특징)');
+            add(`${loc} ${s}`, '패턴2(서비스)');     // 서브 단독 조합도 유지
+        }
+
+        // 패턴3: 심화형 — {지역} + {메뉴} + {서브}
         for (const m of menus) {
-            add(`${loc} ${m}`,             '패턴1');
-            for (const s of subs) add(`${loc} ${m} ${s}`, '패턴3');   // 심화형
+            for (const s of subs) add(`${loc} ${m} ${s}`, '패턴3(심화)');
         }
     }
     return res;
@@ -436,7 +484,13 @@ function regenV2() {
 /* ============================================================
    V2 — 결과 테이블
    ============================================================ */
-const PAT_META = { 패턴1: ['p1','기본형'], 패턴2: ['p2','시설/서비스'], 패턴3: ['p3','심화형'] };
+const PAT_META = {
+    '패턴1(메인)':  ['p1', '메인'],
+    '패턴1(메뉴)':  ['p1', '메뉴'],
+    '패턴2(특징)':  ['p2', '특징'],
+    '패턴2(서비스)':['p2', '서비스'],
+    '패턴3(심화)':  ['p3', '심화'],
+};
 
 function renderResult() {
     const rows = v2Combined.map((item, i) => {
