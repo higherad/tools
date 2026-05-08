@@ -491,17 +491,40 @@ function handleExcelFile(file) {
 
 renderList();
 
-// ── 한글 IME 유지 — 외부 앱 클릭 후 복귀 시 검색창 자동 재포커스 ──
+// ── 한글 IME 유지 — 탭/앱 전환 후 복귀 시 검색창 IME 상태 복원 ──
 (function() {
   const search = document.getElementById('inp-search');
-  let searchWasFocused = false;
-  window.addEventListener('blur', function() {
-    searchWasFocused = (document.activeElement === search);
+  let prevActive = null;
+  let showHandled = false;
+
+  function onHide() {
+    prevActive = document.activeElement;
+    showHandled = false;
+  }
+
+  function onShow() {
+    if (showHandled) return;
+    showHandled = true;
+    const prev = prevActive;
+    setTimeout(function() {
+      search.focus({ preventScroll: true });
+      if (prev && prev !== search && prev !== document.body && typeof prev.focus === 'function') {
+        setTimeout(function() {
+          search.blur();
+          prev.focus({ preventScroll: true });
+        }, 0);
+      }
+    }, 50);
+  }
+
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) onHide();
+    else onShow();
   });
+
+  window.addEventListener('blur', onHide);
   window.addEventListener('focus', function() {
-    if (searchWasFocused) {
-      setTimeout(function() { search.focus({ preventScroll: true }); }, 50);
-    }
+    if (!document.hidden) onShow();
   });
 })();
 
