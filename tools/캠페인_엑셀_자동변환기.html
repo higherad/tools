@@ -396,12 +396,27 @@ function deactivateGroup() {
 
 // ── Product Groups ──
 const GROUPS_KEY = '캠페인_prod_groups';
+const PRODS_KEY  = '캠페인_prod_settings';
 
 function loadGroups() {
   try { const s=localStorage.getItem(GROUPS_KEY); if(s) groups=JSON.parse(s); } catch(e){}
 }
 function saveGroupsLocal() {
   try { localStorage.setItem(GROUPS_KEY, JSON.stringify(groups)); } catch(e){}
+}
+
+function loadProdsLocal() {
+  try {
+    const s=localStorage.getItem(PRODS_KEY); if(!s) return;
+    const saved=JSON.parse(s);
+    const savedMap=new Map(saved.map(p=>[p.id,p]));
+    const defaultIds=new Set(prods.map(p=>p.id));
+    prods=prods.map(def=>savedMap.has(def.id)?{...def,...savedMap.get(def.id)}:def);
+    saved.forEach(sp=>{if(!defaultIds.has(sp.id)) prods.push(sp);});
+  } catch(e){}
+}
+function saveProdsLocal() {
+  try { localStorage.setItem(PRODS_KEY, JSON.stringify(prods)); } catch(e){}
 }
 
 function renderGroups() {
@@ -563,7 +578,6 @@ function scheduleSave() {
 
 // ── Init ──
 window.onload = () => {
-  loadGroups();
   renderPS();
   renderGroups();
   addRow(); addRow(); addRow();
@@ -830,6 +844,10 @@ function removeRow(id){ rows=rows.filter(r=>r.id!==id); renderTable(); refreshUI
 function clearAll(){
   if(rows.filter(r=>r.name).length>0&&!confirm('모든 데이터를 초기화할까요?')) return;
   rows=[]; addRow(); addRow(); addRow(); refreshUI(); scheduleSave();
+  const z=document.getElementById('upz');
+  z.classList.remove('ok');
+  z.querySelector('h3').textContent='접수_날짜.xlsx 드래그 또는 클릭해서 업로드';
+  document.getElementById('fi').value='';
 }
 function upd(id,f,v){ const r=rows.find(x=>x.id===id); if(r){r[f]=v; updateStats(); refreshUI(); scheduleSave();} }
 function togProd(rowId,mid,checked){
