@@ -653,7 +653,6 @@ function renderList() {
           <input type="text" id="amt-${i}"
             value="${amtV || ''}"
             placeholder="금액 입력"
-            inputmode="numeric"
             style="width:100px;padding:5px 8px;font-size:12px;border-radius:7px;"
             oninput="this.value=this.value.replace(/[^0-9]/g,'');onAmountChange(${i}, this.value)"
           />
