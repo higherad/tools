@@ -153,6 +153,10 @@
           <textarea id="inp-keywords" placeholder="귀금속,귀금속방,귀금속위치"></textarea>
           <div class="keyword-hint">쉼표(,)로 구분 — A/B 동일하게 입력됩니다</div>
         </div>
+        <div class="form-group">
+          <label>메모 (선택)</label>
+          <input type="text" id="inp-memo" placeholder="비워두면 오늘 날짜(MM-DD) 자동 입력" />
+        </div>
         <button class="btn btn-primary" onclick="addEntry()">➕ 추가</button>
 
         <hr style="border:none;border-top:1px solid #e8eaf0;margin:14px 0;">
@@ -161,7 +165,7 @@
         <div class="excel-upload-area" id="excel-drop-zone" onclick="document.getElementById('excel-file-input').click()">
           <div class="upload-icon">📊</div>
           <div class="upload-text">엑셀 파일 클릭 또는 드래그</div>
-          <div class="upload-hint">pcode / 캠페인명 / 키워드(쉼표 구분)</div>
+          <div class="upload-hint">pcode / 캠페인명 / 키워드 / 메모(선택)</div>
         </div>
         <input type="file" id="excel-file-input" accept=".xlsx,.xls" onchange="handleExcelFile(this.files[0])">
       </div>
@@ -194,11 +198,12 @@
               <th style="width:36px;"></th>
               <th>Pcode / 캠페인명</th>
               <th>키워드</th>
+              <th>메모</th>
               <th style="width:72px;">상태</th>
             </tr>
           </thead>
           <tbody id="entry-tbody">
-            <tr><td colspan="4">
+            <tr><td colspan="5">
               <div class="empty-state"><div class="empty-icon">📋</div><div>등록된 항목이 없습니다.<br>좌측에서 캠페인을 추가해주세요.</div></div>
             </td></tr>
           </tbody>
@@ -249,14 +254,16 @@ function addEntry() {
   const pcode    = document.getElementById('inp-pcode').value.trim();
   const name     = document.getElementById('inp-name').value.trim();
   const keywords = document.getElementById('inp-keywords').value.trim();
+  const memo     = document.getElementById('inp-memo').value.trim();
   if (!pcode) { alert('Pcode를 입력해주세요.'); return; }
   if (!keywords) { alert('키워드를 입력해주세요.'); return; }
 
-  entries.push({ pcode, name, keywords, status: 'ready', result: '' });
+  entries.push({ pcode, name, keywords, memo, status: 'ready', result: '' });
   save();
   document.getElementById('inp-pcode').value    = '';
   document.getElementById('inp-name').value     = '';
   document.getElementById('inp-keywords').value = '';
+  document.getElementById('inp-memo').value     = '';
   renderList();
   addLog(`추가: ${pcode}${name?' ('+name+')':''} — ${keywords.split(',').length}개 키워드`, 'info');
 }
@@ -307,7 +314,7 @@ function renderList() {
   document.getElementById('entry-count').textContent = entries.length;
 
   if (!entries.length) {
-    tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📋</div><div>등록된 항목이 없습니다.</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><div>등록된 항목이 없습니다.</div></div></td></tr>`;
     syncAll(); return;
   }
 
@@ -316,7 +323,7 @@ function renderList() {
     : entries;
 
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔍</div><div>검색 결과가 없습니다.</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🔍</div><div>검색 결과가 없습니다.</div></div></td></tr>`;
     syncAll(); return;
   }
 
@@ -334,6 +341,7 @@ function renderList() {
         ${e.result?`<div style="font-size:10.5px;color:#718096;margin-top:2px;">${esc(e.result)}</div>`:''}
       </td>
       <td><div class="td-keywords" title="${esc(e.keywords)}">${esc(e.keywords)}</div></td>
+      <td><div class="td-keywords" title="${esc(e.memo||'')}">${esc(e.memo||'') || '<span style="color:#c0c8d4;font-size:10.5px;">오늘 날짜</span>'}</div></td>
       <td><span class="status-badge ${sc[e.status]||'s-ready'}">${st[e.status]||'대기'}</span></td>
     </tr>`;
   }).join('');
@@ -363,7 +371,7 @@ async function startProcess() {
   document.getElementById('btn-run').disabled = true;
   document.getElementById('progress-wrap').style.display = 'block';
 
-  const payload = selected.map(e => ({ pcode: e.pcode, name: e.name, keywords: e.keywords }));
+  const payload = selected.map(e => ({ pcode: e.pcode, name: e.name, keywords: e.keywords, memo: e.memo || '' }));
   selected.forEach(e => { e.status = 'running'; e.result = ''; });
   renderList();
 
@@ -465,9 +473,10 @@ function handleExcelFile(file) {
         const pcode    = String(rows[r][0] || '').trim();
         const name     = String(rows[r][1] || '').trim();
         const keywords = String(rows[r][2] || '').trim();
+        const memo     = String(rows[r][3] || '').trim();
         if (!pcode || !keywords) { skipped++; continue; }
         if (entries.some(e => e.pcode === pcode)) { skipped++; continue; }
-        entries.push({ pcode, name, keywords, status: 'ready', result: '' });
+        entries.push({ pcode, name, keywords, memo, status: 'ready', result: '' });
         added++;
       }
 
@@ -517,7 +526,7 @@ renderList();
   onValue(dataRef, (snap) => {
     const data = snap.val();
     if (Array.isArray(data) && data.length > 0) {
-      entries = data.map(e => ({ ...e, status: 'ready', result: '', checked: e.checked ?? false }));
+      entries = data.map(e => ({ ...e, memo: e.memo || '', status: 'ready', result: '', checked: e.checked ?? false }));
       renderList();
       addLog(`📂 목록 불러옴 (${entries.length}개)`, 'info');
     }
