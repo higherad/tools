@@ -164,10 +164,6 @@
     font-size: 12px;
     border-radius: 7px;
   }
-  /* 숫자 입력 스피너 제거 */
-  input[type="number"]::-webkit-inner-spin-button,
-  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  input[type="number"] { -moz-appearance: textfield; }
 
   /* 상태 뱃지 */
   .status-badge {
@@ -654,12 +650,12 @@ function renderList() {
       </td>
       <td>
         <div class="amount-cell">
-          <input type="number" id="amt-${i}"
+          <input type="text" id="amt-${i}"
             value="${amtV || ''}"
             placeholder="금액 입력"
-            min="1000" step="1000"
-            style="width:100px;padding:5px 8px;font-size:12px;border-radius:7px;-moz-appearance:textfield;"
-            oninput="onAmountChange(${i}, this.value)"
+            inputmode="numeric"
+            style="width:100px;padding:5px 8px;font-size:12px;border-radius:7px;"
+            oninput="this.value=this.value.replace(/[^0-9]/g,'');onAmountChange(${i}, this.value)"
           />
         </div>
       </td>
@@ -846,7 +842,7 @@ function handleExcelFile(file) {
   reader.readAsArrayBuffer(file);
 }
 
-// ── 한글 IME 유지 — 탭/앱 전환 후 복귀 시 검색창 IME 상태 복원 ──
+// ── 한글 IME 유지 — 탭/앱 전환 + 내부 number 입력 후 검색창 복귀 시 IME 재활성화 ──
 (function() {
   const search = document.getElementById('inp-search');
   let prevActive = null;
@@ -862,9 +858,7 @@ function handleExcelFile(file) {
     showHandled = true;
     const prev = prevActive;
     setTimeout(function() {
-      // 한글 IME 활성화를 위해 검색창에 포커스
       search.focus({ preventScroll: true });
-      // 검색창이 아닌 다른 요소에 포커스가 있었으면 원래 위치로 복원
       if (prev && prev !== search && prev !== document.body && typeof prev.focus === 'function') {
         setTimeout(function() {
           search.blur();
@@ -874,17 +868,16 @@ function handleExcelFile(file) {
     }, 50);
   }
 
-  // 브라우저 탭 전환 감지 (visibilitychange가 탭 전환에 더 신뢰성 높음)
   document.addEventListener('visibilitychange', function() {
     if (document.hidden) onHide();
     else onShow();
   });
 
-  // 외부 앱 전환 대응 (window blur/focus)
   window.addEventListener('blur', onHide);
   window.addEventListener('focus', function() {
     if (!document.hidden) onShow();
   });
+
 })();
 
 // ── 초기화 ──
