@@ -31,6 +31,9 @@ input[type=number],input[type=text],input[type=date]{
 }
 input:focus{outline:none;border-color:var(--accent);background:#fff}
 input[readonly]{background:#f3f4f6;color:var(--muted);cursor:not-allowed}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
 .row{display:flex;gap:10px;flex-wrap:wrap}
 .col{flex:1 1 130px;min-width:0}
 
