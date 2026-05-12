@@ -4,6 +4,9 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>플레이스 단가 계산기</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
 <style>
 :root{
   --bg:#f1f3f8;--card:#fff;--text:#111827;--muted:#6b7280;
@@ -110,7 +113,7 @@ input[readonly]{background:#f3f4f6;color:var(--muted);cursor:not-allowed}
   <div class="card-top">
     <div class="card-title"><div class="ic" style="background:#f0fdfa;color:var(--ok)">📂</div>정산 등록 — 대행사별 분류</div>
     <div style="display:flex;gap:8px">
-      <input type="file" id="csvFileInput" accept=".csv" style="display:none"/>
+      <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls" style="display:none"/>
       <button class="btn btn-ghost btn-sm" id="uploadCsvBtn">📤 CSV 업로드</button>
       <button class="btn btn-ghost btn-sm" id="clearCsvBtn" style="display:none;color:var(--error)">✕ 초기화</button>
     </div>
@@ -501,9 +504,53 @@ input[readonly]{background:#f3f4f6;color:var(--muted);cursor:not-allowed}
   $("#clearCsvBtn").onclick = resetCsvArea;
 
   function readCsv(file){
-    const r = new FileReader();
-    r.onload = ev => parseCsv(ev.target.result.replace(/^\uFEFF/,""));
-    r.readAsText(file,"UTF-8");
+
+    const ext = file.name.split(".").pop().toLowerCase();
+
+    // CSV
+    if(ext === "csv"){
+
+      const r = new FileReader();
+
+      r.onload = ev => {
+        parseCsv(
+          ev.target.result.replace(/^\uFEFF/, "")
+        );
+      };
+
+      r.readAsText(file, "UTF-8");
+
+      return;
+    }
+
+    // XLSX / XLS
+    if(ext === "xlsx" || ext === "xls"){
+
+      const r = new FileReader();
+
+      r.onload = ev => {
+
+        const data = new Uint8Array(ev.target.result);
+
+        const workbook = XLSX.read(data, {
+          type: "array"
+        });
+
+        const firstSheet = workbook.SheetNames[0];
+
+        const worksheet = workbook.Sheets[firstSheet];
+
+        const csv = XLSX.utils.sheet_to_csv(worksheet);
+
+        parseCsv(csv);
+      };
+
+      r.readAsArrayBuffer(file);
+
+      return;
+    }
+
+    alert("지원하지 않는 파일 형식입니다.");
   }
 
   function parseCsv(text){
