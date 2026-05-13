@@ -10,8 +10,6 @@
             --bg: #f0f2f5;
             --border: #e2e4e8;
             --panel-bg: #ffffff;
-            --header-height: 60px;
-            --controls-height: auto;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -22,10 +20,9 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* 페이지 자체 스크롤 없앰 */
+            overflow: hidden;
         }
 
-        /* ───── 상단 고정 영역 ───── */
         .sticky-top {
             flex-shrink: 0;
             background: var(--bg);
@@ -33,7 +30,6 @@
             z-index: 100;
         }
 
-        /* 헤더 */
         .header {
             display: flex;
             justify-content: space-between;
@@ -68,10 +64,7 @@
             opacity: 0;
             transition: opacity 0.3s;
         }
-        .sync-badge.show {
-            display: inline-block;
-            opacity: 1;
-        }
+        .sync-badge.show { display: inline-block; opacity: 1; }
         .btn-sync {
             height: 38px;
             padding: 0 18px;
@@ -89,7 +82,6 @@
         }
         .btn-sync:hover { background: #357abd; }
 
-        /* 검색 섹션 */
         .search-section {
             background: var(--panel-bg);
             border-radius: 12px;
@@ -127,25 +119,14 @@
         }
         .btn-search:hover { background: #3b36c4; }
 
-        /* 검색 결과 패널 (상단 고정 영역 내부) */
-        .search-result-area {
-            display: none;
-            margin-top: 10px;
-            background: var(--panel-bg);
-            border-radius: 10px;
-            border: 1.5px solid var(--dark-blue);
-            overflow: hidden;
-        }
-        .search-filter-bar {
+        .search-mode-bar {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 14px;
-            border-bottom: 1px solid var(--border);
-            background: #fafbff;
+            margin-top: 8px;
         }
-        .search-filter-bar > span { font-size: 12px; color: #999; font-weight: 600; }
-        .filter-btn {
+        .search-mode-bar > .label { font-size: 12px; color: #999; font-weight: 600; }
+        .mode-btn {
             padding: 4px 14px;
             border: 1.5px solid var(--border);
             border-radius: 20px;
@@ -156,18 +137,30 @@
             color: #666;
             transition: 0.15s;
         }
-        .filter-btn:hover { border-color: var(--dark-blue); color: var(--dark-blue); }
-        .filter-btn.active { background: var(--dark-blue); color: white; border-color: var(--dark-blue); }
-        .search-result-count { font-size: 12px; color: #999; margin-left: auto; }
-        .search-result-count strong { color: var(--dark-blue); }
-
-        /* 검색 결과 테이블 – 최대 높이 제한으로 자체 스크롤 */
-        .search-table-wrap {
-            max-height: 200px;
-            overflow: auto;
+        .mode-btn:hover { border-color: var(--dark-blue); color: var(--dark-blue); }
+        .mode-btn.active { background: var(--dark-blue); color: white; border-color: var(--dark-blue); }
+        .mode-btn.active-exclude { background: #e53935; color: white; border-color: #e53935; }
+        .search-status {
+            display: none;
+            margin-left: auto;
+            font-size: 12px;
+            color: #666;
         }
+        .search-status strong { color: var(--dark-blue); }
+        .btn-reset {
+            display: none;
+            padding: 3px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            background: white;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            color: #999;
+            transition: 0.15s;
+        }
+        .btn-reset:hover { border-color: #e53935; color: #e53935; }
 
-        /* 타입 선택 탭 */
         .type-selector {
             display: flex;
             gap: 6px;
@@ -184,17 +177,12 @@
             color: #888;
             transition: 0.15s;
         }
-        .type-btn.active {
-            background: var(--dark-blue);
-            color: white;
-            border-color: var(--dark-blue);
-        }
+        .type-btn.active { background: var(--dark-blue); color: white; border-color: var(--dark-blue); }
         .type-btn:hover:not(.active) { border-color: var(--dark-blue); color: var(--dark-blue); }
 
-        /* ───── 테이블 영역 (남은 높이를 모두 차지하고 스크롤) ───── */
         .table-area {
-            flex: 1;          /* 남은 수직 공간 전부 차지 */
-            overflow: hidden; /* 자식인 master-section이 스크롤 담당 */
+            flex: 1;
+            overflow: hidden;
             padding: 0 20px 16px;
             display: flex;
             flex-direction: column;
@@ -203,16 +191,6 @@
         .master-section { display: none; flex: 1; flex-direction: column; overflow: hidden; }
         .master-section.active { display: flex; }
 
-        .table-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--dark-blue);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 8px;
-            flex-shrink: 0;
-        }
         .count-badge {
             font-size: 12px;
             background: #eef2ff;
@@ -251,27 +229,21 @@
             min-width: 130px;
         }
         .grade-select:focus { border-color: var(--dark-blue); }
-        .grade-filter-count {
-            font-size: 12px;
-            color: #999;
-            margin-left: 4px;
-        }
+        .grade-filter-count { font-size: 12px; color: #999; margin-left: 4px; }
         .grade-filter-count strong { color: var(--dark-blue); }
 
-        /* 테이블 카드: flex: 1로 남은 공간 전부, overflow로 스크롤 */
         .main-table-card {
             flex: 1;
-            overflow: auto;   /* 가로·세로 모두 스크롤 */
+            overflow: auto;
             background: white;
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             border: 1px solid var(--border);
         }
 
-        /* ───── 공통 테이블 스타일 ───── */
         .data-table {
             width: 100%;
-            border-collapse: separate; /* collapse는 sticky와 충돌 → separate 사용 */
+            border-collapse: separate;
             border-spacing: 0;
             font-size: 12px;
             table-layout: fixed;
@@ -317,30 +289,6 @@
 
         tr.hidden-row { display: none; }
 
-        /* 검색 모드 토글 */
-        .search-mode-bar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        .search-mode-bar > span { font-size: 12px; color: #999; font-weight: 600; }
-        .mode-btn {
-            padding: 4px 14px;
-            border: 1.5px solid var(--border);
-            border-radius: 20px;
-            background: white;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            color: #666;
-            transition: 0.15s;
-        }
-        .mode-btn:hover { border-color: var(--dark-blue); color: var(--dark-blue); }
-        .mode-btn.active { background: var(--dark-blue); color: white; border-color: var(--dark-blue); }
-        .mode-btn.active-exclude { background: #e53935; color: white; border-color: #e53935; }
-
-        /* 스크롤바 스타일 (webkit) */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
@@ -349,7 +297,6 @@
 </head>
 <body>
 
-<!-- ★ 상단 고정 영역 -->
 <div class="sticky-top">
 
     <div class="header">
@@ -369,38 +316,42 @@
             <button id="btnSearch" class="btn-search" onclick="searchMID()">중복<br>검색하기</button>
         </div>
         <div class="search-mode-bar">
-            <span>검색 방식</span>
+            <span class="label">검색 방식</span>
             <button class="mode-btn active" id="modeInclude" onclick="setSearchMode('include')">포함 검색</button>
             <button class="mode-btn" id="modeExclude" onclick="setSearchMode('exclude')">제외 검색</button>
-        </div>
-
-        <div id="searchResultArea" class="search-result-area">
-            <div class="search-filter-bar">
-                <span>필터</span>
-                <button class="filter-btn active" id="filterAll"   onclick="applySearchFilter('전체')">전체</button>
-                <button class="filter-btn"        id="filterBlack" onclick="applySearchFilter('블랙/올리브')">블랙/올리브</button>
-                <button class="filter-btn"        id="filterOther" onclick="applySearchFilter('기타등급')">기타등급</button>
-                <span class="search-result-count">검색 결과: <strong id="visibleCount">0</strong>건</span>
-            </div>
-            <div class="search-table-wrap">
-                <table class="data-table">
-                    <thead id="searchHeader"></thead>
-                    <tbody id="searchResultBody"></tbody>
-                </table>
-            </div>
+            <span id="searchStatus" class="search-status">검색 결과: <strong id="searchCount">0</strong>건</span>
+            <button id="btnReset" class="btn-reset" onclick="resetSearch()">✕ 초기화</button>
         </div>
     </div>
 
     <div class="type-selector">
-        <button id="btnTypeA" class="type-btn active" onclick="switchType('A')">📂 블랙/올리브 <span id="countA" class="count-badge" style="margin-left:4px;">0건</span></button>
-        <button id="btnTypeB" class="type-btn"        onclick="switchType('B')">📂 기타등급 <span id="countB" class="count-badge" style="margin-left:4px;">0건</span></button>
+        <button id="btnTypeAll" class="type-btn" onclick="switchType('all')">전체</button>
+        <button id="btnTypeA"   class="type-btn active" onclick="switchType('A')">📂 블랙/올리브 <span id="countA" class="count-badge" style="margin-left:4px;">0건</span></button>
+        <button id="btnTypeB"   class="type-btn"        onclick="switchType('B')">📂 기타등급 <span id="countB" class="count-badge" style="margin-left:4px;">0건</span></button>
     </div>
 
-</div><!-- /sticky-top -->
+</div>
 
-<!-- ★ 스크롤 테이블 영역 -->
 <div class="table-area">
 
+    <!-- 전체 통합 뷰 -->
+    <div id="sectionAll" class="master-section">
+        <div class="grade-filter-bar">
+            <label>등급 필터</label>
+            <select id="gradeSelectAll" class="grade-select" onchange="updateMergedVisibility()">
+                <option value="">전체</option>
+            </select>
+            <span class="grade-filter-count">표시: <strong id="gradeCountAll">0</strong>건</span>
+        </div>
+        <div class="main-table-card">
+            <table class="data-table">
+                <thead id="masterHeaderAll"></thead>
+                <tbody id="masterBodyAll"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 블랙/올리브 -->
     <div id="sectionA" class="master-section active">
         <div class="grade-filter-bar">
             <label>등급 필터</label>
@@ -417,6 +368,7 @@
         </div>
     </div>
 
+    <!-- 기타등급 -->
     <div id="sectionB" class="master-section">
         <div class="grade-filter-bar">
             <label>등급 필터</label>
@@ -444,12 +396,13 @@
     window.headersB = [];
     window.origDbA = [];
     window.origDbB = [];
-    window.origSearchRows = [];
-    window.searchHList = [];
+    window.origMergedRows = [];
     window.sortStateA = { colIndex: -1, state: 0 };
     window.sortStateB = { colIndex: -1, state: 0 };
-    window.sortStateSearch = { colIndex: -1, state: 0 };
+    window.sortStateAll = { colIndex: -1, state: 0 };
     window.searchMode = 'include';
+    window.searchQueries = [];
+    window.currentType = 'A';
 
     async function syncWithGoogleSheet() {
         const btn = document.querySelector('.btn-sync');
@@ -472,6 +425,9 @@
             updateCountBadge('countA', window.dbA.length);
             updateCountBadge('countB', window.dbB.length);
             renderAll();
+            resetSearch();
+            switchType('A');
+
             const badge = document.getElementById('syncBadge');
             badge.classList.add('show');
             setTimeout(() => { badge.classList.remove('show'); }, 3000);
@@ -504,38 +460,177 @@
             const grades = [...new Set(db.map(item => stripGrade(item.data[gradeCol] || '')).filter(Boolean))].sort();
             grades.forEach(g => {
                 const opt = document.createElement('option');
-                opt.value = g;
-                opt.textContent = g;
+                opt.value = g; opt.textContent = g;
                 select.appendChild(opt);
             });
         }
-        // 이전 선택 유지
         if ([...select.options].some(o => o.value === current)) select.value = current;
-        // 카운트 표시
         document.getElementById(countId).innerText = db.length;
     }
 
-    function applyGradeFilter(section) {
-        const selectId = 'gradeSelect' + section;
+    /* ── 전체 통합 뷰 ── */
+    function getMergedSource() {
+        const queries = window.searchQueries;
+        const isExclude = window.searchMode === 'exclude';
+        const filterFn = item => {
+            if (queries.length === 0) return true;
+            const matches = queries.some(q => (item.mid || '').includes(q));
+            return isExclude ? !matches : matches;
+        };
+        return [
+            ...window.dbA.filter(filterFn).map(d => ({...d, listType: '블랙/올리브'})),
+            ...window.dbB.filter(filterFn).map(d => ({...d, listType: '기타등급'}))
+        ];
+    }
+
+    function renderMergedSection() {
+        const hList = window.headersA.length > 0 ? window.headersA : window.headersB;
+        if (!hList || hList.length === 0) return;
+
+        const cells = hList.map((h, i) =>
+            `<th onclick="sortMergedTable(${i + 1})">${h}<span class="sort-icon">⇅</span></th>`
+        ).join('');
+        document.getElementById('masterHeaderAll').innerHTML =
+            `<tr><th onclick="sortMergedTable(0)" style="width:90px;">구분<span class="sort-icon">⇅</span></th>${cells}</tr>`;
+
+        const merged = getMergedSource();
+        window.origMergedRows = [...merged];
+        window.sortStateAll = { colIndex: -1, state: 0 };
+
+        document.getElementById('masterBodyAll').innerHTML = buildMergedRows(merged, hList);
+
+        // 등급 select 채우기
+        const gradeCol = getGradeColumn(hList);
+        const select = document.getElementById('gradeSelectAll');
+        const current = select.value;
+        select.innerHTML = '<option value="">전체</option>';
+        if (gradeCol) {
+            const grades = [...new Set(merged.map(item => stripGrade(item.data[gradeCol] || '')).filter(Boolean))].sort();
+            grades.forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g; opt.textContent = g;
+                select.appendChild(opt);
+            });
+        }
+        if ([...select.options].some(o => o.value === current)) select.value = current;
+
+        updateMergedVisibility();
+    }
+
+    function buildMergedRows(rows, hList) {
+        if (!rows || rows.length === 0)
+            return '<tr><td colspan="20" style="padding:40px; color:#bbb; text-align:center;">데이터가 없습니다.</td></tr>';
+
+        const gradeCol = getGradeColumn(hList);
+        return rows.map(item => {
+            const grade = gradeCol ? stripGrade(item.data[gradeCol] || '') : '';
+            const cells = hList.map(h => {
+                const raw = item.data[h] || '-';
+                const dv = h === '등급' ? (stripGrade(raw) || '-') : formatDisplayValue(h, raw);
+                let style = '';
+                if (h === 'MID') style = 'color:var(--main-green); font-weight:700;';
+                if (String(dv).includes('▲')) style = 'color:#e53935; font-weight:700;';
+                else if (String(dv).includes('▼')) style = 'color:var(--dark-blue); font-weight:700;';
+                return `<td title="${dv}" style="${style}">${dv}</td>`;
+            }).join('');
+            return `<tr data-grade="${grade}" data-listtype="${item.listType}">
+                <td style="font-weight:700; color:var(--dark-blue); background:#f0f2ff;">${item.listType}</td>
+                ${cells}
+            </tr>`;
+        }).join('');
+    }
+
+    window.updateMergedVisibility = function() {
+        const selectedGrade = document.getElementById('gradeSelectAll').value;
+        let count = 0;
+        document.querySelectorAll('#masterBodyAll tr').forEach(row => {
+            const grade = row.getAttribute('data-grade') || '';
+            const hidden = selectedGrade ? !grade.includes(selectedGrade) : false;
+            row.classList.toggle('hidden-row', hidden);
+            if (!hidden) count++;
+        });
+        document.getElementById('gradeCountAll').innerText = count;
+    };
+
+    function sortMergedTable(colIndex) {
+        const s = window.sortStateAll;
+        const hList = window.headersA.length > 0 ? window.headersA : window.headersB;
+
+        s.state = (s.colIndex === colIndex) ? (s.state + 1) % 3 : 1;
+        s.colIndex = colIndex;
+
+        document.getElementById('masterHeaderAll').querySelectorAll('th').forEach(th => {
+            th.classList.remove('sort-asc', 'sort-desc');
+            const icon = th.querySelector('.sort-icon');
+            if (icon) icon.textContent = '⇅';
+        });
+
+        let sorted;
+        if (s.state === 0) {
+            sorted = [...window.origMergedRows];
+        } else {
+            const th   = document.getElementById('masterHeaderAll').querySelectorAll('th')[colIndex];
+            const icon = th ? th.querySelector('.sort-icon') : null;
+            sorted = [...window.origMergedRows].sort((a, b) => {
+                let va, vb, h = null;
+                if (colIndex === 0) { va = a.listType || ''; vb = b.listType || ''; }
+                else { h = hList[colIndex - 1]; va = a.data[h] ?? ''; vb = b.data[h] ?? ''; }
+                const na = parseFloat(va), nb = parseFloat(vb);
+                if (h === '등락') {
+                    const emptyA = va === '' || va === '-' || isNaN(na) || na === 0;
+                    const emptyB = vb === '' || vb === '-' || isNaN(nb) || nb === 0;
+                    if (emptyA && emptyB) return 0;
+                    if (emptyA) return 1;
+                    if (emptyB) return -1;
+                }
+                const cmp = (!isNaN(na) && !isNaN(nb)) ? na - nb : String(va).localeCompare(String(vb), 'ko');
+                return s.state === 1 ? cmp : -cmp;
+            });
+            if (s.state === 1) { if (th) th.classList.add('sort-asc');  if (icon) icon.textContent = '▲'; }
+            else               { if (th) th.classList.add('sort-desc'); if (icon) icon.textContent = '▼'; }
+        }
+
+        document.getElementById('masterBodyAll').innerHTML = buildMergedRows(sorted, hList);
+        updateMergedVisibility();
+    }
+
+    /* ── 개별 섹션 필터 ── */
+    function updateSectionVisibility(section) {
         const bodyId = 'masterBody' + section;
         const countId = 'gradeCount' + section;
-        const headers = section === 'A' ? window.headersA : window.headersB;
-        const gradeCol = getGradeColumn(headers);
-        const selected = document.getElementById(selectId).value;
-
+        const selectedGrade = document.getElementById('gradeSelect' + section).value;
         let count = 0;
         document.querySelectorAll('#' + bodyId + ' tr').forEach(row => {
-            if (!selected) {
-                row.classList.remove('hidden-row');
-                count++;
-            } else {
-                const grade = row.getAttribute('data-grade') || '';
-                const show = grade.includes(selected);
-                row.classList.toggle('hidden-row', !show);
-                if (show) count++;
-            }
+            const midHidden = row.hasAttribute('data-mid-hidden');
+            const grade = row.getAttribute('data-grade') || '';
+            const gradeHidden = selectedGrade ? !grade.includes(selectedGrade) : false;
+            row.classList.toggle('hidden-row', midHidden || gradeHidden);
+            if (!midHidden && !gradeHidden) count++;
         });
         document.getElementById(countId).innerText = count;
+    }
+
+    function applyMidFilter() {
+        const queries = window.searchQueries;
+        const isExclude = window.searchMode === 'exclude';
+        ['A', 'B'].forEach(section => {
+            document.querySelectorAll('#masterBody' + section + ' tr').forEach(row => {
+                if (queries.length === 0) {
+                    row.removeAttribute('data-mid-hidden');
+                } else {
+                    const mid = row.getAttribute('data-mid') || '';
+                    const matches = queries.some(q => mid.includes(q));
+                    if (isExclude ? matches : !matches) row.setAttribute('data-mid-hidden', '1');
+                    else row.removeAttribute('data-mid-hidden');
+                }
+            });
+            updateSectionVisibility(section);
+        });
+        if (window.currentType === 'all') renderMergedSection();
+    }
+
+    function applyGradeFilter(section) {
+        updateSectionVisibility(section);
     }
 
     function renderAll() {
@@ -564,8 +659,7 @@
         s.state = (s.colIndex === colIndex) ? (s.state + 1) % 3 : 1;
         s.colIndex = colIndex;
 
-        // 헤더 아이콘 초기화
-        document.getElementById(headerId).querySelectorAll('th').forEach((th, i) => {
+        document.getElementById(headerId).querySelectorAll('th').forEach(th => {
             th.classList.remove('sort-asc', 'sort-desc');
             const icon = th.querySelector('.sort-icon');
             if (icon) icon.textContent = '⇅';
@@ -598,86 +692,19 @@
         if (section === 'A') window.dbA = sorted;
         else                 window.dbB = sorted;
 
-        document.getElementById(bodyId).innerHTML = buildRows(sorted, headers, '');
-        applyGradeFilter(section);
-    }
-
-    function sortSearchTable(colIndex) {
-        const s = window.sortStateSearch;
-        const hList = window.searchHList;
-
-        s.state = (s.colIndex === colIndex) ? (s.state + 1) % 3 : 1;
-        s.colIndex = colIndex;
-
-        // 헤더 아이콘 초기화
-        document.getElementById('searchHeader').querySelectorAll('th').forEach(th => {
-            th.classList.remove('sort-asc', 'sort-desc');
-            const icon = th.querySelector('.sort-icon');
-            if (icon) icon.textContent = '⇅';
-        });
-
-        let sorted;
-        if (s.state === 0) {
-            sorted = [...window.origSearchRows];
-        } else {
-            const th   = document.getElementById('searchHeader').querySelectorAll('th')[colIndex];
-            const icon = th ? th.querySelector('.sort-icon') : null;
-            // colIndex 0 = 구분, 1~ = hList
-            sorted = [...window.origSearchRows].sort((a, b) => {
-                let va, vb, h = null;
-                if (colIndex === 0) { va = a.listType || ''; vb = b.listType || ''; }
-                else { h = hList[colIndex - 1]; va = a.data[h] ?? ''; vb = b.data[h] ?? ''; }
-                const na = parseFloat(va), nb = parseFloat(vb);
-                if (h === '등락') {
-                    const emptyA = va === '' || va === '-' || isNaN(na) || na === 0;
-                    const emptyB = vb === '' || vb === '-' || isNaN(nb) || nb === 0;
-                    if (emptyA && emptyB) return 0;
-                    if (emptyA) return 1;
-                    if (emptyB) return -1;
-                }
-                const cmp = (!isNaN(na) && !isNaN(nb)) ? na - nb : String(va).localeCompare(String(vb), 'ko');
-                return s.state === 1 ? cmp : -cmp;
-            });
-            if (s.state === 1) { if (th) th.classList.add('sort-asc');  if (icon) icon.textContent = '▲'; }
-            else               { if (th) th.classList.add('sort-desc'); if (icon) icon.textContent = '▼'; }
-        }
-
-        // 검색 결과 다시 그리기 (현재 필터 상태 유지)
-        const activeFilter = document.querySelector('.filter-btn.active');
-        const filterType   = activeFilter ? activeFilter.id : 'filterAll';
-        const currentType  = filterType === 'filterBlack' ? '블랙/올리브' : filterType === 'filterOther' ? '기타등급' : '전체';
-
-        document.getElementById('searchResultBody').innerHTML = sorted.map(item => {
-            const cells = hList.map(h => {
-                const raw = item.data[h] || '-';
-                const dv  = h === '등급' ? (stripGrade(raw) || '-') : formatDisplayValue(h, raw);
-                let style = '';
-                if (h === 'MID') style = 'color:red; font-weight:700;';
-                if (String(dv).includes('▲')) style = 'color:#e53935; font-weight:700;';
-                else if (String(dv).includes('▼')) style = 'color:var(--dark-blue); font-weight:700;';
-                return `<td title="${dv}" style="${style}">${dv}</td>`;
-            }).join('');
-            return `<tr data-listtype="${item.listType}">
-                <td style="font-weight:700; color:var(--dark-blue)">${item.listType}</td>
-                ${cells}
-            </tr>`;
-        }).join('');
-
-        // 필터 재적용
-        let count = 0;
-        document.querySelectorAll('#searchResultBody tr').forEach(row => {
-            const show = currentType === '전체' || row.getAttribute('data-listtype') === currentType;
-            row.classList.toggle('hidden-row', !show);
-            if (show) count++;
-        });
-        document.getElementById('visibleCount').innerText = count;
+        document.getElementById(bodyId).innerHTML = buildRows(sorted, headers);
+        applyMidFilter();
     }
 
     function switchType(type) {
+        window.currentType = type;
+        document.getElementById('btnTypeAll').classList.toggle('active', type === 'all');
         document.getElementById('btnTypeA').classList.toggle('active', type === 'A');
         document.getElementById('btnTypeB').classList.toggle('active', type === 'B');
+        document.getElementById('sectionAll').classList.toggle('active', type === 'all');
         document.getElementById('sectionA').classList.toggle('active', type === 'A');
         document.getElementById('sectionB').classList.toggle('active', type === 'B');
+        if (type === 'all') renderMergedSection();
     }
 
     function formatDisplayValue(header, value) {
@@ -689,7 +716,7 @@
         return value || "-";
     }
 
-    function buildRows(db, headers, listType) {
+    function buildRows(db, headers) {
         if (!db || !headers || headers.length === 0)
             return '<tr><td colspan="20" style="padding:40px; color:#bbb; text-align:center;">데이터를 불러와주세요.</td></tr>';
 
@@ -705,29 +732,14 @@
                 else if (String(dv).includes('▼')) style = 'color:var(--dark-blue); font-weight:700;';
                 return `<td title="${dv}" style="${style}">${dv}</td>`;
             }).join('');
-            const prefix = listType ? `<td style="background:#f9f9f9; font-weight:700; color:var(--dark-blue)">${listType}</td>` : '';
-            return `<tr data-listtype="${listType || ''}" data-grade="${grade}">${prefix}${cells}</tr>`;
+            return `<tr data-mid="${item.mid || ''}" data-grade="${grade}">${cells}</tr>`;
         }).join('');
     }
 
     function renderMaster() {
-        document.getElementById('masterBodyA').innerHTML = buildRows(window.dbA, window.headersA, '');
-        document.getElementById('masterBodyB').innerHTML = buildRows(window.dbB, window.headersB, '');
+        document.getElementById('masterBodyA').innerHTML = buildRows(window.dbA, window.headersA);
+        document.getElementById('masterBodyB').innerHTML = buildRows(window.dbB, window.headersB);
     }
-
-    window.applySearchFilter = function(type) {
-        document.getElementById('filterAll').className   = 'filter-btn' + (type === '전체'      ? ' active' : '');
-        document.getElementById('filterBlack').className = 'filter-btn' + (type === '블랙/올리브' ? ' active' : '');
-        document.getElementById('filterOther').className = 'filter-btn' + (type === '기타등급'   ? ' active' : '');
-
-        let count = 0;
-        document.querySelectorAll('#searchResultBody tr').forEach(row => {
-            const show = type === '전체' || row.getAttribute('data-listtype') === type;
-            row.classList.toggle('hidden-row', !show);
-            if (show) count++;
-        });
-        document.getElementById('visibleCount').innerText = count;
-    };
 
     window.setSearchMode = function(mode) {
         window.searchMode = mode;
@@ -743,54 +755,30 @@
         if (queries.length === 0) return alert("검색할 MID를 입력하세요.");
         if (window.dbA.length === 0 && window.dbB.length === 0) return alert("먼저 데이터를 불러와주세요.");
 
-        let foundRows = [];
-        if (window.searchMode === 'include') {
-            queries.forEach(q => {
-                const mA = window.dbA.filter(item => item.mid.includes(q)).map(d => ({...d, listType: '블랙/올리브'}));
-                const mB = window.dbB.filter(item => item.mid.includes(q)).map(d => ({...d, listType: '기타등급'}));
-                foundRows = [...foundRows, ...mA, ...mB];
-            });
-        } else {
-            const exA = window.dbA.filter(item => !queries.some(q => item.mid.includes(q))).map(d => ({...d, listType: '블랙/올리브'}));
-            const exB = window.dbB.filter(item => !queries.some(q => item.mid.includes(q))).map(d => ({...d, listType: '기타등급'}));
-            foundRows = [...exA, ...exB];
-        }
+        window.searchQueries = queries;
+        switchType('all'); // renderMergedSection 포함
 
-        const resultArea = document.getElementById('searchResultArea');
-        if (foundRows.length === 0) {
-            resultArea.style.display = 'none';
+        const total = document.querySelectorAll('#masterBodyAll tr:not(.hidden-row)').length;
+        if (total === 0) {
+            window.searchQueries = [];
+            renderMergedSection();
             return alert(window.searchMode === 'include' ? "일치하는 MID 정보가 없습니다." : "제외 후 남은 데이터가 없습니다.");
         }
 
-        resultArea.style.display = 'block';
-        document.getElementById('filterAll').className   = 'filter-btn active';
-        document.getElementById('filterBlack').className = 'filter-btn';
-        document.getElementById('filterOther').className = 'filter-btn';
-        document.getElementById('visibleCount').innerText = foundRows.length;
+        document.getElementById('searchCount').textContent = total;
+        document.getElementById('searchStatus').style.display = '';
+        document.getElementById('btnReset').style.display = '';
 
-        const hList = window.headersA.length > 0 ? window.headersA : window.headersB;
-        window.searchHList = hList;
-        window.origSearchRows = [...foundRows];
-        window.sortStateSearch = { colIndex: -1, state: 0 };
+        applyMidFilter(); // A, B 섹션에도 반영
+    };
 
-        document.getElementById('searchHeader').innerHTML =
-            `<tr><th onclick="sortSearchTable(0)" style="width:80px;">구분<span class="sort-icon">⇅</span></th>${hList.map((h, i) => `<th onclick="sortSearchTable(${i + 1})">${h}<span class="sort-icon">⇅</span></th>`).join('')}</tr>`;
-
-        document.getElementById('searchResultBody').innerHTML = foundRows.map(item => {
-            const cells = hList.map(h => {
-                const raw = item.data[h] || '-';
-                const dv = h === '등급' ? (stripGrade(raw) || '-') : formatDisplayValue(h, raw);
-                let style = '';
-                if (h === 'MID') style = 'color:red; font-weight:700;';
-                if (String(dv).includes('▲')) style = 'color:#e53935; font-weight:700;';
-                else if (String(dv).includes('▼')) style = 'color:var(--dark-blue); font-weight:700;';
-                return `<td title="${dv}" style="${style}">${dv}</td>`;
-            }).join('');
-            return `<tr data-listtype="${item.listType}">
-                <td style="font-weight:700; color:var(--dark-blue)">${item.listType}</td>
-                ${cells}
-            </tr>`;
-        }).join('');
+    window.resetSearch = function() {
+        window.searchQueries = [];
+        document.getElementById('searchInput').value = '';
+        document.getElementById('searchStatus').style.display = 'none';
+        document.getElementById('btnReset').style.display = 'none';
+        applyMidFilter();
+        if (window.currentType === 'all') renderMergedSection();
     };
 </script>
 </body>
