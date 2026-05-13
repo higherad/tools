@@ -123,7 +123,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-top: 8px;
+            margin-bottom: 0;
         }
         .search-mode-bar > .label { font-size: 12px; color: #999; font-weight: 600; }
         .mode-btn {
@@ -311,16 +311,16 @@
     </div>
 
     <div class="search-section">
-        <div class="search-controls">
-            <textarea id="searchInput" class="search-input" placeholder="검색할 MID를 입력하세요 (여러 줄 입력 가능)"></textarea>
-            <button id="btnSearch" class="btn-search" onclick="searchMID()">중복<br>검색하기</button>
-        </div>
         <div class="search-mode-bar">
             <span class="label">검색 방식</span>
             <button class="mode-btn active" id="modeInclude" onclick="setSearchMode('include')">포함 검색</button>
             <button class="mode-btn" id="modeExclude" onclick="setSearchMode('exclude')">제외 검색</button>
             <span id="searchStatus" class="search-status">검색 결과: <strong id="searchCount">0</strong>건</span>
             <button id="btnReset" class="btn-reset" onclick="resetSearch()">✕ 초기화</button>
+        </div>
+        <div class="search-controls" style="margin-top:8px;">
+            <textarea id="searchInput" class="search-input" placeholder="검색할 MID를 입력하세요 (여러 줄 입력 가능)"></textarea>
+            <button id="btnSearch" class="btn-search" onclick="searchMID()">중복<br>검색하기</button>
         </div>
     </div>
 
