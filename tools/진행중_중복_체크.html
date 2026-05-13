@@ -325,9 +325,9 @@
     </div>
 
     <div class="type-selector">
-        <button id="btnTypeAll" class="type-btn" onclick="switchType('all')">전체</button>
-        <button id="btnTypeA"   class="type-btn active" onclick="switchType('A')">📂 블랙/올리브 <span id="countA" class="count-badge" style="margin-left:4px;">0건</span></button>
-        <button id="btnTypeB"   class="type-btn"        onclick="switchType('B')">📂 기타등급 <span id="countB" class="count-badge" style="margin-left:4px;">0건</span></button>
+        <button id="btnTypeAll" class="type-btn active" onclick="switchType('all')">전체 <span id="countAll" class="count-badge" style="margin-left:4px;">0건</span></button>
+        <button id="btnTypeA"   class="type-btn" onclick="switchType('A')">블랙/올리브 <span id="countA" class="count-badge" style="margin-left:4px;">0건</span></button>
+        <button id="btnTypeB"   class="type-btn" onclick="switchType('B')">기타등급 <span id="countB" class="count-badge" style="margin-left:4px;">0건</span></button>
     </div>
 
 </div>
@@ -335,7 +335,7 @@
 <div class="table-area">
 
     <!-- 전체 통합 뷰 -->
-    <div id="sectionAll" class="master-section">
+    <div id="sectionAll" class="master-section active">
         <div class="grade-filter-bar">
             <label>등급 필터</label>
             <select id="gradeSelectAll" class="grade-select" onchange="updateMergedVisibility()">
@@ -352,7 +352,7 @@
     </div>
 
     <!-- 블랙/올리브 -->
-    <div id="sectionA" class="master-section active">
+    <div id="sectionA" class="master-section">
         <div class="grade-filter-bar">
             <label>등급 필터</label>
             <select id="gradeSelectA" class="grade-select" onchange="applyGradeFilter('A')">
@@ -402,7 +402,7 @@
     window.sortStateAll = { colIndex: -1, state: 0 };
     window.searchMode = 'include';
     window.searchQueries = [];
-    window.currentType = 'A';
+    window.currentType = 'all';
 
     async function syncWithGoogleSheet() {
         const btn = document.querySelector('.btn-sync');
@@ -424,9 +424,10 @@
 
             updateCountBadge('countA', window.dbA.length);
             updateCountBadge('countB', window.dbB.length);
+            updateCountBadge('countAll', window.dbA.length + window.dbB.length);
             renderAll();
             resetSearch();
-            switchType('A');
+            switchType('all');
 
             const badge = document.getElementById('syncBadge');
             badge.classList.add('show');
