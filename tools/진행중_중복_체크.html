@@ -796,10 +796,24 @@
 
     window.resetSearch = function() {
         window.searchQueries = [];
+
         document.getElementById('searchInput').value = '';
         document.getElementById('searchStatus').style.display = 'none';
+
+        // 등급 필터 초기화
+        document.getElementById('gradeSelectAll').value = '';
+        document.getElementById('gradeSelectA').value = '';
+        document.getElementById('gradeSelectB').value = '';
+
         applyMidFilter();
-        if (window.currentType === 'all') renderMergedSection();
+
+        updateMergedVisibility();
+        updateSectionVisibility('A');
+        updateSectionVisibility('B');
+
+        if (window.currentType === 'all') {
+            renderMergedSection();
+        }
     };
     
 </script>
