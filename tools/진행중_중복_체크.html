@@ -567,7 +567,7 @@
         let count = 0;
         document.querySelectorAll('#masterBodyAll tr').forEach(row => {
             const grade = row.getAttribute('data-grade') || '';
-            const hidden = selectedGrade ? !grade.includes(selectedGrade) : false;
+            const hidden = selectedGrade ? grade !== selectedGrade : false;
             row.classList.toggle('hidden-row', hidden);
             if (!hidden) count++;
         });
@@ -625,7 +625,7 @@
         document.querySelectorAll('#' + bodyId + ' tr').forEach(row => {
             const midHidden = row.hasAttribute('data-mid-hidden');
             const grade = row.getAttribute('data-grade') || '';
-            const gradeHidden = selectedGrade ? !grade.includes(selectedGrade) : false;
+            const gradeHidden = selectedGrade ? grade !== selectedGrade : false;
             row.classList.toggle('hidden-row', midHidden || gradeHidden);
             if (!midHidden && !gradeHidden) count++;
         });
