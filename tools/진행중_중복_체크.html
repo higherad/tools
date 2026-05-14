@@ -104,25 +104,18 @@
             transition: border-color 0.2s;
         }
         .search-input:focus { border-color: var(--dark-blue); }
-        .search-btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            width: 110px;
-            flex-shrink: 0;
-        }
         .btn-clear-input {
-            height: 26px;
-            background: #f5f5f5;
-            color: #666;
+            padding: 4px 12px;
             border: 1.5px solid var(--border);
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 700;
+            border-radius: 20px;
+            background: white;
             font-size: 12px;
-            transition: 0.2s;
+            font-weight: 700;
+            cursor: pointer;
+            color: #666;
+            transition: 0.15s;
         }
-        .btn-clear-input:hover { border-color: #e53935; color: #e53935; background: #fff5f5; }
+        .btn-clear-input:hover { border-color: #e53935; color: #e53935; }
         .btn-search {
             width: 110px;
             height: 68px;
@@ -137,6 +130,15 @@
             transition: background 0.2s;
         }
         .btn-search:hover { background: #3b36c4; }
+
+        .btn-reset-top{
+            height:36px;
+            margin-left:auto;
+            background:#6b7280;
+        }
+        .btn-reset-top:hover{
+            background:#4b5563;
+        }
 
         .search-mode-bar {
             display: flex;
@@ -335,14 +337,11 @@
             <button class="mode-btn active" id="modeInclude" onclick="setSearchMode('include')">포함 검색</button>
             <button class="mode-btn" id="modeExclude" onclick="setSearchMode('exclude')">제외 검색</button>
             <span id="searchStatus" class="search-status">검색 결과: <strong id="searchCount">0</strong>건</span>
-            <button id="btnReset" class="btn-reset" onclick="resetSearch()">✕ 초기화</button>
+            <button class="btn-search btn-reset-top" onclick="resetSearch()">초기화</button>
         </div>
         <div class="search-controls" style="margin-top:8px;">
             <textarea id="searchInput" class="search-input" placeholder="검색할 MID를 입력하세요 (여러 줄 입력 가능)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();searchMID();}"></textarea>
-            <div class="search-btn-group">
-                <button class="btn-clear-input" onclick="resetSearch()">초기화</button>
-                <button id="btnSearch" class="btn-search" onclick="searchMID()">검색하기</button>
-            </div>
+            <button id="btnSearch" class="btn-search" onclick="searchMID()">검색하기</button>
         </div>
     </div>
 
