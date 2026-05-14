@@ -301,6 +301,10 @@
           <label>캠페인명 (선택)</label>
           <input type="text" id="inp-name" placeholder="메모용" />
         </div>
+        <div class="form-group">
+          <label>메모 (선택)</label>
+          <input type="text" id="inp-memo" placeholder="비우면 오늘 날짜(MM-DD) 자동 입력" />
+        </div>
         <label style="margin-bottom:6px;">처리 작업</label>
         <div class="toggle-group">
           <div class="toggle-label" id="lbl-pause" onclick="toggleAction('pause')">⏸ 임시중단B</div>
@@ -314,7 +318,7 @@
         <div class="excel-upload-area" id="excel-drop-zone" onclick="document.getElementById('excel-file-input').click()">
           <div class="upload-icon">📊</div>
           <div class="upload-text">엑셀 파일 클릭 또는 드래그</div>
-          <div class="upload-hint">MID / 캠페인명 / 임시중단B(O) / 강제종료(O)</div>
+          <div class="upload-hint">MID / 캠페인명 / 임시중단B(O) / 강제종료(O) / 메모</div>
         </div>
         <input type="file" id="excel-file-input" accept=".xlsx,.xls" onchange="handleExcelFile(this.files[0])">
       </div>
@@ -430,14 +434,16 @@ function toggleAction(type) {
 function addEntry() {
   const mid  = document.getElementById('inp-mid').value.trim();
   const name = document.getElementById('inp-name').value.trim();
+  const memo = document.getElementById('inp-memo').value.trim();
   if (!mid) { alert('MID를 입력해주세요.'); return; }
   if (!addPause && !addForce) { alert('처리 작업을 하나 이상 선택해주세요.'); return; }
 
-  entries.push({ mid, name, do_pause: addPause, do_force: addForce, status: 'ready', result: '' });
+  entries.push({ mid, name, memo, do_pause: addPause, do_force: addForce, status: 'ready', result: '' });
   save();
 
   document.getElementById('inp-mid').value   = '';
   document.getElementById('inp-name').value  = '';
+  document.getElementById('inp-memo').value  = '';
   renderList();
   addLog(`추가: ${mid}${name ? ' ('+name+')' : ''} — ${[addPause?'임시중단B':'', addForce?'강제종료':''].filter(Boolean).join('+')}`, 'info');
 }
@@ -561,7 +567,7 @@ async function startProcess() {
   document.getElementById('progress-wrap').style.display = 'block';
 
   const payload = selected.map(e => ({
-    mid: e.mid, name: e.name, do_pause: e.do_pause, do_force: e.do_force
+    mid: e.mid, name: e.name, memo: e.memo || '', do_pause: e.do_pause, do_force: e.do_force
   }));
 
   selected.forEach(e => { e.status = 'running'; e.result = ''; });
@@ -667,14 +673,15 @@ function handleExcelFile(file) {
       let added = 0, skipped = 0;
 
       for (let r = start; r < rows.length; r++) {
-        const [midRaw, nameRaw, pauseRaw, forceRaw] = rows[r];
+        const [midRaw, nameRaw, pauseRaw, forceRaw, memoRaw] = rows[r];
         const mid      = String(midRaw  || '').trim();
         const name     = String(nameRaw || '').trim();
         const do_pause = String(pauseRaw || '').trim().toUpperCase() === 'O';
         const do_force = String(forceRaw || '').trim().toUpperCase() === 'O';
+        const memo     = String(memoRaw || '').trim();
         if (!mid || (!do_pause && !do_force)) { skipped++; continue; }
         if (entries.some(e => e.mid === mid)) { skipped++; continue; }
-        entries.push({ mid, name, do_pause, do_force, status:'ready', result:'' });
+        entries.push({ mid, name, memo, do_pause, do_force, status:'ready', result:'' });
         added++;
       }
 
