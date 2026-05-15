@@ -162,10 +162,9 @@
     }
     .open-btn:hover { opacity: 0.85; }
 
-    .del-btn {
+    .del-btn, .edit-btn {
       position: absolute;
       top: -8px;
-      right: -8px;
       width: 22px;
       height: 22px;
       border-radius: 50%;
@@ -181,7 +180,10 @@
       transition: all 0.15s;
       box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
-    .del-btn:hover { background: #fef2f2; border-color: var(--danger); color: var(--danger); }
+    .del-btn  { right: -8px; }
+    .edit-btn { right: 20px; }
+    .del-btn:hover  { background: #fef2f2; border-color: var(--danger); color: var(--danger); }
+    .edit-btn:hover { background: #eff6ff; border-color: #3b82f6; color: #3b82f6; }
 
     /* 상태 */
     .state-box {
@@ -306,7 +308,7 @@
 <!-- 등록 모달 -->
 <div class="modal-backdrop" id="modal">
   <div class="modal">
-    <h2>자료 등록</h2>
+    <h2 id="modal-title">자료 등록</h2>
     <div class="form-group">
       <label>제목 *</label>
       <input type="text" id="f-name" placeholder="자료 이름을 입력하세요" />
@@ -338,21 +340,23 @@
 
 <script type="module">
   import { db } from '../ha-tools.js';
-  import { ref, push, remove, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+  import { ref, push, remove, update, onValue } from 'https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js';
 
   const CAT_ICONS = { '링크': '🔗', '프로그램': '💻', '리포트': '📊', '커뮤니티': '💬' };
   const me = localStorage.getItem('ha_user') || '';
 
-  let allFiles = [];
+  let allFiles   = [];
   let currentCat = '전체';
+  let editingId  = null; // 수정 중인 항목 id, null이면 신규 등록
 
-  const tabsEl   = document.getElementById('cat-tabs');
-  const listEl   = document.getElementById('file-list');
-  const modal    = document.getElementById('modal');
-  const nameEl   = document.getElementById('f-name');
-  const descEl   = document.getElementById('f-desc');
-  const catEl    = document.getElementById('f-cat');
-  const urlEl    = document.getElementById('f-url');
+  const tabsEl    = document.getElementById('cat-tabs');
+  const listEl    = document.getElementById('file-list');
+  const modal     = document.getElementById('modal');
+  const modalTitle = document.getElementById('modal-title');
+  const nameEl    = document.getElementById('f-name');
+  const descEl    = document.getElementById('f-desc');
+  const catEl     = document.getElementById('f-cat');
+  const urlEl     = document.getElementById('f-url');
   const submitBtn = document.getElementById('submit-btn');
 
   // 렌더링
@@ -377,7 +381,7 @@
       const dateStr = f.created_at
         ? new Date(f.created_at).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })
         : '';
-      const isMine  = me && f.author === me;
+      const isMine = me && f.author === me;
       return `
         <div class="file-card ${f.pinned ? 'pinned' : ''}">
           <div class="file-icon">${icon}</div>
@@ -392,9 +396,27 @@
           <div class="card-actions">
             <a class="open-btn" href="${esc(f.url)}" target="_blank" rel="noopener">열기</a>
           </div>
-          ${isMine ? `<button class="del-btn" data-id="${f.id}" title="삭제">✕</button>` : ''}
+          ${isMine ? `
+            <button class="edit-btn" data-id="${f.id}" title="수정">✎</button>
+            <button class="del-btn"  data-id="${f.id}" title="삭제">✕</button>
+          ` : ''}
         </div>`;
     }).join('');
+
+    listEl.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const f = allFiles.find(x => x.id === btn.dataset.id);
+        if (!f) return;
+        editingId = f.id;
+        nameEl.value = f.name;
+        descEl.value = f.description || '';
+        catEl.value  = f.category;
+        urlEl.value  = f.url;
+        modalTitle.textContent = '자료 수정';
+        submitBtn.textContent  = '수정하기';
+        modal.classList.add('open');
+      });
+    });
 
     listEl.querySelectorAll('.del-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -421,16 +443,23 @@
   });
 
   // 모달 열기/닫기
-  document.getElementById('open-modal-btn').addEventListener('click', () => modal.classList.add('open'));
+  document.getElementById('open-modal-btn').addEventListener('click', () => {
+    editingId = null;
+    modalTitle.textContent = '자료 등록';
+    submitBtn.textContent  = '등록하기';
+    modal.classList.add('open');
+  });
   document.getElementById('close-modal-btn').addEventListener('click', closeModal);
-  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
   function closeModal() {
     modal.classList.remove('open');
     nameEl.value = descEl.value = urlEl.value = '';
-    catEl.value = '';
+    catEl.value  = '';
+    editingId    = null;
+    modalTitle.textContent = '자료 등록';
+    submitBtn.textContent  = '등록하기';
   }
 
-  // 등록
+  // 등록 / 수정
   submitBtn.addEventListener('click', async () => {
     const name = nameEl.value.trim();
     const cat  = catEl.value;
@@ -439,15 +468,24 @@
 
     submitBtn.disabled = true;
     try {
-      await push(ref(db, 'resource_hub/files'), {
-        name,
-        description: descEl.value.trim(),
-        category:    cat,
-        url,
-        author:      me,
-        created_at:  Date.now(),
-        pinned:      false,
-      });
+      if (editingId) {
+        await update(ref(db, `resource_hub/files/${editingId}`), {
+          name,
+          description: descEl.value.trim(),
+          category:    cat,
+          url,
+        });
+      } else {
+        await push(ref(db, 'resource_hub/files'), {
+          name,
+          description: descEl.value.trim(),
+          category:    cat,
+          url,
+          author:      me,
+          created_at:  Date.now(),
+          pinned:      false,
+        });
+      }
       closeModal();
     } finally {
       submitBtn.disabled = false;
