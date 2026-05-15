@@ -133,7 +133,7 @@
           </div>
           <div>
             <label>MID 열</label>
-            <input type="text" id="gs-col" placeholder="C" value="C" style="text-align:center;" />
+            <input type="text" id="gs-col" placeholder="B" value="B" style="text-align:center;" />
           </div>
         </div>
         <button class="btn btn-blue btn-full" onclick="fetchMids()" id="btn-fetch">📥 MID 불러오기</button>
@@ -252,7 +252,7 @@ function save() { if (window.fbSave) window.fbSave(entries.map(e => ({ mid: e.mi
 async function fetchMids() {
   const sid   = document.getElementById('gs-id').value.trim();
   const sheet = document.getElementById('gs-sheet').value.trim();
-  const col   = document.getElementById('gs-col').value.trim() || 'C';
+  const col   = document.getElementById('gs-col').value.trim() || 'B';
   if (!sid || !sheet) { alert('Spreadsheet ID와 시트명을 입력해주세요.'); return; }
 
   document.getElementById('btn-fetch').disabled = true;
