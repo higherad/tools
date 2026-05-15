@@ -440,7 +440,12 @@
     #sidebar.collapsed .tool-button .badge { display: none; }
 
     /* 카드 코너 배지 */
-    .link-card .badge { position: absolute; top: 8px; right: 8px; }
+    .link-card .badge {
+      position: absolute; top: 8px; right: 8px;
+      width: auto; height: auto; border-radius: 4px;
+      font-size: 9px; font-weight: 700; color: #fff;
+      padding: 2px 5px; letter-spacing: 0.3px;
+    }
 
     .sidebar-footer {
       padding: 10px 16px; border-top: 1px solid var(--border-color);
