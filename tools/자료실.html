@@ -336,20 +336,14 @@
   </div>
 </div>
 
-<script>
-  // import { db } from '../ha-tools.js';
-  // import { ref, push, remove, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+<script type="module">
+  import { db } from '../ha-tools.js';
+  import { ref, push, remove, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
   const CAT_ICONS = { '링크': '🔗', '프로그램': '💻', '리포트': '📊', '커뮤니티': '💬' };
-  const me = localStorage.getItem('ha_user') || '나';
+  const me = localStorage.getItem('ha_user') || '';
 
-  let allFiles = [
-    { id: 's1', name: '네이버 쇼핑 순위 확인 링크', description: '자주 쓰는 순위 조회 페이지 모음', category: '링크', url: '#', author: '팀원A', created_at: Date.now() - 86400000 * 3, pinned: true },
-    { id: 's2', name: '5월 순위 현황 리포트', description: '쇼핑·플레이스 주요 키워드 순위 월간 정리', category: '리포트', url: '#', author: '팀원A', created_at: Date.now() - 86400000, pinned: false },
-    { id: 's3', name: '캠페인 자동변환기 v2', description: '엑셀 업로드 → 자동 포맷 변환 프로그램', category: '프로그램', url: '#', author: '팀원B', created_at: Date.now() - 86400000 * 5, pinned: false },
-    { id: 's4', name: '이번 주 공유 사항', description: '팀 미팅 후 정리된 공유 내용', category: '커뮤니티', url: '#', author: '팀원B', created_at: Date.now() - 86400000 * 2, pinned: false },
-    { id: 's5', name: '내가 정리한 키워드 목록', description: '개인 작업용 키워드 정리 시트', category: '링크', url: '#', author: '나', created_at: Date.now(), pinned: false },
-  ];
+  let allFiles = [];
   let currentCat = '전체';
 
   const tabsEl   = document.getElementById('cat-tabs');
@@ -405,9 +399,7 @@
     listEl.querySelectorAll('.del-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (!confirm('삭제할까요?')) return;
-        // remove(ref(db, `resource_hub/files/${btn.dataset.id}`));
-        allFiles = allFiles.filter(f => f.id !== btn.dataset.id);
-        render();
+        remove(ref(db, `resource_hub/files/${btn.dataset.id}`));
       });
     });
   }
@@ -439,31 +431,37 @@
   }
 
   // 등록
-  submitBtn.addEventListener('click', () => {
+  submitBtn.addEventListener('click', async () => {
     const name = nameEl.value.trim();
     const cat  = catEl.value;
     const url  = urlEl.value.trim();
     if (!name || !cat || !url) { alert('제목, 카테고리, 링크는 필수입니다.'); return; }
 
-    // await push(ref(db, 'resource_hub/files'), { ... });
-    allFiles.unshift({
-      id:          'local_' + Date.now(),
-      name,
-      description: descEl.value.trim(),
-      category:    cat,
-      url,
-      author:      me,
-      created_at:  Date.now(),
-      pinned:      false,
-    });
-    render();
-    closeModal();
+    submitBtn.disabled = true;
+    try {
+      await push(ref(db, 'resource_hub/files'), {
+        name,
+        description: descEl.value.trim(),
+        category:    cat,
+        url,
+        author:      me,
+        created_at:  Date.now(),
+        pinned:      false,
+      });
+      closeModal();
+    } finally {
+      submitBtn.disabled = false;
+    }
   });
 
   // Firebase 실시간 구독
-  // onValue(ref(db, 'resource_hub/files'), snap => { ... });
-
-  render();
+  onValue(ref(db, 'resource_hub/files'), snap => {
+    const val = snap.val();
+    allFiles = val
+      ? Object.entries(val).map(([id, data]) => ({ id, ...data }))
+      : [];
+    render();
+  });
 </script>
 </body>
 </html>
