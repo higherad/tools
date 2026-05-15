@@ -339,8 +339,20 @@
 </div>
 
 <script type="module">
-  import { db } from '../ha-tools.js';
-  import { ref, push, remove, update, onValue } from 'https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js';
+  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js';
+  import { getDatabase, ref, push, remove, update, onValue } from 'https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyAF-Rn7tzIjQeyUDJKnvKTRNccsXUVsIjo",
+    authDomain:        "higherad-b9d62.firebaseapp.com",
+    databaseURL:       "https://higherad-b9d62-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "higherad-b9d62",
+    storageBucket:     "higherad-b9d62.firebasestorage.app",
+    messagingSenderId: "938928195180",
+    appId:             "1:938928195180:web:8209b1e02a8caabe643a49",
+  };
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
 
   const CAT_ICONS = { '링크': '🔗', '프로그램': '💻', '리포트': '📊', '커뮤니티': '💬' };
   const me = localStorage.getItem('ha_user') || '';
@@ -487,6 +499,8 @@
         });
       }
       closeModal();
+    } catch (e) {
+      alert('저장 실패: ' + e.message);
     } finally {
       submitBtn.disabled = false;
     }
