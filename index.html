@@ -1044,7 +1044,6 @@
 
     function goHome() {
       document.querySelectorAll('.tab, #iframeContainer iframe, .tool-button').forEach(el => el.classList.remove('active'));
-      tabBar.style.display = "none";
       welcome.style.display = "flex";
       currentActiveFile = null;
       document.getElementById('tabOverflowBtn')?.remove();
@@ -1227,22 +1226,14 @@
     window.goHomeMode = function() {
       document.body.classList.remove('macro-mode');
       setActiveNavBtn('home');
-      if (tabs.length > 0 && currentActiveFile) {
-        activateTab(currentActiveFile);
-      } else {
-        goHome();
-      }
+      goHome();
     }
 
     window.goMacroMode = function() {
       document.body.classList.add('macro-mode');
       setActiveNavBtn('macro');
-      if (tabs.length > 0 && currentActiveFile) {
-        activateTab(currentActiveFile);
-      } else {
-        goHome();
-        renderMacroScreen();
-      }
+      goHome();
+      renderMacroScreen();
     }
 
     window.toggleSidebar = function() {
