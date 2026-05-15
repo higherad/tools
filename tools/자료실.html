@@ -376,8 +376,9 @@
 
   // 렌더링
   function render() {
+    const myName   = nameMap[me] || me;
     const filtered = currentCat === '전체' ? allFiles
-      : currentCat === '개인'             ? allFiles.filter(f => f.author === me)
+      : currentCat === '개인'             ? allFiles.filter(f => f.author === me || f.author === myName)
       :                                     allFiles.filter(f => f.category === currentCat);
 
     if (filtered.length === 0) {
@@ -396,7 +397,7 @@
       const dateStr = f.created_at
         ? new Date(f.created_at).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })
         : '';
-      const isMine = me && f.author === me;
+      const isMine = me && (f.author === me || f.author === myName);
       return `
         <div class="file-card ${f.pinned ? 'pinned' : ''}">
           <div class="file-icon">${icon}</div>
