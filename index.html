@@ -1053,7 +1053,7 @@
     function goHome() {
       document.querySelectorAll('.tab, #iframeContainer iframe, .tool-button').forEach(el => el.classList.remove('active'));
       welcome.style.display = "flex";
-      tabBar.style.display = "none";
+      if (tabs.length === 0) tabBar.style.display = "none";
       currentActiveFile = null;
       document.getElementById('tabOverflowBtn')?.remove();
       document.getElementById('tabOverflowMenu')?.remove();
