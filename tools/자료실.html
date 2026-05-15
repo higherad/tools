@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>자료실</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📂</text></svg>">
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-light: #eef2ff;
+      --primary-hover: #4338ca;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-sub: #64748b;
+      --border: #e2e8f0;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      margin: 0;
+      padding: 36px 20px 60px;
+      line-height: 1.5;
+    }
+
+    .container { max-width: 860px; margin: 0 auto; }
+
+    /* 헤더 */
+    .header-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      gap: 12px;
+    }
+    .header-row h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--primary);
+      margin: 0 0 4px;
+    }
+    .header-row p { color: var(--text-sub); font-size: 13px; margin: 0; }
+
+    .add-btn {
+      flex-shrink: 0;
+      padding: 9px 18px;
+      border-radius: 10px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .add-btn:hover { background: var(--primary-hover); }
+
+    /* 카테고리 탭 */
+    .cat-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .cat-tab {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text-sub);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .cat-tab:hover { border-color: var(--primary); color: var(--primary); }
+    .cat-tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .cat-tab.personal { border-style: dashed; }
+    .cat-tab.personal.active { background: #475569; border-color: #475569; border-style: solid; }
+
+    /* 파일 리스트 */
+    #file-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .file-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: box-shadow 0.15s;
+      position: relative;
+    }
+    .file-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+    .file-card.pinned { border-left: 3px solid var(--primary); }
+
+    .file-icon { font-size: 28px; flex-shrink: 0; width: 40px; text-align: center; }
+
+    .file-info { flex: 1; min-width: 0; }
+    .file-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-desc {
+      font-size: 13px;
+      color: var(--text-sub);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-author {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 3px;
+    }
+
+    .file-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .cat-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: var(--primary-light);
+      color: var(--primary);
+      white-space: nowrap;
+    }
+    .file-date { font-size: 11px; color: #94a3b8; }
+
+    .card-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+
+    .open-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: opacity 0.15s;
+    }
+    .open-btn:hover { opacity: 0.85; }
+
+    .del-btn {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: #94a3b8;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      transition: all 0.15s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    .del-btn:hover { background: #fef2f2; border-color: var(--danger); color: var(--danger); }
+
+    /* 상태 */
+    .state-box {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-sub);
+      font-size: 14px;
+    }
+    .state-box .icon { font-size: 36px; margin-bottom: 12px; }
+
+    /* 모달 */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px;
+      width: 100%;
+      max-width: 480px;
+      margin: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .modal h2 {
+      font-size: 17px;
+      font-weight: 800;
+      margin: 0 0 20px;
+      color: var(--text-main);
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+      background: #fff;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus { border-color: var(--primary); }
+    .form-group textarea { resize: vertical; min-height: 72px; }
+
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel {
+      padding: 9px 18px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-sub);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-submit {
+      padding: 9px 18px;
+      border-radius: 8px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-submit:hover { background: var(--primary-hover); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    @media (max-width: 600px) {
+      .file-card { flex-wrap: wrap; }
+      .file-meta { flex-direction: row; align-items: center; }
+      .card-actions { width: 100%; }
+      .open-btn { flex: 1; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header-row">
+    <div>
+      <h1>📂 자료실</h1>
+      <p>팀 공유 자료를 한 곳에서 확인하세요</p>
+    </div>
+    <button class="add-btn" id="open-modal-btn">+ 자료 등록</button>
+  </div>
+
+  <div class="cat-tabs" id="cat-tabs">
+    <button class="cat-tab active" data-cat="전체">전체</button>
+    <button class="cat-tab" data-cat="링크">🔗 링크</button>
+    <button class="cat-tab" data-cat="프로그램">💻 프로그램</button>
+    <button class="cat-tab" data-cat="리포트">📊 리포트</button>
+    <button class="cat-tab" data-cat="커뮤니티">💬 커뮤니티</button>
+    <button class="cat-tab personal" data-cat="개인">👤 개인</button>
+  </div>
+
+  <div id="file-list">
+    <div class="state-box"><div class="icon">⏳</div>불러오는 중...</div>
+  </div>
+</div>
+
+<!-- 등록 모달 -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <h2>자료 등록</h2>
+    <div class="form-group">
+      <label>제목 *</label>
+      <input type="text" id="f-name" placeholder="자료 이름을 입력하세요" />
+    </div>
+    <div class="form-group">
+      <label>설명</label>
+      <textarea id="f-desc" placeholder="간단한 설명을 입력하세요"></textarea>
+    </div>
+    <div class="form-group">
+      <label>카테고리 *</label>
+      <select id="f-cat">
+        <option value="">선택</option>
+        <option value="링크">🔗 링크</option>
+        <option value="프로그램">💻 프로그램</option>
+        <option value="리포트">📊 리포트</option>
+        <option value="커뮤니티">💬 커뮤니티</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>링크 (URL) *</label>
+      <input type="url" id="f-url" placeholder="https://docs.google.com/..." />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="close-modal-btn">취소</button>
+      <button class="btn-submit" id="submit-btn">등록하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // import { db } from '../ha-tools.js';
+  // import { ref, push, remove, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+  const CAT_ICONS = { '링크': '🔗', '프로그램': '💻', '리포트': '📊', '커뮤니티': '💬' };
+  const me = localStorage.getItem('ha_user') || '나';
+
+  let allFiles = [
+    { id: 's1', name: '네이버 쇼핑 순위 확인 링크', description: '자주 쓰는 순위 조회 페이지 모음', category: '링크', url: '#', author: '팀원A', created_at: Date.now() - 86400000 * 3, pinned: true },
+    { id: 's2', name: '5월 순위 현황 리포트', description: '쇼핑·플레이스 주요 키워드 순위 월간 정리', category: '리포트', url: '#', author: '팀원A', created_at: Date.now() - 86400000, pinned: false },
+    { id: 's3', name: '캠페인 자동변환기 v2', description: '엑셀 업로드 → 자동 포맷 변환 프로그램', category: '프로그램', url: '#', author: '팀원B', created_at: Date.now() - 86400000 * 5, pinned: false },
+    { id: 's4', name: '이번 주 공유 사항', description: '팀 미팅 후 정리된 공유 내용', category: '커뮤니티', url: '#', author: '팀원B', created_at: Date.now() - 86400000 * 2, pinned: false },
+    { id: 's5', name: '내가 정리한 키워드 목록', description: '개인 작업용 키워드 정리 시트', category: '링크', url: '#', author: '나', created_at: Date.now(), pinned: false },
+  ];
+  let currentCat = '전체';
+
+  const tabsEl   = document.getElementById('cat-tabs');
+  const listEl   = document.getElementById('file-list');
+  const modal    = document.getElementById('modal');
+  const nameEl   = document.getElementById('f-name');
+  const descEl   = document.getElementById('f-desc');
+  const catEl    = document.getElementById('f-cat');
+  const urlEl    = document.getElementById('f-url');
+  const submitBtn = document.getElementById('submit-btn');
+
+  // 렌더링
+  function render() {
+    const filtered = currentCat === '전체' ? allFiles
+      : currentCat === '개인'             ? allFiles.filter(f => f.author === me)
+      :                                     allFiles.filter(f => f.category === currentCat);
+
+    if (filtered.length === 0) {
+      const msg = currentCat === '개인' ? '내가 등록한 자료가 없습니다' : '등록된 자료가 없습니다';
+      listEl.innerHTML = `<div class="state-box"><div class="icon">📭</div>${msg}</div>`;
+      return;
+    }
+
+    filtered.sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return (b.created_at || 0) - (a.created_at || 0);
+    });
+
+    listEl.innerHTML = filtered.map(f => {
+      const icon    = CAT_ICONS[f.category] || '📄';
+      const dateStr = f.created_at
+        ? new Date(f.created_at).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })
+        : '';
+      const isMine  = me && f.author === me;
+      return `
+        <div class="file-card ${f.pinned ? 'pinned' : ''}">
+          <div class="file-icon">${icon}</div>
+          <div class="file-info">
+            <div class="file-name">${esc(f.name)}</div>
+            <div class="file-desc">${esc(f.description || '')}</div>
+          </div>
+          <div class="file-meta">
+            <span class="cat-badge">${esc(f.category)}</span>
+            <span class="file-date">${f.author ? esc(f.author) + ' · ' : ''}${dateStr}</span>
+          </div>
+          <div class="card-actions">
+            <a class="open-btn" href="${esc(f.url)}" target="_blank" rel="noopener">열기</a>
+          </div>
+          ${isMine ? `<button class="del-btn" data-id="${f.id}" title="삭제">✕</button>` : ''}
+        </div>`;
+    }).join('');
+
+    listEl.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!confirm('삭제할까요?')) return;
+        // remove(ref(db, `resource_hub/files/${btn.dataset.id}`));
+        allFiles = allFiles.filter(f => f.id !== btn.dataset.id);
+        render();
+      });
+    });
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // 탭 클릭
+  tabsEl.addEventListener('click', e => {
+    const tab = e.target.closest('.cat-tab');
+    if (!tab) return;
+    tabsEl.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentCat = tab.dataset.cat;
+    render();
+  });
+
+  // 모달 열기/닫기
+  document.getElementById('open-modal-btn').addEventListener('click', () => modal.classList.add('open'));
+  document.getElementById('close-modal-btn').addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  function closeModal() {
+    modal.classList.remove('open');
+    nameEl.value = descEl.value = urlEl.value = '';
+    catEl.value = '';
+  }
+
+  // 등록
+  submitBtn.addEventListener('click', () => {
+    const name = nameEl.value.trim();
+    const cat  = catEl.value;
+    const url  = urlEl.value.trim();
+    if (!name || !cat || !url) { alert('제목, 카테고리, 링크는 필수입니다.'); return; }
+
+    // await push(ref(db, 'resource_hub/files'), { ... });
+    allFiles.unshift({
+      id:          'local_' + Date.now(),
+      name,
+      description: descEl.value.trim(),
+      category:    cat,
+      url,
+      author:      me,
+      created_at:  Date.now(),
+      pinned:      false,
+    });
+    render();
+    closeModal();
+  });
+
+  // Firebase 실시간 구독
+  // onValue(ref(db, 'resource_hub/files'), snap => { ... });
+
+  render();
+</script>
+</body>
+</html>
