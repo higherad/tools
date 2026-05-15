@@ -497,7 +497,7 @@
           description: descEl.value.trim(),
           category:    cat,
           url,
-          author:      me,
+          author:      nameMap[me] || me,
           created_at:  Date.now(),
           pinned:      false,
         });
