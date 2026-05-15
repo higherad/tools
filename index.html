@@ -1213,14 +1213,22 @@
     window.goHomeMode = function() {
       document.body.classList.remove('macro-mode');
       setActiveNavBtn('home');
-      goHome();
+      if (tabs.length > 0 && currentActiveFile) {
+        activateTab(currentActiveFile);
+      } else {
+        goHome();
+      }
     }
 
     window.goMacroMode = function() {
       document.body.classList.add('macro-mode');
       setActiveNavBtn('macro');
-      goHome();
-      renderMacroScreen();
+      if (tabs.length > 0 && currentActiveFile) {
+        activateTab(currentActiveFile);
+      } else {
+        goHome();
+        renderMacroScreen();
+      }
     }
 
     window.toggleSidebar = function() {
