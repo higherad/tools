@@ -121,12 +121,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .file-author {
-      font-size: 11px;
-      color: #94a3b8;
-      margin-top: 3px;
-    }
-
     .file-meta {
       display: flex;
       flex-direction: column;
@@ -359,7 +353,7 @@
 
   let allFiles   = [];
   let currentCat = '전체';
-  let editingId  = null; // 수정 중인 항목 id, null이면 신규 등록
+  let editingId  = null;
 
   const tabsEl    = document.getElementById('cat-tabs');
   const listEl    = document.getElementById('file-list');
