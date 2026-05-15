@@ -159,6 +159,7 @@
   }
   .ab-pause { background: #fef9c3; color: #b7791f; }
   .ab-force { background: #fed7d7; color: #c53030; }
+  .ab-memo  { background: #e9d8fd; color: #6b21a8; }
 
   .status-badge {
     display: inline-block;
@@ -436,7 +437,7 @@ function addEntry() {
   const name = document.getElementById('inp-name').value.trim();
   const memo = document.getElementById('inp-memo').value.trim();
   if (!mid) { alert('MID를 입력해주세요.'); return; }
-  if (!addPause && !addForce) { alert('처리 작업을 하나 이상 선택해주세요.'); return; }
+  if (!addPause && !addForce && !memo) { alert('처리 작업을 선택하거나 메모를 입력해주세요.'); return; }
 
   entries.push({ mid, name, memo, do_pause: addPause, do_force: addForce, status: 'ready', result: '' });
   save();
@@ -445,7 +446,8 @@ function addEntry() {
   document.getElementById('inp-name').value  = '';
   document.getElementById('inp-memo').value  = '';
   renderList();
-  addLog(`추가: ${mid}${name ? ' ('+name+')' : ''} — ${[addPause?'임시중단B':'', addForce?'강제종료':''].filter(Boolean).join('+')}`, 'info');
+  const actionLabel = [addPause?'임시중단B':'', addForce?'강제종료':''].filter(Boolean).join('+') || '메모만';
+  addLog(`추가: ${mid}${name ? ' ('+name+')' : ''} — ${actionLabel}`, 'info');
 }
 
 // ── 삭제 ──
@@ -485,7 +487,7 @@ function syncAll() {
 }
 function updateSummary() {
   const sel   = entries.filter(e => e.checked);
-  const noAct = sel.filter(e => !e.do_pause && !e.do_force).length;
+  const noAct = sel.filter(e => !e.do_pause && !e.do_force && !e.memo).length;
   document.getElementById('sum-count').textContent = sel.length;
   document.getElementById('sum-noact').textContent = noAct;
   document.getElementById('btn-run').disabled = sel.length === 0 || noAct > 0;
@@ -530,6 +532,7 @@ function renderList() {
       <td>
         ${e.do_pause ? '<span class="action-badge ab-pause">임시중단B</span>' : ''}
         ${e.do_force ? '<span class="action-badge ab-force">강제종료</span>' : ''}
+        ${(!e.do_pause && !e.do_force) ? '<span class="action-badge ab-memo">메모만</span>' : ''}
       </td>
       <td><span class="status-badge ${sc[e.status]||'s-ready'}">${st[e.status]||'대기'}</span></td>
     </tr>`;
@@ -558,9 +561,10 @@ async function startProcess() {
   const selected = entries.filter(e => e.checked);
   if (!selected.length) { alert('항목을 선택해주세요.'); return; }
 
-  const summary = selected.map(e =>
-    `  · ${e.mid}${e.name?' ('+e.name+')':''}: ${[e.do_pause?'임시중단B':'', e.do_force?'강제종료':''].filter(Boolean).join('+')}`
-  ).join('\n');
+  const summary = selected.map(e => {
+    const acts = [e.do_pause?'임시중단B':'', e.do_force?'강제종료':''].filter(Boolean).join('+') || '메모만';
+    return `  · ${e.mid}${e.name?' ('+e.name+')':''}: ${acts}`;
+  }).join('\n');
   if (!confirm(`아래 항목을 처리하시겠습니까?\n\n${summary}\n\n총 ${selected.length}건`)) return;
 
   document.getElementById('btn-run').disabled = true;
@@ -679,7 +683,7 @@ function handleExcelFile(file) {
         const do_pause = String(pauseRaw || '').trim().toUpperCase() === 'O';
         const do_force = String(forceRaw || '').trim().toUpperCase() === 'O';
         const memo     = String(memoRaw || '').trim();
-        if (!mid || (!do_pause && !do_force)) { skipped++; continue; }
+        if (!mid || (!do_pause && !do_force && !memo)) { skipped++; continue; }
         if (entries.some(e => e.mid === mid)) { skipped++; continue; }
         entries.push({ mid, name, memo, do_pause, do_force, status:'ready', result:'' });
         added++;
@@ -688,7 +692,7 @@ function handleExcelFile(file) {
       save(); renderList();
       document.getElementById('excel-file-input').value = '';
       if (added > 0) addLog(`📊 엑셀 가져오기: ${added}개 추가${skipped?', '+skipped+'개 건너뜀':''}`, 'info');
-      else           addLog('⚠️ 추가된 항목 없음 — MID가 비어있거나 작업 미선택(O 없음)', 'warn');
+      else           addLog('⚠️ 추가된 항목 없음 — MID가 비어있거나 작업/메모 모두 없음', 'warn');
     } catch(err) {
       addLog(`❌ 엑셀 읽기 실패: ${err.message}`, 'fail');
     }
