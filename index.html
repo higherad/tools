@@ -648,7 +648,7 @@
     } else {
       // 로그인 정보가 있으면 화면 표시 및 데이터 로드 시작
       document.body.style.display = 'flex';
-      document.getElementById('displayUser').textContent = currentUserId + "님";
+      document.getElementById('displayUser').textContent = currentUserId + "님"; // 이름 로드 후 교체됨
       
       // 유저 데이터 로드 및 실시간 동기화
       initUserData();
@@ -665,6 +665,9 @@
       onValue(userRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
+          if (data.name) {
+            document.getElementById('displayUser').textContent = data.name + "님";
+          }
           // 데이터 구조가 toolDashboardState(문자열)인 경우와 fav/active(객체)인 경우 모두 대응
           let state;
           if (data.toolDashboardState) {
