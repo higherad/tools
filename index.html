@@ -128,6 +128,15 @@
     body.macro-mode #content { background: #0d0d0d; }
     body.macro-mode #welcome { background: #0d0d0d; }
     body.macro-mode #toggleMenuBtn { background: #0d0d0d; border-top-color: #2a2a2a; color: #666; }
+    body.macro-mode #tabBar { background: #111; border-bottom-color: #2a2a2a; }
+    body.macro-mode .tab { color: #555; }
+    body.macro-mode .tab:hover { background: #1e1e1e; color: #aaa; border-color: #333; }
+    body.macro-mode .tab.active { background: #1e1e1e; color: #00e676; border-color: #00e676; box-shadow: 0 2px 8px rgba(0,230,118,0.15); }
+    body.macro-mode .tab .close-tab { color: #333; }
+    body.macro-mode .tab.active .close-tab { color: rgba(0,230,118,0.4); }
+    body.macro-mode .tab.active .close-tab:hover { color: #00e676; }
+    body.macro-mode #tabOverflowBtn { border-color: #333; color: #555; }
+    body.macro-mode #tabOverflowBtn:hover { background: #1e1e1e; color: #aaa; border-color: #555; }
 
     /* 매크로 모드 — 일반 welcome 콘텐츠 숨김 */
     body.macro-mode .welcome-inner { display: none; }
