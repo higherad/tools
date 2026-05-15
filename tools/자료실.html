@@ -334,7 +334,7 @@
 
 <script type="module">
   import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js';
-  import { getDatabase, ref, push, remove, update, onValue } from 'https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js';
+  import { getDatabase, ref, push, remove, update, onValue, get } from 'https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js';
 
   const firebaseConfig = {
     apiKey:            "AIzaSyAF-Rn7tzIjQeyUDJKnvKTRNccsXUVsIjo",
@@ -354,6 +354,15 @@
   let allFiles   = [];
   let currentCat = '전체';
   let editingId  = null;
+  let nameMap    = {};
+
+  get(ref(db, 'users')).then(snap => {
+    const val = snap.val() || {};
+    Object.entries(val).forEach(([uid, data]) => {
+      if (data.name) nameMap[uid] = data.name;
+    });
+    render();
+  });
 
   const tabsEl    = document.getElementById('cat-tabs');
   const listEl    = document.getElementById('file-list');
@@ -397,7 +406,7 @@
           </div>
           <div class="file-meta">
             <span class="cat-badge">${esc(f.category)}</span>
-            <span class="file-date">${f.author ? esc(f.author) + ' · ' : ''}${dateStr}</span>
+            <span class="file-date">${f.author ? esc(nameMap[f.author] || f.author) + ' · ' : ''}${dateStr}</span>
           </div>
           <div class="card-actions">
             <a class="open-btn" href="${esc(f.url)}" target="_blank" rel="noopener">열기</a>
