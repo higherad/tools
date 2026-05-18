@@ -255,17 +255,10 @@ input[type=date]:focus{border-color:var(--acc);}
         <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
       <div class="modal-body">
-        <div id="ratioWarnNotice" class="notice" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);color:#fca5a5;">
-          <span>⚠️</span><span>비율 합계가 10이 아닙니다.</span>
-        </div>
         <div class="mf-row">
           <div class="mf" style="flex:1;">
             <label>상품명</label>
             <input type="text" id="mName" placeholder="블랙" />
-          </div>
-          <div class="mf" style="flex:0 0 112px;">
-            <label>키워드 수 <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:9px;">(0=전체)</span></label>
-            <input type="number" id="mKwCount" min="0" max="99" placeholder="4" style="font-family:'JetBrains Mono',monospace;text-align:center;" />
           </div>
           <div class="mf" style="flex:1.5;">
             <label>엑셀 버전</label>
@@ -273,9 +266,14 @@ input[type=date]:focus{border-color:var(--acc);}
           </div>
         </div>
         <div class="mf">
-          <label>분배 비율 <span style="font-weight:400;text-transform:none;letter-spacing:0;">(활성화된 상품 간 일 목표 분배 — 합계가 10이 되도록 설정)</span></label>
+          <label>키워드 배분 <span style="font-weight:400;text-transform:none;letter-spacing:0;">— 활성 상품 간 검색키워드 분배 (합계 10)</span></label>
+          <div class="ratio-grid" id="kwPctGrid"></div>
+          <div class="ratio-note" id="kwPctNote">합계: 0%</div>
+        </div>
+        <div class="mf">
+          <label>일 목표 배분 <span style="font-weight:400;text-transform:none;letter-spacing:0;">— 활성 상품 간 일 목표 분배 (합계 10)</span></label>
           <div class="ratio-grid" id="ratioGrid"></div>
-          <div class="ratio-note" id="ratioNote">합계: 0</div>
+          <div class="ratio-note" id="ratioNote">합계: 0%</div>
         </div>
       </div>
       <div class="modal-footer">
@@ -294,16 +292,10 @@ input[type=date]:focus{border-color:var(--acc);}
         <button class="modal-close" onclick="closeAddProdModal()">✕</button>
       </div>
       <div class="modal-body">
-        <div class="mf-row">
-          <div class="mf" style="flex:1;">
-            <label>상품명</label>
-            <input type="text" id="apName" placeholder="새 상품" maxlength="16"
-              onkeydown="if(event.key==='Enter')saveNewProd();if(event.key==='Escape')closeAddProdModal();" />
-          </div>
-          <div class="mf" style="flex:0 0 112px;">
-            <label>키워드 수 <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:9px;">(0=전체)</span></label>
-            <input type="number" id="apKwCount" min="0" max="99" value="4" style="font-family:'JetBrains Mono',monospace;text-align:center;" />
-          </div>
+        <div class="mf">
+          <label>상품명</label>
+          <input type="text" id="apName" placeholder="새 상품" maxlength="16"
+            onkeydown="if(event.key==='Enter')saveNewProd();if(event.key==='Escape')closeAddProdModal();" />
         </div>
         <div class="mf">
           <label>엑셀 버전</label>
@@ -361,15 +353,15 @@ input[type=date]:focus{border-color:var(--acc);}
 <script>
 // ── Product defaults ──
 let prods = [
-  {id:'p1',    name:'블랙',  color:'#3b82f6',active:true,  ver:'ver.5.0/3.2', ratio:5, kwCount:4},
-  {id:'p2',    name:'올리브',color:'#8b5cf6',active:true,  ver:'ver.5.0/3.2', ratio:5, kwCount:4},
-  {id:'p3',    name:'X3',    color:'#10b981',active:false, ver:'ver.5.0/3.2', ratio:5, kwCount:4},
-  {id:'p4',    name:'X4',    color:'#f97316',active:false, ver:'ver.5.0/3.2', ratio:5, kwCount:4},
-  {id:'p5',    name:'X5',    color:'#cbd5e1',active:false, ver:'ver.5.0/3.2', ratio:5, kwCount:4},
-  {id:'p6',    name:'X6',    color:'#84cc16',active:false, ver:'ver.5.0/3.2', ratio:5, kwCount:4},
-  {id:'p7',    name:'X7',    color:'#ec4899',active:false, ver:'ver.5.0/3.2', ratio:5, kwCount:4},
-  {id:'p8',    name:'X8',    color:'#eab308',active:false, ver:'ver.5.0/3.2', ratio:5, kwCount:4},
-  {id:'charlie',name:'찰리', color:'#f43f5e',active:false, ver:'ver.4.1/3.2', ratio:5, kwCount:0},
+  {id:'p1',    name:'블랙',  color:'#3b82f6',active:true,  ver:'ver.5.0/3.2', ratio:5, kwPct:5},
+  {id:'p2',    name:'올리브',color:'#8b5cf6',active:true,  ver:'ver.5.0/3.2', ratio:5, kwPct:5},
+  {id:'p3',    name:'X3',    color:'#10b981',active:false, ver:'ver.5.0/3.2', ratio:0, kwPct:0},
+  {id:'p4',    name:'X4',    color:'#f97316',active:false, ver:'ver.5.0/3.2', ratio:0, kwPct:0},
+  {id:'p5',    name:'X5',    color:'#cbd5e1',active:false, ver:'ver.5.0/3.2', ratio:0, kwPct:0},
+  {id:'p6',    name:'X6',    color:'#84cc16',active:false, ver:'ver.5.0/3.2', ratio:0, kwPct:0},
+  {id:'p7',    name:'X7',    color:'#ec4899',active:false, ver:'ver.5.0/3.2', ratio:0, kwPct:0},
+  {id:'p8',    name:'X8',    color:'#eab308',active:false, ver:'ver.5.0/3.2', ratio:0, kwPct:0},
+  {id:'charlie',name:'찰리', color:'#f43f5e',active:false, ver:'ver.4.1/3.2', ratio:0, kwPct:0},
 ];
 
 let rows = [], rid = 0;
@@ -378,7 +370,7 @@ let activeGroupId = null;
 let defaultProds = null;
 
 function saveDefaultState() {
-  defaultProds = prods.map(p=>({id:p.id,active:p.active,ratio:p.ratio,name:p.name,ver:p.ver,kwCount:p.kwCount}));
+  defaultProds = prods.map(p=>({id:p.id,active:p.active,ratio:p.ratio,name:p.name,ver:p.ver,kwPct:p.kwPct}));
 }
 function deactivateGroup() {
   activeGroupId = null;
@@ -386,7 +378,7 @@ function deactivateGroup() {
     defaultProds.forEach(s => {
       const p=prods.find(x=>x.id===s.id); if(!p) return;
       p.active=s.active; p.ratio=s.ratio; p.name=s.name; p.ver=s.ver;
-      if(s.kwCount !== undefined) p.kwCount = s.kwCount;
+      if(s.kwPct !== undefined) p.kwPct = s.kwPct;
     });
     rows.forEach(r=>{ r.products=(r.products||[]).filter(mid=>prods.find(p=>p.id===mid&&p.active)); });
   }
@@ -440,7 +432,7 @@ function hideAddGroup() {
 function saveNewGroup() {
   const name = document.getElementById('groupNameInput').value.trim();
   if (!name) { document.getElementById('groupNameInput').focus(); return; }
-  const state = prods.map(p => ({id:p.id, active:p.active, ratio:p.ratio, name:p.name, ver:p.ver, kwCount:p.kwCount}));
+  const state = prods.map(p => ({id:p.id, active:p.active, ratio:p.ratio, name:p.name, ver:p.ver, kwPct:p.kwPct}));
   groups.push({ id:'g'+Date.now(), name, state });
   saveGroupsLocal();
   hideAddGroup();
@@ -463,7 +455,7 @@ function applyGroup(id) {
     if(s.ratio !== undefined) p.ratio = s.ratio;
     if(s.name)               p.name  = s.name;
     if(s.ver  !== undefined) p.ver   = s.ver;
-    if(s.kwCount !== undefined) p.kwCount = s.kwCount;
+    if(s.kwPct !== undefined) p.kwPct = s.kwPct;
   });
   activeGroupId = id;
   const activeIds = prods.filter(p=>p.active).map(p=>p.id);
@@ -497,7 +489,7 @@ function startRenameGroup(id) {
 function updateActiveGroup() {
   if (!activeGroupId) return;
   const g = groups.find(x=>x.id===activeGroupId); if(!g) return;
-  g.state = prods.map(p => ({id:p.id, active:p.active, ratio:p.ratio, name:p.name, ver:p.ver, kwCount:p.kwCount}));
+  g.state = prods.map(p => ({id:p.id, active:p.active, ratio:p.ratio, name:p.name, ver:p.ver, kwPct:p.kwPct}));
   saveGroupsLocal();
   renderGroups();
 }
@@ -533,6 +525,19 @@ function saveToServer() {
 window.applySlotData = function(data) {
   if (!data) return;
   if (data.prods && Array.isArray(data.prods)) {
+    // 구버전 kwCount → kwPct 마이그레이션 (0~10 스케일)
+    const savedActive = data.prods.filter(p => p.active);
+    const needsKwMigration = data.prods.some(p => p.active && p.kwPct === undefined);
+    if (needsKwMigration) {
+      const n = savedActive.length || 1;
+      const each = Math.round(10 / n * 10) / 10;
+      const last = Math.round((10 - each * (n - 1)) * 10) / 10;
+      let ai = 0;
+      data.prods.forEach(p => {
+        if (p.active) { p.kwPct = ai === n - 1 ? last : each; ai++; }
+        else p.kwPct = 0;
+      });
+    }
     const defaultIds = new Set(prods.map(p => p.id));
     const savedMap = new Map(data.prods.map(p => [p.id, p]));
     prods = prods.map(def => savedMap.has(def.id) ? {...def, ...savedMap.get(def.id)} : def);
@@ -592,93 +597,111 @@ function renderPS() {
 
 // ── Modal ──
 let _modalId = null;
-let _modalFromToggle = false;
 
-function openModal(id, warnRatio=false) {
+function openModal(id) {
   const p = prods.find(x=>x.id===id); if(!p) return;
   _modalId = id;
 
   document.getElementById('mdot').style.background = p.color;
   document.getElementById('mTitle').textContent = `${p.name} 설정`;
   document.getElementById('mName').value = p.name;
-  document.getElementById('mKwCount').value = p.kwCount !== undefined ? p.kwCount : 4;
   document.getElementById('mVer').value = p.ver||'';
-  _modalFromToggle = warnRatio;
-  document.getElementById('ratioWarnNotice').style.display = warnRatio ? 'flex' : 'none';
 
   const actives = ap();
+  const n = actives.length || 1;
+
+  const defVal = q => Math.round(10 / n * 10) / 10;
+
+  const kwGrid = document.getElementById('kwPctGrid');
+  kwGrid.innerHTML = actives.map(q=>`
+    <div class="ratio-item">
+      <div class="ri-dot" style="background:${q.color}"></div>
+      <span class="ri-name" style="color:${q.color}">${esc(q.name)}</span>
+      <input type="number" step="any" min="0" max="10" value="${q.kwPct !== undefined ? q.kwPct : defVal(q)}" id="kwpct-${q.id}"
+        oninput="updatePctNotes()" />
+    </div>`).join('');
+
   const grid = document.getElementById('ratioGrid');
   grid.innerHTML = actives.map(q=>`
     <div class="ratio-item">
       <div class="ri-dot" style="background:${q.color}"></div>
       <span class="ri-name" style="color:${q.color}">${esc(q.name)}</span>
-      <input type="number" step="any" value="${q.ratio}" id="ratio-${q.id}"
-        oninput="updateRatioNote()" />
+      <input type="number" step="any" min="0" max="10" value="${q.ratio !== undefined ? q.ratio : defVal(q)}" id="ratio-${q.id}"
+        oninput="updatePctNotes()" />
     </div>`).join('');
 
-  updateRatioNote();
+  updatePctNotes();
   document.getElementById('modalBg').style.display = 'flex';
 }
 
-function updateRatioNote() {
+function updatePctNotes() {
   const actives = ap();
-  const sum = actives.reduce((s,q)=>{
-    const el = document.getElementById(`ratio-${q.id}`);
-    return s + (el ? (parseFloat(el.value)||0) : q.ratio);
+  const kwSum = actives.reduce((s,q)=>{
+    const el = document.getElementById(`kwpct-${q.id}`);
+    return s + (el ? (parseFloat(el.value)||0) : (q.kwPct||0));
   }, 0);
-  const rounded = Math.round(sum * 10) / 10;
-  const note = document.getElementById('ratioNote');
-  note.textContent = `합계: ${rounded}`;
-  note.className = 'ratio-note ' + (rounded===10?'ok':'ng');
+  const kwRounded = Math.round(kwSum * 10) / 10;
+  const kwNote = document.getElementById('kwPctNote');
+  if (kwNote) { kwNote.textContent = `합계: ${kwRounded}`; kwNote.className = 'ratio-note ' + (kwRounded===10?'ok':'ng'); }
+
+  const ratioSum = actives.reduce((s,q)=>{
+    const el = document.getElementById(`ratio-${q.id}`);
+    return s + (el ? (parseFloat(el.value)||0) : (q.ratio||0));
+  }, 0);
+  const ratioRounded = Math.round(ratioSum * 10) / 10;
+  const ratioNote = document.getElementById('ratioNote');
+  if (ratioNote) { ratioNote.textContent = `합계: ${ratioRounded}`; ratioNote.className = 'ratio-note ' + (ratioRounded===10?'ok':'ng'); }
 }
 
 function closeModal() {
   document.getElementById('modalBg').style.display = 'none';
-  if (_modalFromToggle && _modalId) {
-    const p = prods.find(x=>x.id===_modalId);
-    if (p) {
-      p.active = false;
-      rows.forEach(r => { r.products=(r.products||[]).filter(mid=>mid!==p.id); });
-      renderPS(); renderTable(); refreshUI(); scheduleSave();
-    }
-  }
   _modalId = null;
-  _modalFromToggle = false;
 }
 
 function saveModal() {
   const p = prods.find(x=>x.id===_modalId); if(!p) return;
   p.name = document.getElementById('mName').value.trim() || p.name;
-  const kwCountVal = parseInt(document.getElementById('mKwCount').value);
-  p.kwCount = isNaN(kwCountVal) ? 4 : Math.max(0, kwCountVal);
   p.ver  = document.getElementById('mVer').value.trim();
 
   const actives = ap();
-  const sum = actives.reduce((s,q)=>{
-    const el = document.getElementById(`ratio-${q.id}`);
-    return s + (el ? (parseFloat(el.value)||0) : q.ratio);
+  const kwSum = actives.reduce((s,q)=>{
+    const el = document.getElementById(`kwpct-${q.id}`);
+    return s + (el ? (parseFloat(el.value)||0) : (q.kwPct||0));
   }, 0);
-  const rounded = Math.round(sum * 10) / 10;
-  if (rounded !== 10) {
+  const ratioSum = actives.reduce((s,q)=>{
+    const el = document.getElementById(`ratio-${q.id}`);
+    return s + (el ? (parseFloat(el.value)||0) : (q.ratio||0));
+  }, 0);
+  const kwRounded = Math.round(kwSum * 10) / 10;
+  const ratioRounded = Math.round(ratioSum * 10) / 10;
+
+  if (kwRounded !== 10) {
+    const note = document.getElementById('kwPctNote');
+    note.textContent = `합계 10 필수 (현재 ${kwRounded})`;
+    note.className = 'ratio-note ng';
+    return;
+  }
+  if (ratioRounded !== 10) {
     const note = document.getElementById('ratioNote');
-    note.textContent = `총합 10 필수 (현재 ${rounded})`;
+    note.textContent = `합계 10 필수 (현재 ${ratioRounded})`;
     note.className = 'ratio-note ng';
     return;
   }
 
   actives.forEach(q=>{
-    const el = document.getElementById(`ratio-${q.id}`);
-    if(el) q.ratio = Math.round((parseFloat(el.value)||0) * 10) / 10;
+    const kwEl = document.getElementById(`kwpct-${q.id}`);
+    if(kwEl) q.kwPct = Math.round((parseFloat(kwEl.value)||0) * 10) / 10;
+    const ratEl = document.getElementById(`ratio-${q.id}`);
+    if(ratEl) q.ratio = Math.round((parseFloat(ratEl.value)||0) * 10) / 10;
   });
 
-  // 모든 그룹의 해당 상품 이름/버전 동기화
+  // 그룹에 상품명/버전 동기화
   groups.forEach(g => {
     const gs = g.state.find(s => s.id === p.id);
-    if (gs) { gs.name = p.name; gs.ver = p.ver; gs.kwCount = p.kwCount; }
+    if (gs) { gs.name = p.name; gs.ver = p.ver; }
   });
   saveGroupsLocal();
 
-  _modalFromToggle = false;
   closeModal();
   rows.forEach(r => { const c=document.getElementById(`tags-${r.id}`); if(c) c.innerHTML=tagsHtml(r); });
   if (activeGroupId) updateActiveGroup(); else saveDefaultState();
@@ -686,17 +709,25 @@ function saveModal() {
   scheduleSave();
 }
 
+function rebalanceActive(field) {
+  const active = ap();
+  const n = active.length;
+  if (!n) return;
+  const each = Math.round(10 / n * 10) / 10;
+  const last = Math.round((10 - each * (n - 1)) * 10) / 10;
+  active.forEach((p, i) => { p[field] = i === n - 1 ? last : each; });
+  prods.forEach(p => { if (!p.active) p[field] = 0; });
+}
+
 function toggleP(id) {
   const p = prods.find(x=>x.id===id); if(!p) return;
   p.active = !p.active;
   if (!p.active) rows.forEach(r => { r.products=(r.products||[]).filter(mid=>mid!==id); });
+  rebalanceActive('kwPct');
+  rebalanceActive('ratio');
   if (activeGroupId) updateActiveGroup(); else saveDefaultState();
   renderPS(); renderTable(); refreshUI();
   scheduleSave();
-  if (p.active) {
-    const sum = Math.round(ap().reduce((s,q)=>s+q.ratio, 0) * 10) / 10;
-    if (sum !== 10) openModal(id, true);
-  }
 }
 
 // ── Add / Delete Product ──
@@ -711,7 +742,6 @@ function showAddProdModal(){
   _apColor=nextProdColor();
   document.getElementById('apDot').style.background=_apColor;
   document.getElementById('apName').value='';
-  document.getElementById('apKwCount').value=4;
   document.getElementById('apVer').value='';
   document.getElementById('addProdModalBg').style.display='flex';
   setTimeout(()=>document.getElementById('apName').focus(),50);
@@ -722,10 +752,8 @@ function closeAddProdModal(){
 function saveNewProd(){
   const name=document.getElementById('apName').value.trim();
   if(!name){document.getElementById('apName').focus();return;}
-  const kwCountVal=parseInt(document.getElementById('apKwCount').value);
-  const kwCount=isNaN(kwCountVal)?4:Math.max(0,kwCountVal);
   const ver=document.getElementById('apVer').value.trim();
-  prods.push({id:'u'+Date.now(),name,color:_apColor,active:false,ver:ver||'ver.5.0/3.2',ratio:5,kwCount});
+  prods.push({id:'u'+Date.now(),name,color:_apColor,active:false,ver:ver||'ver.5.0/3.2',ratio:0,kwPct:0});
   closeAddProdModal();
   if(activeGroupId) updateActiveGroup(); else saveDefaultState();
   renderPS(); renderTable(); refreshUI(); scheduleSave();
@@ -1300,9 +1328,24 @@ function buildJumuSheet(wb,f){
 function kwForProd(keywords, prod) {
   if (!keywords) return '';
   const parts = keywords.split(',').map(k => k.trim()).filter(k => k);
-  const n = prod.kwCount !== undefined ? prod.kwCount : (prod.id === 'charlie' ? 0 : 4);
-  if (n === 0) return parts.join(',');
-  return parts.slice(0, n).join(',');
+  if (!parts.length) return '';
+  const activeProds = ap();
+  const totalKw = parts.length;
+  // Distribute keyword counts by kwPct using largest remainder
+  const pcts = activeProds.map(p => p.kwPct || 0);
+  const totalPct = pcts.reduce((s,v) => s+v, 0) || 100;
+  const exact = pcts.map(pct => totalKw * pct / totalPct);
+  const floors = exact.map(v => Math.floor(v));
+  const remainders = exact.map((v,i) => v - floors[i]);
+  let leftover = totalKw - floors.reduce((s,v) => s+v, 0);
+  const order = remainders.map((_,i)=>i).sort((a,b)=>remainders[b]-remainders[a]);
+  for (let i = 0; i < leftover; i++) floors[order[i]]++;
+  let offset = 0;
+  for (let i = 0; i < activeProds.length; i++) {
+    if (activeProds[i].id === prod.id) return parts.slice(offset, offset + floors[i]).join(',');
+    offset += floors[i];
+  }
+  return '';
 }
 
 // ratio 비율로 target 분배, Largest Remainder로 정수 오차 보정
