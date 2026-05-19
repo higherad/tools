@@ -137,7 +137,13 @@
       color: var(--primary);
       white-space: nowrap;
     }
-    .file-date { font-size: 11px; color: #94a3b8; }
+    .file-date { font-size: 11px; color: #94a3b8; text-align: right; }
+    .updated-badge {
+      display: block;
+      font-size: 11px;
+      color: #f59e0b;
+      margin-top: 2px;
+    }
 
     .card-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
 
@@ -394,9 +400,9 @@
 
     listEl.innerHTML = filtered.map(f => {
       const icon    = CAT_ICONS[f.category] || '📄';
-      const dateStr = f.created_at
-        ? new Date(f.created_at).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })
-        : '';
+      const fmt = ts => new Date(ts).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+      const dateStr    = f.created_at  ? fmt(f.created_at)  : '';
+      const updatedStr = f.updated_at  ? fmt(f.updated_at)  : '';
       const isMine = me && (f.author === me || f.author === myName);
       return `
         <div class="file-card ${f.pinned ? 'pinned' : ''}">
@@ -407,7 +413,7 @@
           </div>
           <div class="file-meta">
             <span class="cat-badge">${esc(f.category)}</span>
-            <span class="file-date">${f.author ? esc(nameMap[f.author] || f.author) + ' · ' : ''}${dateStr}</span>
+            <span class="file-date">${f.author ? esc(nameMap[f.author] || f.author) + ' · ' : ''}${dateStr}${updatedStr ? ` <span class="updated-badge">수정 ${updatedStr}</span>` : ''}</span>
           </div>
           <div class="card-actions">
             <a class="open-btn" href="${esc(f.url)}" target="_blank" rel="noopener">열기</a>
@@ -490,6 +496,7 @@
           description: descEl.value.trim(),
           category:    cat,
           url,
+          updated_at:  Date.now(),
         });
       } else {
         await push(ref(db, 'resource_hub/files'), {
