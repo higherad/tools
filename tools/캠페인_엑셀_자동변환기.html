@@ -642,7 +642,10 @@ function updatePctNotes() {
   }, 0);
   const kwRounded = Math.round(kwSum * 10) / 10;
   const kwNote = document.getElementById('kwPctNote');
-  if (kwNote) { kwNote.textContent = `합계: ${kwRounded}`; kwNote.className = 'ratio-note ' + (kwRounded===10?'ok':'ng'); }
+  if (kwNote) {
+    if (kwRounded === 0) { kwNote.textContent = '배분 안함'; kwNote.className = 'ratio-note ok'; }
+    else { kwNote.textContent = `합계: ${kwRounded}`; kwNote.className = 'ratio-note ' + (kwRounded===10?'ok':'ng'); }
+  }
 
   const ratioSum = actives.reduce((s,q)=>{
     const el = document.getElementById(`ratio-${q.id}`);
@@ -675,9 +678,9 @@ function saveModal() {
   const kwRounded = Math.round(kwSum * 10) / 10;
   const ratioRounded = Math.round(ratioSum * 10) / 10;
 
-  if (kwRounded !== 10) {
+  if (kwRounded !== 10 && kwRounded !== 0) {
     const note = document.getElementById('kwPctNote');
-    note.textContent = `합계 10 필수 (현재 ${kwRounded})`;
+    note.textContent = `합계 10 또는 모두 0 필수 (현재 ${kwRounded})`;
     note.className = 'ratio-note ng';
     return;
   }
@@ -1333,7 +1336,8 @@ function kwForProd(keywords, prod) {
   const totalKw = parts.length;
   // Distribute keyword counts by kwPct using largest remainder
   const pcts = activeProds.map(p => p.kwPct || 0);
-  const totalPct = pcts.reduce((s,v) => s+v, 0) || 100;
+  const totalPct = pcts.reduce((s,v) => s+v, 0);
+  if (totalPct === 0) return parts.join(',');
   const exact = pcts.map(pct => totalKw * pct / totalPct);
   const floors = exact.map(v => Math.floor(v));
   const remainders = exact.map((v,i) => v - floors[i]);
