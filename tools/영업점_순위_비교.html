@@ -82,7 +82,7 @@
     async function fetchData() {
         document.getElementById('contentArea').innerHTML = '<div class="loading">데이터 동기화 중...</div>';
         try {
-            const response = await fetch(`${GAS_URL}?action=getRankData`);
+            const response = await fetch(`${GAS_URL}?action=getRankData&t=${Date.now()}`);
             rawData = await response.json();
 
             if (rawData.dateTitle) {
@@ -124,8 +124,9 @@
     }
 
     function renderRankCells(ranks) {
-        return (ranks || []).map((v, idx) => {
-            const prev  = idx === 0 ? null : ranks[idx - 1];
+        const cells = ranks && ranks.length > 0 ? ranks : ["-","-","-","-","-"];
+        return cells.map((v, idx) => {
+            const prev  = idx === 0 ? null : cells[idx - 1];
             const pNum  = prev === null ? 301 : (parseFloat(prev) || 301);
             const cNum  = parseFloat(v) || 301;
             const color = (idx === 0 || pNum >= 301 || cNum >= 301)
