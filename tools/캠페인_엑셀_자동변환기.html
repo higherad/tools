@@ -745,7 +745,12 @@ function rebalanceActive(field) {
 function toggleP(id) {
   const p = prods.find(x=>x.id===id); if(!p) return;
   p.active = !p.active;
-  if (!p.active) rows.forEach(r => { r.products=(r.products||[]).filter(mid=>mid!==id); });
+  if (!p.active) {
+    rows.forEach(r => { r.products=(r.products||[]).filter(mid=>mid!==id); });
+  } else if (id === 'yupfl') {
+    // 유입플 ON 시 모든 행에 자동 배정
+    rows.forEach(r => { r.products=r.products||[]; if(!r.products.includes('yupfl')) r.products.push('yupfl'); });
+  }
   rebalanceActive('kwPct');
   rebalanceActive('ratio');
   if (activeGroupId) updateActiveGroup(); else saveDefaultState();
