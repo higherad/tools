@@ -348,14 +348,12 @@ input[type=date]:focus{border-color:var(--acc);}
       </div>
       <div class="addr" onclick="addRow()">＋ 행 추가</div>
     </div>
-    <div class="ab">
-      <div class="stats" id="statsEl"></div>
-    </div>
   </div>
 
   <!-- Download & Preview -->
   <div class="panel">
     <div class="ph"><span>⬇️</span><h2>대행사별 다운로드</h2><span class="m" id="agMeta">대행사 미설정</span></div>
+    <div class="stats" id="statsEl" style="display:none;padding:8px 18px;border-bottom:1px solid var(--brd);flex-wrap:wrap;"></div>
 
     <div class="pgw" id="pgw">
       <div class="pgb"><div class="pgf" id="pgf"></div></div>
@@ -988,13 +986,16 @@ function tagsHtml(row){
 function updateStats(){
   const f=rows.filter(r=>r.name.trim());
   document.getElementById('rcMeta').textContent=`${f.length}개 업체`;
+  const el=document.getElementById('statsEl');
+  if(!f.length){el.style.display='none';return;}
   const cnt={}; ap().forEach(p=>cnt[p.id]=0);
   f.forEach(r=>r.products.forEach(mid=>{if(cnt[mid]!==undefined)cnt[mid]++;}));
   let h=`업체 <span class="sv">${f.length}</span>`;
   ap().filter(p=>cnt[p.id]>0).forEach(p=>{
     h+=` &nbsp;·&nbsp; <span style="color:${p.color};font-weight:700">${esc(p.name)}</span> <span class="sv">${cnt[p.id]}</span>`;
   });
-  document.getElementById('statsEl').innerHTML=h;
+  el.innerHTML=h;
+  el.style.display='flex';
 }
 
 // ── filename helper ──
