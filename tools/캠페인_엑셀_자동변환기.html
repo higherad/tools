@@ -195,6 +195,17 @@ input[type=date]:focus{border-color:var(--acc);}
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px;}
+
+/* product two-row layout */
+.ps-two-row{display:flex;flex-direction:column;gap:0;}
+.ps-row{display:flex;align-items:center;gap:6px;}
+.ps-row-inner{display:flex;gap:8px;flex:1;min-width:0;overflow-x:auto;scroll-behavior:smooth;}
+.ps-row-inner::-webkit-scrollbar{display:none;}
+.ps-sect-lbl{font-size:10px;font-weight:700;color:var(--txd);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;min-width:26px;}
+.ps-divider-h{height:1px;background:var(--brd);margin:9px 0;}
+.ps-nav{width:22px;height:22px;border-radius:5px;border:1px solid var(--brd);background:var(--sur2);color:var(--txd);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .15s;flex-shrink:0;line-height:1;padding:0;}
+.ps-nav:hover:not(:disabled){border-color:var(--acc);color:var(--acc);}
+.ps-nav:disabled{opacity:.2;cursor:not-allowed;}
 </style>
 </head>
 <body>
@@ -242,7 +253,19 @@ input[type=date]:focus{border-color:var(--acc);}
         </div>
       </div>
       <!-- Products -->
-      <div class="ps-wrap" id="psWrap"></div>
+      <div class="ps-two-row">
+        <div class="ps-row">
+          <span class="ps-sect-lbl">일반</span>
+          <button class="ps-nav" id="psNavL" onclick="psScroll(-1)">&#8249;</button>
+          <div class="ps-row-inner" id="psWrapNormal"></div>
+          <button class="ps-nav" id="psNavR" onclick="psScroll(1)">&#8250;</button>
+        </div>
+        <div class="ps-divider-h"></div>
+        <div class="ps-row">
+          <span class="ps-sect-lbl">고정</span>
+          <div class="ps-wrap" id="psWrapFixed" style="flex:1;"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -364,6 +387,8 @@ let prods = [
   {id:'charlie',name:'찰리', color:'#f43f5e',active:false, ver:'ver.4.1/3.2', ratio:0, kwPct:0},
   {id:'yupfl', name:'유입플', color:'#f59e0b',active:false, ver:'ver.5.0/3.2', ratio:0, kwPct:0},
 ];
+
+const FIXED_PROD_IDS = new Set(['charlie', 'yupfl']);
 
 let rows = [], rid = 0;
 let groups = [];
@@ -573,6 +598,9 @@ window.onload = () => {
   renderGroups();
   addRow(); addRow(); addRow();
   setupUpload();
+  const psInner = document.getElementById('psWrapNormal');
+  if (psInner) psInner.addEventListener('scroll', updatePSArrows);
+  window.addEventListener('resize', updatePSArrows);
   document.addEventListener('mousedown', e => {
     if (!activeGroupId) return;
     if (e.target.closest('.panel') || e.target.closest('#modalBg')) return;
@@ -587,13 +615,32 @@ window.onload = () => {
 // ── Product settings ──
 function renderPS() {
   renderGroups();
-  document.getElementById('psWrap').innerHTML = prods.map(p=>`
+  const prodHtml = p => `
     <div class="ps-item${p.active?' active':''}" id="psi-${p.id}" onclick="openModal('${p.id}')">
       <div class="ps-dot" style="background:${p.color};border-color:rgba(255,255,255,.25);"></div>
       <span class="ps-name" style="color:${p.color}">${esc(p.name)}</span>
       <button class="ps-tog ${p.active?'on':'off'}" onclick="event.stopPropagation();toggleP('${p.id}')"></button>
       <button class="ps-item-del" onclick="event.stopPropagation();deleteProd('${p.id}')" title="${esc(p.name)} 삭제">✕</button>
-    </div>`).join('');
+    </div>`;
+  document.getElementById('psWrapNormal').innerHTML = prods.filter(p=>!FIXED_PROD_IDS.has(p.id)).map(prodHtml).join('');
+  document.getElementById('psWrapFixed').innerHTML  = prods.filter(p=> FIXED_PROD_IDS.has(p.id)).map(prodHtml).join('');
+  updatePSArrows();
+}
+
+function psScroll(dir) {
+  const el = document.getElementById('psWrapNormal');
+  if (!el) return;
+  el.scrollLeft += dir * 220;
+  setTimeout(updatePSArrows, 180);
+}
+
+function updatePSArrows() {
+  const el = document.getElementById('psWrapNormal');
+  if (!el) return;
+  const l = document.getElementById('psNavL');
+  const r = document.getElementById('psNavR');
+  if (l) l.disabled = el.scrollLeft <= 0;
+  if (r) r.disabled = Math.ceil(el.scrollLeft + el.clientWidth) >= el.scrollWidth;
 }
 
 // ── Modal ──
