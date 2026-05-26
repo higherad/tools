@@ -84,27 +84,6 @@ th{padding:8px 11px;background:var(--sur2);color:var(--txd);font-weight:600;font
 td{padding:8px 11px;border-bottom:1px solid var(--brd);vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:rgba(255,255,255,.015);}
-td input[type=text],td input[type=number]{background:transparent;border:1px solid transparent;color:var(--tx);padding:3px 6px;border-radius:5px;font-size:12px;font-family:inherit;width:100%;transition:all .15s;}
-td input:hover,td input:focus{border-color:var(--brd);background:var(--sur2);}
-td input:focus{border-color:var(--acc);outline:none;}
-input[type=date]{background:transparent;border:1px solid transparent;color:var(--tx);padding:3px 6px;border-radius:5px;font-size:12px;font-family:inherit;color-scheme:dark;cursor:pointer;transition:all .15s;}
-input[type=date]:hover,input[type=date]:focus{border-color:var(--brd);background:var(--sur2);outline:none;}
-input[type=date]:focus{border-color:var(--acc);}
-
-/* tags */
-.tw2{display:flex;flex-wrap:wrap;gap:4px;min-width:160px;}
-.ptag{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid;transition:all .12s;user-select:none;white-space:nowrap;}
-.ptag input{display:none;}
-.ptag.off{opacity:.3;}
-.pdot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;}
-
-/* add row */
-.addr{display:flex;align-items:center;gap:6px;padding:8px 18px;color:var(--txd);font-size:12px;cursor:pointer;border-top:1px dashed var(--brd);transition:all .2s;}
-.addr:hover{color:var(--acc);border-color:var(--acc);background:rgba(0,229,255,.02);}
-
-/* action bar */
-.ab{display:flex;align-items:center;gap:9px;padding:12px 18px;border-top:1px solid var(--brd);background:var(--sur2);flex-wrap:wrap;}
-.sp{flex:1;}
 
 /* buttons */
 .btn{padding:8px 16px;border-radius:7px;border:none;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;}
@@ -178,18 +157,12 @@ input[type=date]:focus{border-color:var(--acc);}
 .ps-item-del{width:16px;height:16px;border-radius:3px;border:none;background:transparent;color:transparent;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0;line-height:1;padding:0;}
 .ps-item:hover .ps-item-del{color:var(--txd);}
 .ps-item-del:hover{background:rgba(239,68,68,.25)!important;color:var(--red)!important;}
-.color-swatches{display:flex;flex-wrap:wrap;gap:5px;}
-.csw{width:22px;height:22px;border-radius:5px;cursor:pointer;border:2px solid transparent;transition:all .12s;flex-shrink:0;}
-.csw:hover{transform:scale(1.15);}
-.csw.sel{border-color:#fff;transform:scale(1.15);}
+
 
 /* misc */
 .empty{padding:36px;text-align:center;color:var(--txd);}
 .empty .ico{font-size:34px;margin-bottom:8px;}
-.notice{padding:10px 13px;border-radius:7px;font-size:12px;display:flex;gap:8px;margin-bottom:14px;}
-.ni{background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.2);color:#7dd3e8;}
-.rdel{width:21px;height:21px;border-radius:5px;border:none;background:rgba(239,68,68,.1);color:var(--red);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;transition:all .12s;}
-.rdel:hover{background:rgba(239,68,68,.22);}
+
 .stats{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--txd);align-items:center;}
 .sv{color:var(--acc);font-weight:700;font-family:'JetBrains Mono',monospace;}
 ::-webkit-scrollbar{width:5px;height:5px;}
@@ -756,7 +729,6 @@ function saveModal() {
   saveGroupsLocal();
 
   closeModal();
-  rows.forEach(r => { const c=document.getElementById(`tags-${r.id}`); if(c) c.innerHTML=tagsHtml(r); });
   if (activeGroupId) updateActiveGroup(); else saveDefaultState();
   renderPS(); renderTable(); refreshUI();
   scheduleSave();
@@ -912,7 +884,6 @@ function addRow(){
   rows.push({id:rid++,receiptDate:today(),agency:'',name:'',url:'',mid:'',keyword:'',days:7,startDate:today(),dailyTarget:125,searchKeywords:'',products:ap().map(p=>p.id)});
   renderTable();
 }
-function removeRow(id){ rows=rows.filter(r=>r.id!==id); renderTable(); refreshUI(); scheduleSave(); }
 function clearAll(){
   if(rows.filter(r=>r.name).length>0&&!confirm('모든 데이터를 초기화할까요?')) return;
   rows=[]; addRow(); addRow(); addRow(); refreshUI(); scheduleSave();
@@ -921,57 +892,11 @@ function clearAll(){
   z.querySelector('h3').textContent='접수_날짜.xlsx 드래그 또는 클릭해서 업로드';
   document.getElementById('fi').value='';
 }
-function upd(id,f,v){ const r=rows.find(x=>x.id===id); if(r){r[f]=v; updateStats(); refreshUI(); scheduleSave();} }
-function togProd(rowId,mid,checked){
-  const r=rows.find(x=>x.id===rowId); if(!r) return;
-  if(checked&&!r.products.includes(mid)) r.products.push(mid);
-  if(!checked) r.products=r.products.filter(p=>p!==mid);
-  const c=document.getElementById(`tags-${rowId}`); if(c) c.innerHTML=tagsHtml(r);
-  updateStats(); refreshUI(); scheduleSave();
-}
-
 // ── Render table ──
-function renderTable(){
-  const tb=document.getElementById('tbody');
-  tb.innerHTML='';
-  rows.forEach((row,idx)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td style="color:var(--txd);font-family:'JetBrains Mono',monospace;font-size:10px;">${idx+1}</td>
-      <td><input type="date" value="${row.receiptDate}" oninput="upd(${row.id},'receiptDate',this.value)" style="min-width:115px;"/></td>
-      <td><input type="text" value="${esc(row.agency)}" placeholder="영업점" style="min-width:95px;" oninput="upd(${row.id},'agency',this.value)"/></td>
-      <td><input type="text" value="${esc(row.name)}" placeholder="업체명" style="min-width:135px;" oninput="upd(${row.id},'name',this.value)"/></td>
-      <td><input type="text" value="${esc(row.url)}" placeholder="https://m.place.naver.com/..." style="min-width:200px;" oninput="upd(${row.id},'url',this.value)"/></td>
-      <td><input type="text" value="${esc(row.mid)}" placeholder="MID" style="min-width:95px;" oninput="upd(${row.id},'mid',this.value)"/></td>
-      <td><input type="text" value="${esc(row.keyword)}" placeholder="순위키워드" style="min-width:95px;" oninput="upd(${row.id},'keyword',this.value)"/></td>
-      <td><input type="number" value="${row.days}" min="1" style="min-width:50px;max-width:60px;" oninput="upd(${row.id},'days',parseInt(this.value)||7)"/></td>
-      <td><input type="date" value="${row.startDate}" oninput="upd(${row.id},'startDate',this.value)" style="min-width:115px;"/></td>
-      <td><input type="number" value="${row.dailyTarget}" min="1" style="min-width:62px;max-width:75px;" oninput="upd(${row.id},'dailyTarget',parseInt(this.value)||0)"/></td>
-      <td><input type="text" value="${esc(row.searchKeywords)}" placeholder="키워드1,키워드2" style="min-width:190px;" oninput="upd(${row.id},'searchKeywords',this.value)"/></td>
-      <td id="tags-${row.id}">${tagsHtml(row)}</td>
-      <td><button class="rdel" onclick="removeRow(${row.id})">×</button></td>
-    `;
-    tb.appendChild(tr);
-  });
-  updateStats();
-  const wrap = document.getElementById('tbWrap');
-  if(wrap) wrap.style.maxHeight = rows.length > 5 ? '320px' : 'none';
-}
-
-function tagsHtml(row){
-  return `<div class="tw2">${ap().map(p=>{
-    const on=(row.products||[]).includes(p.id);
-    const rgb=hex2rgb(p.color);
-    return `<label class="ptag ${on?'':'off'}" style="color:${p.color};border-color:${on?p.color:`rgba(${rgb},.3)`};background:rgba(${rgb},${on?.16:.05})">
-      <input type="checkbox" ${on?'checked':''} onchange="togProd(${row.id},'${p.id}',this.checked)"/>
-      <span class="pdot"></span>${esc(p.name)}
-    </label>`;
-  }).join('')}</div>`;
-}
+function renderTable(){ updateStats(); }
 
 function updateStats(){
   const f=rows.filter(r=>r.name.trim());
-  document.getElementById('rcMeta').textContent=`${f.length}개 업체`;
   const el=document.getElementById('statsEl');
   if(!f.length){el.style.display='none';return;}
   const cnt={}; ap().forEach(p=>cnt[p.id]=0);
@@ -1094,25 +1019,6 @@ function setPG(show,pct=0,lbl=''){
   document.getElementById('pgw').classList.toggle('show',show);
   document.getElementById('pgf').style.width=pct+'%';
   document.getElementById('pgl').textContent=lbl;
-}
-
-// ── 대행사별 개별 다운로드 (접수+주문 1파일) ──
-async function dlSheetForAgency(ag){
-  const f=rowsByAgency(ag);
-  if(!f.length){alert('해당 대행사의 데이터가 없습니다.');return;}
-  setPG(true,20,'생성 중...');
-  await sleep(60);
-  try{
-    const wb=XLSX.utils.book_new();
-    const realAg=ag==='(대행사 미지정)'?'':ag;
-    buildJusuSheet(wb,f);
-    buildJumuSheet(wb,f);
-    setPG(true,85,'저장 중...');
-    await sleep(40);
-    XLSX.writeFile(wb, realAg ? `${realAg}-주문서.xlsx` : `주문서-${shortD()}.xlsx`);
-    setPG(true,100,'완료 ✅'); await sleep(700);
-  }catch(e){alert('오류: '+e.message);}
-  finally{setPG(false);}
 }
 
 // ── 대행사별 전체 다운로드 (접수+주문 시트 1개 파일) ──
