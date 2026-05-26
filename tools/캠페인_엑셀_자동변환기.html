@@ -600,7 +600,7 @@ function renderPS() {
       <div class="ps-dot" style="background:${p.color};border-color:rgba(255,255,255,.25);"></div>
       <span class="ps-name" style="color:${p.color}">${esc(p.name)}</span>
       <button class="ps-tog ${p.active?'on':'off'}" onclick="event.stopPropagation();toggleP('${p.id}')"></button>
-      <button class="ps-item-del" onclick="event.stopPropagation();deleteProd('${p.id}')" title="${esc(p.name)} 삭제">✕</button>
+      ${FIXED_PROD_IDS.has(p.id)?'':'<button class="ps-item-del" onclick="event.stopPropagation();deleteProd(\''+p.id+'\')" title="'+esc(p.name)+' 삭제">✕</button>'}
     </div>`;
   document.getElementById('psWrapNormal').innerHTML = prods.filter(p=>!FIXED_PROD_IDS.has(p.id)).map(prodHtml).join('');
   document.getElementById('psWrapFixed').innerHTML  = prods.filter(p=> FIXED_PROD_IDS.has(p.id)).map(prodHtml).join('');
@@ -814,6 +814,7 @@ function saveNewProd(){
   renderPS(); renderTable(); refreshUI(); scheduleSave();
 }
 function deleteProd(id){
+  if(FIXED_PROD_IDS.has(id)) return;
   const p=prods.find(x=>x.id===id); if(!p) return;
   if(!confirm(`'${p.name}' 상품을 삭제할까요?\n(모든 행의 배정에서도 제거됩니다)`)) return;
   prods=prods.filter(x=>x.id!==id);
