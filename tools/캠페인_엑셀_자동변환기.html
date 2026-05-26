@@ -368,6 +368,9 @@ let prods = [
   {id:'yupfl', name:'유입플', color:'#f59e0b',active:false, ver:'ver.5.0/3.2', ratio:0, kwPct:0},
 ];
 
+// 고정 상품 ID 목록 — 이 Set에 등록된 상품은 UI에서 삭제 버튼이 숨겨지고 삭제가 차단됩니다.
+// 새 고정 상품을 추가할 때: 1) prods 배열에 항목 추가  2) 이 Set에 해당 id 추가
+// 고정 상품은 특수 분배 로직(yupflAlloc 등)을 allocate/kwForProd 함수에 직접 구현하세요.
 const FIXED_PROD_IDS = new Set(['charlie', 'yupfl']);
 
 let rows = [], rid = 0;
