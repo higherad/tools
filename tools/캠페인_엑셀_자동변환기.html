@@ -38,11 +38,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 
 /* product settings */
 .ps-wrap{display:flex;flex-wrap:wrap;gap:8px;}
-.ps-item{display:flex;align-items:center;gap:7px;background:var(--sur2);border:1px solid var(--brd);border-radius:8px;padding:6px 12px;transition:all .2s;cursor:pointer;user-select:none;}
+.ps-item{display:flex;align-items:center;gap:7px;background:var(--sur2);border:1px solid var(--brd);border-radius:8px;padding:6px 12px;transition:all .2s;cursor:pointer;user-select:none;flex-shrink:0;}
 .ps-item:hover{border-color:rgba(255,255,255,.2);background:#222230;}
 .ps-item.active{border-color:rgba(255,255,255,.15);}
 .ps-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,.2);}
-.ps-name{font-size:13px;font-weight:700;}
+.ps-name{font-size:13px;font-weight:700;white-space:nowrap;}
 .ps-tog{width:30px;height:17px;border-radius:9px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
 .ps-tog.on{background:var(--acc);}
 .ps-tog.off{background:#3a3a50;}
@@ -236,7 +236,9 @@ tr:hover td{background:rgba(255,255,255,.015);}
         <div class="ps-divider-h"></div>
         <div class="ps-row">
           <span class="ps-sect-lbl">고정</span>
-          <div class="ps-wrap" id="psWrapFixed" style="flex:1;"></div>
+          <button class="ps-nav" id="psNavFL" onclick="psScrollFixed(-1)">&#8249;</button>
+          <div class="ps-row-inner" id="psWrapFixed"></div>
+          <button class="ps-nav" id="psNavFR" onclick="psScrollFixed(1)">&#8250;</button>
         </div>
       </div>
     </div>
@@ -537,6 +539,7 @@ window.applySlotData = function(data) {
       rid = Math.max(...rows.map(r => r.id ?? 0)) + 1;
     }
   }
+  saveDefaultState();
   renderPS();
   renderTable();
   refreshUI();
@@ -556,6 +559,8 @@ window.onload = () => {
   setupUpload();
   const psInner = document.getElementById('psWrapNormal');
   if (psInner) psInner.addEventListener('scroll', updatePSArrows);
+  const psFixed = document.getElementById('psWrapFixed');
+  if (psFixed) psFixed.addEventListener('scroll', updatePSArrows);
   window.addEventListener('resize', updatePSArrows);
   document.addEventListener('mousedown', e => {
     if (!activeGroupId) return;
@@ -590,13 +595,28 @@ function psScroll(dir) {
   setTimeout(updatePSArrows, 180);
 }
 
+function psScrollFixed(dir) {
+  const el = document.getElementById('psWrapFixed');
+  if (!el) return;
+  el.scrollLeft += dir * 220;
+  setTimeout(updatePSArrows, 180);
+}
+
 function updatePSArrows() {
   const el = document.getElementById('psWrapNormal');
-  if (!el) return;
-  const l = document.getElementById('psNavL');
-  const r = document.getElementById('psNavR');
-  if (l) l.disabled = el.scrollLeft <= 0;
-  if (r) r.disabled = Math.ceil(el.scrollLeft + el.clientWidth) >= el.scrollWidth;
+  if (el) {
+    const l = document.getElementById('psNavL');
+    const r = document.getElementById('psNavR');
+    if (l) l.disabled = el.scrollLeft <= 0;
+    if (r) r.disabled = Math.ceil(el.scrollLeft + el.clientWidth) >= el.scrollWidth;
+  }
+  const fel = document.getElementById('psWrapFixed');
+  if (fel) {
+    const fl = document.getElementById('psNavFL');
+    const fr = document.getElementById('psNavFR');
+    if (fl) fl.disabled = fel.scrollLeft <= 0;
+    if (fr) fr.disabled = Math.ceil(fel.scrollLeft + fel.clientWidth) >= fel.scrollWidth;
+  }
 }
 
 // ── Modal ──
