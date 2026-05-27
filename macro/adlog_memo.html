@@ -189,10 +189,7 @@
     <div class="card">
       <div class="card-header">
         <span class="card-title">📝 처리 목록 <span class="badge badge-blue" id="mid-count">0</span></span>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-danger btn-sm" onclick="removeChecked()">선택 삭제</button>
-          <button class="btn btn-danger btn-sm" onclick="clearAll()">전체 삭제</button>
-        </div>
+        <button class="btn btn-danger btn-sm" onclick="removeChecked()">삭제</button>
       </div>
 
       <!-- 공통 룰 적용 바 -->
@@ -327,11 +324,6 @@ function addMid() {
 
 function removeChecked() {
   entries = entries.filter(e => !e.checked);
-  save(); renderTable();
-}
-function clearAll() {
-  if (!confirm('모든 항목을 삭제하시겠습니까?')) return;
-  entries = [];
   save(); renderTable();
 }
 function removeEntry(idx) {
