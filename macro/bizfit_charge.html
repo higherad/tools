@@ -862,6 +862,9 @@ function handleExcelFile(file) {
     showHandled = true;
     const prev = prevActive;
     setTimeout(function() {
+      // 유저가 이미 다른 요소를 클릭했으면 포커스를 빼앗지 않음
+      const active = document.activeElement;
+      if (active && active !== document.body && active !== search) return;
       search.focus({ preventScroll: true });
       if (prev && prev !== search && prev !== document.body && typeof prev.focus === 'function') {
         setTimeout(function() {
