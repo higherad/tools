@@ -271,6 +271,7 @@
     color: #2d3748;
     width: 180px;
     padding: 0;
+    align-self: stretch;
   }
   .search-wrap input::placeholder { color: #a0aec0; }
   .btn-del-filtered {
@@ -586,8 +587,10 @@ function filterList(val) {
 }
 
 function removeFiltered() {
-  document.getElementById('inp-search').value = '';
+  const el = document.getElementById('inp-search');
+  el.value = '';
   filterList('');
+  el.focus();
 }
 
 // ── 렌더링 ──
@@ -701,6 +704,9 @@ async function startCharge() {
 
   const summary = selected.map(a => `  · ${a.alias}: ${parseInt(a.amount).toLocaleString()}캐시`).join('\n');
   if (!confirm(`아래 계정을 충전하시겠습니까?\n\n${summary}\n\n총 ${selected.length}건`)) return;
+
+  accounts.forEach(a => a.checked = false);
+  save();
 
   document.getElementById('btn-charge').disabled = true;
   document.getElementById('progress-wrap').style.display = 'block';
