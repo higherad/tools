@@ -1329,17 +1329,14 @@ function kwForProd(keywords, prod) {
   if (!keywords) return '';
   const parts = keywords.split(',').map(k => k.trim()).filter(k => k);
   if (!parts.length) return '';
-  const activeProds = ap();
-  const yupflActive = activeProds.find(p => p.id === 'yupfl');
-  // 유입플: 항상 앞 5개 고정
+  // 유입플: 항상 앞 5개 고정 (독립)
   if (prod.id === 'yupfl') return parts.slice(0, 5).join(',');
-  // 유입플 활성화 시 앞 5개 제외 후 나머지를 비율로 배분
-  const availableParts = yupflActive ? parts.slice(5) : parts;
-  const activeOthers = yupflActive ? activeProds.filter(p => p.id !== 'yupfl') : activeProds;
-  const totalKw = availableParts.length;
+  // 일반 상품: 유입플과 무관하게 전체 키워드를 비율로 배분 (독립)
+  const activeOthers = ap().filter(p => p.id !== 'yupfl');
+  const totalKw = parts.length;
   const pcts = activeOthers.map(p => p.kwPct || 0);
   const totalPct = pcts.reduce((s,v) => s+v, 0);
-  if (totalPct === 0) return availableParts.join(',');
+  if (totalPct === 0) return parts.join(',');
   const exact = pcts.map(pct => totalKw * pct / totalPct);
   const floors = exact.map(v => Math.floor(v));
   const remainders = exact.map((v,i) => v - floors[i]);
@@ -1348,7 +1345,7 @@ function kwForProd(keywords, prod) {
   for (let i = 0; i < leftover; i++) floors[order[i]]++;
   let offset = 0;
   for (let i = 0; i < activeOthers.length; i++) {
-    if (activeOthers[i].id === prod.id) return availableParts.slice(offset, offset + floors[i]).join(',');
+    if (activeOthers[i].id === prod.id) return parts.slice(offset, offset + floors[i]).join(',');
     offset += floors[i];
   }
   return '';
