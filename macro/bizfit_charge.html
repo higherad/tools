@@ -35,7 +35,7 @@
     margin: 28px auto;
     padding: 0 20px;
     display: grid;
-    grid-template-columns: 240px 1fr 500px;
+    grid-template-columns: 280px 1fr 500px;
     gap: 20px;
     align-items: start;
   }
@@ -298,11 +298,10 @@
     cursor: pointer;
     transition: all 0.2s;
     background: #fafbfc;
-    margin-top: 12px;
   }
   .excel-upload-area:hover, .excel-upload-area.drag-over {
-    border-color: #2d6a9f;
-    background: #ebf4ff;
+    border-color: #0277bd;
+    background: #e3f2fd;
   }
   .excel-upload-area .upload-icon { font-size: 28px; margin-bottom: 6px; }
   .excel-upload-area .upload-text { font-size: 13px; font-weight: 600; color: #4a5568; }
@@ -346,11 +345,11 @@
 
         <hr style="border:none;border-top:1px solid #e8eaf0;margin:16px 0;">
 
-        <div style="font-size:12px;font-weight:600;color:#4a5568;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">엑셀로 일괄 추가</div>
+        <div style="font-size:12px;font-weight:600;color:#4a5568;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">📂 엑셀 등록</div>
         <div class="excel-upload-area" id="excel-drop-zone" onclick="document.getElementById('excel-file-input').click()">
           <div class="upload-icon">📊</div>
           <div class="upload-text">엑셀 파일을 클릭하거나 드래그</div>
-          <div class="upload-hint">영업점 / ID / PW 열 순서 (.xlsx)</div>
+          <div class="upload-hint">영업점 / ID / PW</div>
         </div>
         <input type="file" id="excel-file-input" accept=".xlsx,.xls" onchange="handleExcelFile(this.files[0])">
       </div>

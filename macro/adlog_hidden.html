@@ -120,13 +120,13 @@
 
   /* 엑셀 업로드 */
   .excel-zone {
-    border: 2px dashed #bfdbfe; border-radius: 8px; padding: 12px; text-align: center;
-    cursor: pointer; transition: all 0.2s; background: #eff6ff; margin-top: 10px;
+    border: 2px dashed #cbd5e0; border-radius: 10px; padding: 18px 16px; text-align: center;
+    cursor: pointer; transition: all 0.2s; background: #fafbfc;
   }
-  .excel-zone:hover, .excel-zone.drag-over { border-color: #1565c0; background: #dbeafe; }
-  .excel-zone .ez-icon { font-size: 22px; margin-bottom: 3px; }
-  .excel-zone .ez-text { font-size: 12px; font-weight: 600; color: #1565c0; }
-  .excel-zone .ez-hint { font-size: 11px; color: #a0aec0; margin-top: 2px; }
+  .excel-zone:hover, .excel-zone.drag-over { border-color: #0277bd; background: #e3f2fd; }
+  .excel-zone .ez-icon { font-size: 28px; margin-bottom: 6px; }
+  .excel-zone .ez-text { font-size: 13px; font-weight: 600; color: #4a5568; }
+  .excel-zone .ez-hint { font-size: 11px; color: #a0aec0; margin-top: 3px; }
   #excel-input { display: none; }
 
   @media (max-width: 1100px) { .layout { grid-template-columns: 240px 1fr; } .right-panel { grid-column: 1 / -1; } }
@@ -156,8 +156,8 @@
 
         <div class="excel-zone" id="excel-zone" onclick="document.getElementById('excel-input').click()">
           <div class="ez-icon">📊</div>
-          <div class="ez-text">엑셀로 일괄 추가</div>
-          <div class="ez-hint">A: 업체명 / B: URL</div>
+          <div class="ez-text">엑셀 파일 클릭 또는 드래그</div>
+          <div class="ez-hint">업체명 / URL</div>
         </div>
         <input type="file" id="excel-input" accept=".xlsx,.xls" onchange="handleExcel(this.files[0])">
       </div>

@@ -256,22 +256,21 @@
   .search-wrap input::placeholder { color: #a0aec0; }
 
   .excel-upload-area {
-    border: 2px dashed #e9d5ff;
-    border-radius: 8px;
-    padding: 14px;
+    border: 2px dashed #cbd5e0;
+    border-radius: 10px;
+    padding: 18px 16px;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s;
-    background: #faf5ff;
-    margin-top: 10px;
+    background: #fafbfc;
   }
   .excel-upload-area:hover, .excel-upload-area.drag-over {
-    border-color: #7b1fa2;
-    background: #f3e8ff;
+    border-color: #0277bd;
+    background: #e3f2fd;
   }
-  .excel-upload-area .upload-icon { font-size: 24px; margin-bottom: 4px; }
-  .excel-upload-area .upload-text { font-size: 12px; font-weight: 600; color: #6b21a8; }
-  .excel-upload-area .upload-hint { font-size: 11px; color: #a0aec0; margin-top: 2px; }
+  .excel-upload-area .upload-icon { font-size: 28px; margin-bottom: 6px; }
+  .excel-upload-area .upload-text { font-size: 13px; font-weight: 600; color: #4a5568; }
+  .excel-upload-area .upload-hint { font-size: 11px; color: #a0aec0; margin-top: 3px; }
   #excel-file-input { display: none; }
 
   @media (max-width: 1000px) {
@@ -315,7 +314,7 @@
 
         <hr style="border:none;border-top:1px solid #e8eaf0;margin:14px 0;">
 
-        <div style="font-size:11px;font-weight:600;color:#4a5568;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">엑셀로 일괄 추가</div>
+        <div style="font-size:11px;font-weight:600;color:#4a5568;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">📂 엑셀 등록</div>
         <div class="excel-upload-area" id="excel-drop-zone" onclick="document.getElementById('excel-file-input').click()">
           <div class="upload-icon">📊</div>
           <div class="upload-text">엑셀 파일 클릭 또는 드래그</div>
