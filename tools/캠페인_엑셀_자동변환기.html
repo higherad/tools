@@ -1027,13 +1027,22 @@ function switchPTab(ag, n){
 function prevTable(data){
   if(!data||!data.length) return `<div class="empty"><div class="ico">📭</div><p>배정된 업체가 없습니다</p></div>`;
   const cols=Object.keys(data[0]);
+  const KW_W='160px';
   return `<div class="tw" style="overflow-x:auto;"><table style="white-space:nowrap;">
-    <thead style="position:sticky;top:0;z-index:1;"><tr>${cols.map(c=>`<th style="white-space:nowrap;">${c}</th>`).join('')}</tr></thead>
+    <thead style="position:sticky;top:0;z-index:1;"><tr>${cols.map(c=>{
+      const kw=c==='검색키워드';
+      return `<th style="white-space:nowrap;${kw?`max-width:${KW_W};width:${KW_W};overflow:hidden;text-overflow:ellipsis;`:''}">${c}</th>`;
+    }).join('')}</tr></thead>
     <tbody>${data.map(row=>`<tr>${cols.map(c=>{
       const v=row[c]??'';
       const prod=prods.find(p=>p.name===c);
-      const st=prod&&v!==''?`style="color:${prod.color};font-weight:700;white-space:nowrap;"`:' style="white-space:nowrap;"';
-      return `<td ${st}>${esc(String(v))}</td>`;
+      const kw=c==='검색키워드';
+      const kwcnt=c==='키워드 수';
+      const base=kw?`max-width:${KW_W};width:${KW_W};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`:'white-space:nowrap;';
+      const st=prod&&v!==''?`style="color:${prod.color};font-weight:700;${base}"`
+        :kwcnt&&v!==''&&v!==0?`style="color:#00e5ff;font-weight:700;${base}"`
+        :` style="${base}"`;
+      return `<td ${st} title="${esc(String(v))}">${esc(String(v))}</td>`;
     }).join('')}</tr>`).join('')}</tbody>
   </table></div>`;
 }
@@ -1215,14 +1224,14 @@ function buildJusuSheet(wb,f){
   sc(ws,1,0,totalGil,    {font:{bold:true},fill:'F3F4F6'});
 
   const AP=ap();
-  const baseH=['업체명','URL','MID','순위키워드','일수','시작일','일 목표','분류','검색키워드'];
+  const baseH=['업체명','URL','MID','순위키워드','일수','시작일','일 목표','분류','검색키워드','키워드 수'];
   const prodH=AP.map(p=>p.name);
   const tailH=['합계'];
   const headers=[...baseH,...prodH,...tailH];
 
   headers.forEach((h,ci)=>{
     const prod=AP.find(p=>p.name===h);
-    const fill=prod?prod.color.replace('#',''):(ci<9?'D97706':'374151');
+    const fill=prod?prod.color.replace('#',''):(ci<10?'D97706':'374151');
     sc(ws,3,ci,h,{font:{bold:true,color:{rgb:'FFFFFF'}},fill,align:'center'});
   });
 
@@ -1230,24 +1239,25 @@ function buildJusuSheet(wb,f){
     const rowIdx=4+ri;
     const asgn=AP.filter(p=>r.products.includes(p.id));
     const alloc=allocate(asgn, r.dailyTarget);
-    const base=[r.name,r.url,r.mid,r.keyword,r.days,null,r.dailyTarget,asgn.length,r.searchKeywords];
+    const kwCount=r.searchKeywords?r.searchKeywords.split(',').map(k=>k.trim()).filter(k=>k).length:0;
+    const base=[r.name,r.url,r.mid,r.keyword,r.days,null,r.dailyTarget,asgn.length,r.searchKeywords,kwCount];
     const pv=AP.map(p=>r.products.includes(p.id)?(alloc[p.id]??0):'');
     const tail=[r.dailyTarget*r.days];
     const row=[...base,...pv,...tail];
     row.forEach((v,ci)=>{
       if(v===''||v===undefined) return;
-      const pi=ci-9; const isProd=ci>=9&&ci<9+AP.length&&pv[pi]!=='';
+      const pi=ci-10; const isProd=ci>=10&&ci<10+AP.length&&pv[pi]!=='';
       const fc=isProd?AP[pi].color.replace('#',''):null;
       if(ci===5){ scDate(ws,rowIdx,5,r.startDate); return; }
       sc(ws,rowIdx,ci,v,{
-        align:[0,1,3,10].includes(ci)?'left':'center',
+        align:[0,1,3].includes(ci)?'left':'center',
         font:fc?{color:{rgb:fc},bold:true}:{}
       });
     });
     ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:rowIdx,c:headers.length-1}});
   });
   if(!ws['!ref']) ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:4,c:headers.length-1}});
-  ws['!cols']=[{wch:22},{wch:44},{wch:14},{wch:18},{wch:6},{wch:13},{wch:12},{wch:6},{wch:44},...AP.map(()=>({wch:10})),{wch:10}];
+  ws['!cols']=[{wch:22},{wch:44},{wch:14},{wch:18},{wch:6},{wch:13},{wch:12},{wch:6},{wch:44},{wch:8},...AP.map(()=>({wch:10})),{wch:10}];
   XLSX.utils.book_append_sheet(wb,ws,'접수');
 }
 
@@ -1397,9 +1407,10 @@ function buildJusuPrev(f){
     const asgn=ap().filter(p=>r.products.includes(p.id));
     const alloc=allocate(asgn, r.dailyTarget);
     const pc={}; ap().forEach(p=>{pc[p.name]=r.products.includes(p.id)?(alloc[p.id]??0):'';});
+    const kwCount=r.searchKeywords?r.searchKeywords.split(',').map(k=>k.trim()).filter(k=>k).length:0;
     return {'업체명':r.name,'URL':r.url,'MID':r.mid,'순위키워드':r.keyword,
       '일수':r.days,'시작일':r.startDate,'일 목표':r.dailyTarget,'분류':asgn.length,
-      '검색키워드':r.searchKeywords,...pc,'합계':r.dailyTarget*r.days};
+      '검색키워드':r.searchKeywords,'키워드 수':kwCount,...pc,'합계':r.dailyTarget*r.days};
   });
 }
 function buildJumuPrev_(f,filterFn){
@@ -1414,8 +1425,10 @@ function buildJumuPrev_(f,filterFn){
       const alloc=allocate(asgn, r.dailyTarget);
       const pp=alloc[prod.id]??0;
       const daysVal=prod.id==='charlie'?pp*r.days:r.days;
+      const kw=kwForProd(r.searchKeywords,prod);
+      const kwCount=kw?kw.split(',').map(k=>k.trim()).filter(k=>k).length:0;
       result.push({'상품등급명':prod.name,'업체명':r.name,'URL':r.url,'MID':r.mid,
-        '순위키워드':r.keyword,'일 목표':pp,'일 수':daysVal,'예약일':r.startDate,'검색키워드':kwForProd(r.searchKeywords,prod)});
+        '순위키워드':r.keyword,'일 목표':pp,'일 수':daysVal,'예약일':r.startDate,'검색키워드':kw,'키워드 수':kwCount});
     });
   });
   return result;
