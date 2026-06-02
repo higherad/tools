@@ -641,8 +641,7 @@
   </div>
 
   <script type="module">
-    // ha-tools.js (또는 firebase-config.js)에서 db 객체를 가져옵니다.
-    import { db } from "./ha-tools.js"; 
+    import { db } from "./ha-tools.js";
     import { ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
 
     // 1. 로그인 체크 (LocalStorage 방식)
@@ -699,7 +698,7 @@
       setupTabDragAndDrop();
     }
 
-    // 3. 서버에 상태 저장 함수 (수정됨)
+    // 3. 서버에 상태 저장 함수
     window.saveStateToServer = function(state) {
       if (!currentUserId) return;
       const userRef = ref(db, 'users/' + currentUserId);
@@ -713,7 +712,7 @@
       });
     };
 
-    // 4. 로그아웃 함수 (수정됨)
+    // 4. 로그아웃 함수
     window.handleLogout = () => {
       if(confirm("로그아웃 하시겠습니까?")) {
         localStorage.removeItem('ha_user');
@@ -725,9 +724,7 @@
     window.saveClientsData = function(clients) {
       if (!currentUserId) return;
       const clientsRef = ref(db, `users/${currentUserId}/clients`);
-      set(clientsRef, clients)
-        .then(() => console.log("업체 목록 저장 완료"))
-        .catch(err => console.error("업체 목록 저장 실패:", err));
+      set(clientsRef, clients).catch(err => console.error("업체 목록 저장 실패:", err));
     };
 
     // 6. 단가 계산기 업체 목록 로드 (플레이스_단가_계산기.html에서 호출)
@@ -741,16 +738,14 @@
         if (activeFrame && activeFrame.contentWindow && activeFrame.contentWindow.applyClientsData) {
           activeFrame.contentWindow.applyClientsData(data);
         }
-      }, { onlyOnce: false });
+      });
     };
 
     // 7. 캠페인 엑셀 변환기 데이터 저장 (캠페인_엑셀_자동변환기.html에서 호출)
     window.saveSlotData = function(data) {
       if (!currentUserId) return;
       const slotRef = ref(db, `users/${currentUserId}/slotConverter`);
-      set(slotRef, data)
-        .then(() => console.log("캠페인 변환기 데이터 저장 완료"))
-        .catch(err => console.error("캠페인 변환기 저장 실패:", err));
+      set(slotRef, data).catch(err => console.error("캠페인 변환기 저장 실패:", err));
     };
 
     // 8. 캠페인 엑셀 변환기 데이터 로드 (캠페인_엑셀_자동변환기.html에서 호출)

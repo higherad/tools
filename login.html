@@ -126,18 +126,6 @@
     location.replace("index.html");
   }
 
-  // 엔터키 입력 시 로그인/회원가입 실행
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      const isLoginVisible = document.getElementById('loginBox').style.display !== 'none';
-      if (isLoginVisible) {
-        window.handleLogin();
-      } else {
-        window.handleRegister();
-      }
-    }
-  });
-
   // 로그인/회원가입 화면 전환
   window.toggleAuth = (isRegister) => {
     document.getElementById('loginBox').style.display = isRegister ? 'none' : 'block';
