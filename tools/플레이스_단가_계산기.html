@@ -442,7 +442,7 @@ input[type=number]{-moz-appearance:textfield}
     };
   });
   ["showTraffic1","showRoute1","combine1"].forEach(id => {
-    if($("#"+id)) $("#"+id).onchange = recalc;
+    $("#"+id).onchange = recalc;
   });
 
   $("#resetAll").onclick = () => {

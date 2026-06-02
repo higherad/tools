@@ -323,7 +323,7 @@
   let groupSizes = [];
 
   function parseKeywords(input) {
-    return input.split(/[\n\r]+/).map(s => s.trim()).filter(s => s.length > 0);
+    return input.split(/[\n\r]+/).map(s => s.trim()).filter(Boolean);
   }
 
   function copyWithEffect(btn, getText) {
@@ -379,7 +379,6 @@
     for (let i = 0; i < groupSizes.length; i++) {
       const size = groupSizes[i];
       const block = globalKeywords.slice(offset, offset + size).join(',');
-      const safeBlock = block.replace(/"/g, '&quot;');
       html += `
         <div class="group-box">
           <div class="group-header">
@@ -423,7 +422,7 @@
   function doSplit() {
     const input = splitKeywordsEl.value.trim();
     if (!input) return;
-    const keywords = input.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    const keywords = input.split(',').map(s => s.trim()).filter(Boolean);
     const resultText = keywords.join('\n');
     const height = Math.max(120, Math.min(keywords.length * 26, 400));
 

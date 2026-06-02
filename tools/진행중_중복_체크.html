@@ -376,7 +376,7 @@
     <div id="sectionA" class="master-section">
         <div class="grade-filter-bar">
             <label>등급 필터</label>
-            <select id="gradeSelectA" class="grade-select" onchange="applyGradeFilter('A')">
+            <select id="gradeSelectA" class="grade-select" onchange="updateSectionVisibility('A')">
                 <option value="">전체</option>
             </select>
             <span class="grade-filter-count">표시: <strong id="gradeCountA">0</strong>건</span>
@@ -393,7 +393,7 @@
     <div id="sectionB" class="master-section">
         <div class="grade-filter-bar">
             <label>등급 필터</label>
-            <select id="gradeSelectB" class="grade-select" onchange="applyGradeFilter('B')">
+            <select id="gradeSelectB" class="grade-select" onchange="updateSectionVisibility('B')">
                 <option value="">전체</option>
             </select>
             <span class="grade-filter-count">표시: <strong id="gradeCountB">0</strong>건</span>
@@ -651,9 +651,7 @@
         if (window.currentType === 'all') renderMergedSection();
     }
 
-    function applyGradeFilter(section) {
-        updateSectionVisibility(section);
-    }
+
 
     function renderAll() {
         renderHeader('masterHeaderA', window.headersA, 'A');
@@ -809,14 +807,6 @@
         switchType('all');
 
         applyMidFilter();
-
-        updateMergedVisibility();
-        updateSectionVisibility('A');
-        updateSectionVisibility('B');
-
-        if (window.currentType === 'all') {
-            renderMergedSection();
-        }
     };
     
 </script>

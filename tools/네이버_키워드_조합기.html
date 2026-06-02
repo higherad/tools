@@ -107,8 +107,7 @@ let isInitialLoading = false; // 로드 중 자동저장 방지 플래그
 // 1. 입력 카드 생성 (기본 UI)
 const labels = ["지역", "업체명", "메뉴", "의도"];
 const inputContainer = document.getElementById('input-container');
-labels.forEach((L, i) => {
-    inputContainer.innerHTML += `
+inputContainer.innerHTML = labels.map((L, i) => `
     <div class="card">
         <div class="card-header">
             <strong>${i+1}. ${L}</strong>
@@ -126,20 +125,16 @@ labels.forEach((L, i) => {
         <div class="card-body">
             <textarea id="words${i}" class="words" oninput="autoSave()" placeholder="${L} 키워드를 줄바꿈으로 입력하세요..."></textarea>
         </div>
-    </div>`;
-});
+    </div>`).join('');
 
 // 2. 캠페인 생성
 function createSlots() {
     const grid = document.getElementById('slot-grid');
-    grid.innerHTML = '';
-    for(let i=1; i<=5; i++) {
-        grid.innerHTML += `
+    grid.innerHTML = Array.from({length: 5}, (_, i) => `
         <div class="slot-box">
-            <button id="slot_btn_${i}" class="slot-btn" onclick="switchSlot(${i})">${i}</button>
-            <input type="text" id="slot_name_${i}" class="slot-name" value="저장 ${i}" oninput="autoSave()" placeholder="이름">
-        </div>`;
-    }
+            <button id="slot_btn_${i+1}" class="slot-btn" onclick="switchSlot(${i+1})">${i+1}</button>
+            <input type="text" id="slot_name_${i+1}" class="slot-name" value="저장 ${i+1}" oninput="autoSave()" placeholder="이름">
+        </div>`).join('');
 }
 
 // 3. 서버 저장 로직 (부모 창의 Firebase 함수 호출)
@@ -240,15 +235,12 @@ function generate() {
     generatedKeywords = [...new Set(pool)].sort(()=>Math.random()-0.5).slice(0, limit);
 
     const tbody = document.getElementById('result-body');
-    tbody.innerHTML = '';
-    generatedKeywords.forEach((kw, i) => {
-        tbody.innerHTML += `
+    tbody.innerHTML = generatedKeywords.map((kw, i) => `
         <tr id="row_${i}">
             <td class="col-check"><input type="checkbox" class="kw-check" data-idx="${i}" onclick="handleCheck(event, this)"></td>
             <td class="col-num">${i+1}</td>
             <td class="col-text">${kw}</td>
-        </tr>`;
-    });
+        </tr>`).join('');
     document.getElementById('gen-count').innerText = `✨ ${generatedKeywords.length}개의 키워드가 생성되었습니다!`;
     document.getElementById('all-check').checked = false;
 }

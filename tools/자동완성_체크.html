@@ -74,7 +74,7 @@
         const input = document.getElementById('keywordList').value.trim();
         if (!input) return alert("키워드를 입력해주세요.");
 
-        keywords = input.split('\n').map(k => k.trim()).filter(k => k !== "");
+        keywords = input.split('\n').map(k => k.trim()).filter(k => k);
         currentIndex = 0;
 
         document.getElementById('startBtn').disabled = true;

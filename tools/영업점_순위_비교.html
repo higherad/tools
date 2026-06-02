@@ -90,10 +90,8 @@
             }
 
             const filter = document.getElementById('branchFilter');
-            filter.innerHTML = '<option value="all">전체 영업점 보기</option>';
-            rawData.branchNames.forEach(name => {
-                filter.innerHTML += `<option value="${name}">${name}</option>`;
-            });
+            filter.innerHTML = '<option value="all">전체 영업점 보기</option>' +
+                rawData.branchNames.map(name => `<option value="${name}">${name}</option>`).join('');
 
             document.getElementById('lastUpdated').innerText = "최근 업데이트: " + new Date().toLocaleTimeString();
             renderTabs();
@@ -114,13 +112,6 @@
         currentBucket = b;
         renderTabs();
         renderData();
-    }
-
-    function getRankColor(prev, curr) {
-        const p = parseFloat(prev) || 301;
-        const c = parseFloat(curr) || 301;
-        if (p >= 301 || c >= 301) return '#5F6368';
-        return c < p ? '#D93025' : (c > p ? '#1967D2' : '#5F6368');
     }
 
     function renderRankCells(ranks) {
@@ -178,6 +169,9 @@
 
     function renderSection(title, list, type, theadHtml) {
         const colorVar = `var(--${type}-color)`;
+        const branchStyle = type === 'up' ? 'color:#D93025;font-weight:bold'
+                          : type === 'down' ? 'color:#1967D2;font-weight:bold'
+                          : 'color:#202124;font-weight:bold';
         const rows = list.length === 0
             ? `<tr><td colspan="9" style="font-size:11px; color:#999; text-align:center; padding:12px;">데이터 없음</td></tr>`
             : list.map(i => {
@@ -186,9 +180,6 @@
                     : i.diff < 0
                     ? `<td class="down">↓${Math.abs(i.diff)}</td>`
                     : `<td class="eq">-</td>`;
-                const branchStyle = type === 'up' ? 'color:#D93025;font-weight:bold'
-                                  : type === 'down' ? 'color:#1967D2;font-weight:bold'
-                                  : 'color:#202124;font-weight:bold';
                 return `<tr>
                     <td style="${branchStyle}">${i.branch}</td>
                     <td>${i.company}</td>

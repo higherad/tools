@@ -194,7 +194,7 @@
                     // 태그 레이아웃 생성
                     let tagHtml = `<div class="tag-wrapper"><span class="no-tag">태그 없음</span></div>`;
                     if (item.tags && item.tags !== "태그 없음") {
-                        const tagArray = item.tags.split(/[, ]+/).filter(t => t.trim() !== "");
+                        const tagArray = item.tags.split(/[, ]+/).filter(t => t.trim());
                         tagHtml = `<div class="tag-wrapper">` + 
                                   tagArray.map(t => `<span class="tag-item">#${t.replace(/^#/, '')}</span>`).join('') + 
                                   `</div>`;

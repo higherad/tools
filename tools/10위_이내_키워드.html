@@ -355,7 +355,7 @@ function processData() {
                 let countMatch = nextLine.match(/([0-9,]+)건/);
                 let rawCount = countMatch ? parseInt(countMatch[1].replace(/,/g, '')) : 0;
                 let displayCount = countMatch ? countMatch[0] : '0건';
-                let ranks = nextLine.replace(/[0-9,]+건/, '').split('위').filter(r => r.trim() !== '');
+                let ranks = nextLine.replace(/[0-9,]+건/, '').split('위').filter(r => r.trim());
                 let currentRank = ranks.length > 0 ? parseInt(ranks[0]) : 999;
                 if (currentRank <= rankLimit) {
                     allResults.push({ keyword, displayCount, rawCount, rank: currentRank });

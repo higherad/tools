@@ -16,7 +16,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 .hdr-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--acc),#7c3aed);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;box-shadow:0 0 16px rgba(0,229,255,.2);}
 .hdr h1{font-size:19px;font-weight:700;letter-spacing:-.5px;}
 .hdr p{font-size:12px;color:var(--txd);margin-top:2px;}
-.ver{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--acc);border:1px solid rgba(0,229,255,.3);padding:3px 9px;border-radius:20px;}
 
 .wrap{max-width:1450px;margin:0 auto;padding:24px 36px;}
 
@@ -1433,7 +1432,6 @@ function buildJumuPrev_(f,filterFn){
   });
   return result;
 }
-function buildJumuPrev(f)       { return buildJumuPrev_(f, ()=>true); }
 function buildJumuNormalPrev(f) { return buildJumuPrev_(f, p=>!FIXED_PROD_IDS.has(p.id)); }
 function buildJumuFixedPrev(f)  { return buildJumuPrev_(f, p=> FIXED_PROD_IDS.has(p.id)); }
 </script>

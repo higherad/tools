@@ -633,15 +633,15 @@
   });
 
   // ── Copy ───────────────────────────────────────────────
-  document.getElementById('copyBtn').addEventListener('click', async () => {
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.addEventListener('click', async () => {
     const v = resultEl.value;
     if (!v) return;
     try {
       await navigator.clipboard.writeText(v);
-      const btn = document.getElementById('copyBtn');
-      btn.classList.add('success');
-      btn.textContent = '✓';
-      setTimeout(() => { btn.classList.remove('success'); btn.textContent = '⎘'; }, 1500);
+      copyBtn.classList.add('success');
+      copyBtn.textContent = '✓';
+      setTimeout(() => { copyBtn.classList.remove('success'); copyBtn.textContent = '⎘'; }, 1500);
     } catch(e) {
       // fallback
       resultEl.select();

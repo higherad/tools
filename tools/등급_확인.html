@@ -146,7 +146,6 @@
 
   // ── 한글 IME 유지 — 탭/앱 전환 후 복귀 시 검색창 IME 상태 복원 ──
   (function() {
-    const search = document.getElementById('searchInput');
     let prevActive = null;
     let showHandled = false;
 
@@ -160,10 +159,10 @@
       showHandled = true;
       const prev = prevActive;
       setTimeout(function() {
-        search.focus({ preventScroll: true });
-        if (prev && prev !== search && prev !== document.body && typeof prev.focus === 'function') {
+        input.focus({ preventScroll: true });
+        if (prev && prev !== input && prev !== document.body && typeof prev.focus === 'function') {
           setTimeout(function() {
-            search.blur();
+            input.blur();
             prev.focus({ preventScroll: true });
           }, 0);
         }

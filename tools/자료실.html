@@ -351,7 +351,8 @@
     messagingSenderId: "938928195180",
     appId:             "1:938928195180:web:8209b1e02a8caabe643a49",
   };
-  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const existingApps = getApps();
+  const app = existingApps.length ? existingApps[0] : initializeApp(firebaseConfig);
   const db  = getDatabase(app);
 
   const CAT_ICONS = { '링크': '🔗', '프로그램': '💻', '리포트': '📊', '커뮤니티': '💬' };
@@ -398,11 +399,11 @@
       return (b.created_at || 0) - (a.created_at || 0);
     });
 
+    const fmtDate = ts => new Date(ts).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
     listEl.innerHTML = filtered.map(f => {
       const icon    = CAT_ICONS[f.category] || '📄';
-      const fmt = ts => new Date(ts).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
-      const dateStr    = f.created_at  ? fmt(f.created_at)  : '';
-      const updatedStr = f.updated_at  ? fmt(f.updated_at)  : '';
+      const dateStr    = f.created_at  ? fmtDate(f.created_at)  : '';
+      const updatedStr = f.updated_at  ? fmtDate(f.updated_at)  : '';
       const isMine = me && (f.author === me || f.author === myName);
       return `
         <div class="file-card ${f.pinned ? 'pinned' : ''}">
