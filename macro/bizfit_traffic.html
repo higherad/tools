@@ -403,11 +403,7 @@ async function runProcess() {
 
 <script type="module">
   import { db } from "../ha-tools.js";
-  import { ref } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
-  const userId = localStorage.getItem('ha_user');
-  if (!userId) { location.replace("../login.html"); }
-  const headerEl = document.getElementById('header-user');
-  if (headerEl) headerEl.textContent = `물동량 데이터 수집 · 구글 시트 업로드 · GAS 실행`;
+  if (!localStorage.getItem('ha_user')) location.replace("../login.html");
 </script>
 
 </body>

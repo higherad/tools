@@ -339,9 +339,9 @@ function applyGlobalRule() {
   const targets = entries.filter(e => e.checked);
   if (!targets.length) { alert('적용할 항목을 선택해주세요.'); return; }
   targets.forEach(e => {
-    if (from !== '') e.change_from = from;
-    if (to   !== '') e.change_to   = to;
-    if (del  !== '') e.delete_cond = del;
+    if (from) e.change_from = from;
+    if (to)   e.change_to   = to;
+    if (del)  e.delete_cond = del;
   });
   save(); renderTable();
   addLog(`공통 룰 ${targets.length}개 항목에 적용됨`, 'info');

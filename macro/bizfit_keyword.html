@@ -541,6 +541,8 @@ renderList();
     showHandled = true;
     const prev = prevActive;
     setTimeout(function() {
+      const active = document.activeElement;
+      if (active && active !== document.body && active !== search) return;
       search.focus({ preventScroll: true });
       if (prev && prev !== search && prev !== document.body && typeof prev.focus === 'function') {
         setTimeout(function() { search.blur(); prev.focus({ preventScroll: true }); }, 0);

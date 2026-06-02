@@ -480,15 +480,6 @@ function addAccount() {
   addLog(`계정 추가됨: ${alias || id} (${id})`, 'info');
 }
 
-// ── 전체삭제 ──
-function clearAll() {
-  if (!confirm('모든 계정을 삭제하시겠습니까?')) return;
-  accounts = [];
-  save();
-  renderList();
-}
-
-
 // ── 체크박스 ──
 function toggleItem(i, el) {
   accounts[i].checked = el.checked;
@@ -519,23 +510,15 @@ function onAmountChange(i, val) {
   accounts[i].amount = val;
   save();
   updateSummary();
-  updateChargeBtn();
 }
 
 // ── 요약 업데이트 ──
 function updateSummary() {
   const selected = accounts.filter(a => a.checked);
   const noAmt    = selected.filter(a => !a.amount || parseInt(a.amount) <= 0).length;
-
   document.getElementById('sum-count').textContent = selected.length;
   document.getElementById('sum-noamt').textContent = noAmt;
-  updateChargeBtn();
-}
-
-function updateChargeBtn() {
-  const selected = accounts.filter(a => a.checked);
-  const noAmt    = selected.filter(a => !a.amount || parseInt(a.amount) <= 0).length;
-  document.getElementById('btn-charge').disabled = selected.length === 0 || noAmt > 0;
+  document.getElementById('btn-charge').disabled   = selected.length === 0 || noAmt > 0;
 }
 
 // ── 초성 검색 ──
@@ -633,20 +616,15 @@ function renderList() {
     const st = { ready:'대기', running:'⏳ 진행중', success:'✅ 완료', fail:'❌ 실패' }[acc.status] || '대기';
     const amtV = acc.amount ? parseInt(acc.amount) : '';
 
-    // 검색어 하이라이트
-    function highlight(text) {
-      return esc(text);
-    }
-
     return `
     <tr id="row-${i}" class="${acc.checked ? 'checked' : ''}">
       <td><input type="checkbox" ${acc.checked ? 'checked' : ''} onchange="toggleItem(${i}, this)"
             style="width:17px;height:17px;accent-color:#2d6a9f;cursor:pointer;" /></td>
       <td>
         <div class="td-info">
-          <span class="td-alias">${highlight(acc.alias)}</span>
+          <span class="td-alias">${esc(acc.alias)}</span>
           <span class="td-sep">/</span>
-          <span class="td-id">${highlight(acc.id)}</span>
+          <span class="td-id">${esc(acc.id)}</span>
         </div>
         ${acc.result ? `<div style="font-size:10.5px;color:#718096;margin-top:2px;">${esc(acc.result)}</div>` : ''}
       </td>

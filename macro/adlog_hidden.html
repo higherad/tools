@@ -400,15 +400,14 @@ async function streamFetch(endpoint, body, onLog, timeout=360000) {
 }
 
 async function doStep1() {
-  const targets = urls;
-  addLog(`▶ STEP 1 시작 — ${targets.length}개 URL`, 'info');
+  addLog(`▶ STEP 1 시작 — ${urls.length}개 URL`, 'info');
 
-  for (let i = 0; i < targets.length; i++) {
-    const { name, url } = targets[i];
+  for (let i = 0; i < urls.length; i++) {
+    const { name, url } = urls[i];
     results[url] = { name, status: 'running', keywords: [], rankResults: [] };
     renderResults();
-    addLog(`[${i+1}/${targets.length}] ${name||url}`, 'info');
-    setProgress((i / targets.length) * 50, `STEP1 ${i+1}/${targets.length}`);
+    addLog(`[${i+1}/${urls.length}] ${name||url}`, 'info');
+    setProgress((i / urls.length) * 50, `STEP1 ${i+1}/${urls.length}`);
 
     try {
       const data = await streamFetch('step1-stream', { name, url },
@@ -431,7 +430,7 @@ async function doStep1() {
   }
 
   const done = Object.values(results).filter(r => r.status === 'done').length;
-  addLog(`━━ STEP 1 완료 — ${done}개 성공`, done === targets.length ? 'success' : 'warn');
+  addLog(`━━ STEP 1 완료 — ${done}개 성공`, done === urls.length ? 'success' : 'warn');
 }
 
 async function doStep2() {
