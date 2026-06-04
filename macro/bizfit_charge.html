@@ -874,7 +874,7 @@ renderList();
     if (i > 0) await new Promise(r => setTimeout(r, 3000));
     try {
       const res = await fetch(`${SERVER}/ping`, { signal: AbortSignal.timeout(5000) });
-      if (res.ok) { addLog('✅ 서버 연결됨 — 충전 준비 완료', 'success'); return; }
+      if (res.ok) { addLog('✅ 서버 연결됨', 'success'); return; }
     } catch(_) {}
   }
   addLog('⚠️  서버 연결 실패 — 잠시 후 다시 시도해주세요.', 'warn');

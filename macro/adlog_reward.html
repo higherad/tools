@@ -369,7 +369,7 @@ async function runProcess() {
     setStatus(`서버 시작 중... (${i + 1}/5)`, 'running');
     try {
       const res = await fetch(`${SERVER}/ping`, { signal: AbortSignal.timeout(5000) });
-      if (res.ok) { setStatus('서버 연결됨 — 실행 준비 완료', 'success'); return; }
+      if (res.ok) { setStatus('서버 연결됨', 'success'); return; }
     } catch(_) {}
   }
   setStatus('⚠️ 서버 연결 실패 — 잠시 후 다시 시도', 'error');
