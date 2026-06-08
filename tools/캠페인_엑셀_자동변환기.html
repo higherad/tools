@@ -864,6 +864,13 @@ function loadFile(file) {
 
         const parseDate = raw => {
           if(!raw) return today();
+          // 일반 서식 셀: Excel이 날짜를 시리얼 번호(40000~80000)로 저장한 경우
+          const num = typeof raw === 'number' ? raw : parseFloat(raw);
+          if (!isNaN(num) && num > 40000 && num < 80000 &&
+              (typeof raw === 'number' || /^\d+$/.test(String(raw).trim()))) {
+            const jsDate = new Date(Math.round((num - 25569) * 86400000));
+            if (!isNaN(jsDate)) return jsDate.toISOString().split('T')[0];
+          }
           const d=new Date(raw); if(!isNaN(d)) return d.toISOString().split('T')[0];
           const s=String(raw).replace(/\.\s*/g,'-').trim();
           const m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
