@@ -613,10 +613,11 @@ input[type=number]{-moz-appearance:textfield}
     const container = document.createElement("div");
     order.forEach(agency => {
       const list = groups[agency];
-      const totalAmt    = list.reduce((s,r) => s+r.amount,  0);
-      const totalDep    = list.reduce((s,r) => s+r.deposit, 0);
-      const totalRefund = list.reduce((s,r) => s+r.refund,  0);
-      const pendCount   = list.filter(r => r.status !== "정산완료").length;
+      const totalAmt    = list.reduce((s,r) => s+r.amount,    0);
+      const totalDep    = list.reduce((s,r) => s+r.deposit,   0);
+      const totalRefund = list.reduce((s,r) => s+r.refund,    0);
+      const totalCamp   = list.reduce((s,r) => s+r.campaigns, 0);
+      const totalG      = list.reduce((s,r) => s+r.totalGoal, 0);
 
       const block = document.createElement("div");
       block.className = "agency-block";
@@ -626,7 +627,7 @@ input[type=number]{-moz-appearance:textfield}
       hd.innerHTML = `
         <div>
           <div class="aname">${agency}</div>
-          <div class="ameta">총 ${list.length}건 · 미정산 ${pendCount}건</div>
+          <div class="ameta">총 ${totalCamp}건 · 전체 목표 ${Math.round(totalG).toLocaleString()}건</div>
         </div>
         <button class="agency-copy-btn">📋 복사</button>`;
       block.appendChild(hd);
