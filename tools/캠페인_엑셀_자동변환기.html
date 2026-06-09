@@ -153,9 +153,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
 .pg-add-form input[type=text]:focus{border-color:var(--acc);}
 
 /* product add/delete */
-.ps-item-del{width:16px;height:16px;border-radius:3px;border:none;background:transparent;color:transparent;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0;line-height:1;padding:0;}
-.ps-item:hover .ps-item-del{color:var(--txd);}
-.ps-item-del:hover{background:rgba(239,68,68,.25)!important;color:var(--red)!important;}
+.ps-ratio{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--txd);background:rgba(255,255,255,.06);border-radius:4px;padding:1px 5px;white-space:nowrap;line-height:1.4;flex-shrink:0;}
 
 
 /* misc */
@@ -274,6 +272,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
         </div>
       </div>
       <div class="modal-footer">
+        <button class="btn btn-d" id="mdDeleteBtn" style="font-size:11px;padding:6px 12px;margin-right:auto;" onclick="deleteModalProd()">🗑 삭제</button>
         <button class="btn btn-s" style="font-size:12px;padding:7px 14px;" onclick="closeModal()">취소</button>
         <button class="btn btn-p" style="font-size:12px;padding:7px 16px;" onclick="saveModal()">✔ 저장</button>
       </div>
@@ -580,7 +579,6 @@ function renderPS() {
       <div class="ps-dot" style="background:${p.color};border-color:rgba(255,255,255,.25);"></div>
       <span class="ps-name" style="color:${p.color}">${esc(p.name)}</span>
       <button class="ps-tog ${p.active?'on':'off'}" onclick="event.stopPropagation();toggleP('${p.id}')"></button>
-      ${FIXED_PROD_IDS.has(p.id)?'':'<button class="ps-item-del" onclick="event.stopPropagation();deleteProd(\''+p.id+'\')" title="'+esc(p.name)+' 삭제">✕</button>'}
     </div>`;
   document.getElementById('psWrapNormal').innerHTML = prods.filter(p=>!FIXED_PROD_IDS.has(p.id)).map(prodHtml).join('');
   document.getElementById('psWrapFixed').innerHTML  = prods.filter(p=> FIXED_PROD_IDS.has(p.id)).map(prodHtml).join('');
@@ -629,6 +627,8 @@ function openModal(id) {
   document.getElementById('mTitle').textContent = `${p.name} 설정`;
   document.getElementById('mName').value = p.name;
   document.getElementById('mVer').value = p.ver||'';
+  const delBtn = document.getElementById('mdDeleteBtn');
+  if (delBtn) delBtn.style.display = FIXED_PROD_IDS.has(id) ? 'none' : 'inline-flex';
 
   const isYupfl = id === 'yupfl';
   const actives = isYupfl ? [] : ap().filter(q => q.id !== 'yupfl');
@@ -697,6 +697,20 @@ function updatePctNotes() {
 function closeModal() {
   document.getElementById('modalBg').style.display = 'none';
   _modalId = null;
+}
+
+function deleteModalProd() {
+  if (!_modalId) return;
+  const p = prods.find(x=>x.id===_modalId); if(!p) return;
+  if (!confirm(`'${p.name}' 상품을 삭제할까요?\n(모든 행의 배정에서도 제거됩니다)`)) return;
+  const id = _modalId;
+  closeModal();
+  prods = prods.filter(x=>x.id!==id);
+  rows.forEach(r=>{r.products=(r.products||[]).filter(mid=>mid!==id);});
+  groups.forEach(g=>{g.state=g.state.filter(s=>s.id!==id);});
+  saveGroupsLocal();
+  if(activeGroupId) updateActiveGroup(); else saveDefaultState();
+  renderPS(); renderTable(); refreshUI(); scheduleSave();
 }
 
 function saveModal() {
