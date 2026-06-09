@@ -1382,9 +1382,9 @@ function kwForProd(keywords, prod) {
   return '';
 }
 
-// 유입플 고정 수량 계산: 300타 이상 → 15%, 300 미만 → 50타
+// 유입플 고정 수량 계산: 300타 이상 → 25%, 300 미만 → 50타
 function yupflAlloc(dailyTarget) {
-  if (dailyTarget >= 300) return Math.round(dailyTarget * 0.15);
+  if (dailyTarget >= 300) return Math.round(dailyTarget * 0.25);
   return 50;
 }
 
