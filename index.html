@@ -39,9 +39,10 @@
     body {
       font-family: 'Pretendard', Arial, sans-serif;
       margin: 0; padding: 0;
-      display: flex; height: 100vh; overflow: hidden;
+      display: none; height: 100vh; overflow: hidden;
       color: var(--text-main); background: var(--bg);
     }
+    body.auth-ok { display: flex; }
 
     #authOverlay {
       position: fixed; top:0; left:0; width:100%; height:100%;
@@ -486,6 +487,16 @@
 </head>
 <body>
 
+  <script>
+    // 외부 스크립트(Firebase 등) 로딩 여부와 무관하게 가장 먼저 실행되는 인증 체크.
+    // 미로그인 시 본문(카드 섹션 포함)을 절대 노출하지 않음.
+    if (!localStorage.getItem('ha_user')) {
+      location.replace("login.html");
+    } else {
+      document.body.classList.add('auth-ok');
+    }
+  </script>
+
   <div id="authOverlay">
     <div class="auth-card" id="loginBox">
       <h3>🔐 하이어애드 통합 도구</h3>
@@ -644,17 +655,12 @@
     import { db } from "./ha-tools.js";
     import { ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
 
-    // 1. 로그인 체크 (LocalStorage 방식)
+    // 1. 로그인 체크 (인증 자체는 body 상단의 인라인 스크립트가 이미 처리함)
     const currentUserId = localStorage.getItem('ha_user');
 
-    if (!currentUserId) {
-      // 로그인 정보 없으면 로그인 페이지로 이동
-      location.replace("login.html");
-    } else {
-      // 로그인 정보가 있으면 화면 표시 및 데이터 로드 시작
-      document.body.style.display = 'flex';
+    if (currentUserId) {
       document.getElementById('displayUser').textContent = currentUserId + "님"; // 이름 로드 후 교체됨
-      
+
       // 유저 데이터 로드 및 실시간 동기화
       initUserData();
     }
