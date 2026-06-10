@@ -429,6 +429,7 @@ function deleteGroup(id) {
   scheduleSave();
 }
 function applyGroup(id) {
+  if (id === activeGroupId) { deactivateGroup(); return; }
   const g = groups.find(x=>x.id===id); if(!g) return;
   if (!activeGroupId) saveDefaultState();
   g.state.forEach(s => {
@@ -560,11 +561,6 @@ window.onload = () => {
   const psFixed = document.getElementById('psWrapFixed');
   if (psFixed) psFixed.addEventListener('scroll', updatePSArrows);
   window.addEventListener('resize', updatePSArrows);
-  document.addEventListener('mousedown', e => {
-    if (!activeGroupId) return;
-    if (e.target.closest('.panel') || e.target.closest('#modalBg')) return;
-    deactivateGroup();
-  });
   // 부모 창에게 데이터 요청
   if (window.parent && window.parent.loadSlotData) {
     window.parent.loadSlotData();
