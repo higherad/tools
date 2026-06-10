@@ -123,7 +123,7 @@
   // ✅ [보완] 접속 시 이미 로그인된 상태인지 확인 (localStorage 방식)
   const currentUserId = localStorage.getItem('ha_user');
   if (currentUserId) {
-    location.replace("index.html");
+    location.replace("./");
   }
 
   // 로그인/회원가입 화면 전환
@@ -150,7 +150,7 @@
       if (snapshot.exists() && snapshot.val().password === pw) {
         // 로그인 성공: 로컬 스토리지에 유저 ID 저장
         localStorage.setItem('ha_user', id);
-        location.href = 'index.html';
+        location.href = './';
       } else {
         alert("아이디 또는 비밀번호가 올바르지 않습니다.");
       }
