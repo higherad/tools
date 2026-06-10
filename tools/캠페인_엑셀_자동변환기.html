@@ -952,7 +952,6 @@ function updateStats(){
 
 // ── filename helper ──
 function fname(agency, label){
-  if(label==='접수') return agency ? `${label}-${agency}.xlsx` : `${label}-${shortD()}.xlsx`;
   return agency ? `${agency}-${label}.xlsx` : `${shortD()}-${label}.xlsx`;
 }
 
@@ -1109,20 +1108,15 @@ async function downloadForAgencySplit(ag){
   const realAg=ag==='(대행사 미지정)'?'':ag;
 
   try{
-    setPG(true,8,`[${ag}] 접수 시트 생성 중...`);
-    await sleep(60);
-    const wb0=XLSX.utils.book_new(); buildJusuSheet(wb0,f);
-    XLSX.writeFile(wb0, fname(realAg,'접수'));
-    await sleep(350);
     for(let i=0;i<pSheets.length;i++){
       const p=pSheets[i];
-      setPG(true,15+Math.round(82*(i+1)/pSheets.length),`[${ag}] ${p.name} 시트 생성 중...`);
+      setPG(true,Math.round(100*(i+1)/pSheets.length),`[${ag}] ${p.name} 시트 생성 중...`);
       await sleep(60);
       const wb=XLSX.utils.book_new(); buildProdSheet(wb,f,p);
       XLSX.writeFile(wb, fname(realAg, p.name));
       await sleep(350);
     }
-    setPG(true,100,`[${ag}] ${1+pSheets.length}개 파일 완료 ✅`); await sleep(1200);
+    setPG(true,100,`[${ag}] ${pSheets.length}개 파일 완료 ✅`); await sleep(1200);
   }catch(e){alert('오류: '+e.message);}
   finally{setPG(false);}
 }
@@ -1139,7 +1133,7 @@ async function downloadAllSplit(){
     agencies.forEach(ag=>{
       const f=rowsByAgency(ag);
       const usedIds=new Set(); f.forEach(r=>r.products.forEach(mid=>usedIds.add(mid)));
-      totalFiles+=1+ap().filter(p=>usedIds.has(p.id)).length;
+      totalFiles+=ap().filter(p=>usedIds.has(p.id)).length;
     });
 
     let done=0;
@@ -1148,12 +1142,6 @@ async function downloadAllSplit(){
       const usedIds=new Set(); f.forEach(r=>r.products.forEach(mid=>usedIds.add(mid)));
       const pSheets=ap().filter(p=>usedIds.has(p.id));
       const realAg=ag==='(대행사 미지정)'?'':ag;
-
-      setPG(true,Math.round(100*done/totalFiles),`[${ag}] 접수 시트 생성 중...`);
-      await sleep(60);
-      const wb0=XLSX.utils.book_new(); buildJusuSheet(wb0,f);
-      XLSX.writeFile(wb0, fname(realAg,'접수'));
-      done++; await sleep(300);
 
       for(let i=0;i<pSheets.length;i++){
         const p=pSheets[i];
