@@ -106,10 +106,8 @@
     <p class="auth-footer" onclick="toggleAuth(false)">이미 계정이 있습니다</p>
   </div>
 
-<script type="module">
-  // ha-tools.js 파일에서 db 객체를 가져옵니다.
-  import { db } from "./ha-tools.js"; 
-  import { ref, set, get } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+<script>
+  const TOOLS_API = 'https://higherad-auto-938928195180.asia-northeast3.run.app';
 
   // 버튼 클릭 시 시각 효과 함수
   const triggerBtnEffect = (btnId) => {
@@ -143,11 +141,14 @@
     triggerBtnEffect('loginBtn');
 
     try {
-      // DB의 users/아이디 경로를 조회합니다.
-      const userRef = ref(db, `users/${id}`);
-      const snapshot = await get(userRef);
+      const res = await fetch(`${TOOLS_API}/tools-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, pw })
+      });
+      const result = await res.json();
 
-      if (snapshot.exists() && snapshot.val().password === pw) {
+      if (result.ok) {
         // 로그인 성공: 로컬 스토리지에 유저 ID 저장
         localStorage.setItem('ha_user', id);
         location.href = './';
@@ -156,7 +157,7 @@
       }
     } catch (e) {
       console.error(e);
-      alert("로그인 중 오류가 발생했습니다. DB 규칙 설정을 확인하세요.");
+      alert("로그인 중 오류가 발생했습니다.");
     }
   };
 
@@ -175,19 +176,14 @@
     triggerBtnEffect('regBtn');
 
     try {
-      const userRef = ref(db, `users/${id}`);
-      const snapshot = await get(userRef);
-      
-      if(snapshot.exists()) return alert("이미 존재하는 아이디입니다.");
-
-      // DB에 유저 정보 직접 저장
-      await set(userRef, {
-        name: name,
-        password: pw,
-        fav: [],
-        active: ["tools/메모장.html"], // 기본 도구 설정
-        inactive: []
+      const res = await fetch(`${TOOLS_API}/tools-register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, pw, name })
       });
+      const result = await res.json();
+
+      if (!result.ok) return alert(result.error || "회원가입 중 오류가 발생했습니다.");
 
       alert("회원가입이 완료되었습니다! 로그인해주세요.");
       window.toggleAuth(false);
