@@ -4,10 +4,7 @@ higherad-b9d62-firebase-adminsdk-fbsvc-a46811723b.json
 config.js
 
 # Cloud Run 백엔드 스크립트 (macro 하위 디렉토리)
-macro/리워드_그룹/
-macro/물동량/
-macro/애드로그_메모/
-macro/영업점_충전/
-macro/임시중단_강제종료/
-macro/키워드_변경/
-macro/히든키워드/
+macro/macro-*/
+macro/higherad-auto/
+macro/naver-keyword-bot/
+macro/place-rank-check/
