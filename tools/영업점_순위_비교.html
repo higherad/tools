@@ -117,12 +117,16 @@
     function renderRankCells(ranks) {
         const cells = ranks && ranks.length > 0 ? ranks : ["-","-","-","-","-"];
         return cells.map((v, idx) => {
-            const prev  = idx === 0 ? null : cells[idx - 1];
-            const pNum  = prev === null ? 301 : (parseFloat(prev) || 301);
-            const cNum  = parseFloat(v) || 301;
-            const color = (idx === 0 || pNum >= 301 || cNum >= 301)
-                ? '#5F6368'
-                : (cNum < pNum ? '#D93025' : cNum > pNum ? '#1967D2' : '#5F6368');
+            const cNum = parseFloat(v) || 301;
+            let color = '#5F6368';
+            if (idx > 0) {
+                const pNumRaw = parseFloat(cells[idx - 1]) || 301;
+                // 직전 값이 "-"(데이터 없음/300위 밖)인데 현재 값은 있으면 300위에서 진입한 것으로 간주
+                const pNum = (pNumRaw === 301 && cNum !== 301) ? 300 : pNumRaw;
+                color = (cNum === 301 || pNum === 301)
+                    ? '#5F6368'
+                    : (cNum < pNum ? '#D93025' : cNum > pNum ? '#1967D2' : '#5F6368');
+            }
             const display = (v === '' || v === null || v === undefined || v === '-') ? '-' : v;
             return `<td style="color:${color};${idx===4?'font-weight:bold':''}">${display}</td>`;
         }).join('');
