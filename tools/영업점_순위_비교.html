@@ -35,12 +35,14 @@
         }
         .rank-table thead th:nth-child(1),
         .rank-table thead th:nth-child(2),
-        .rank-table thead th:nth-child(3) { text-align: left; }
+        .rank-table thead th:nth-child(3),
+        .rank-table thead th:nth-child(4) { text-align: left; }
         .rank-table tbody tr:last-child td { border-bottom: none; }
         .rank-table tbody td { padding: 5px 8px; border-bottom: 1px solid #f0f0f0; text-align: center; white-space: nowrap; }
         .rank-table tbody td:nth-child(1),
         .rank-table tbody td:nth-child(2),
-        .rank-table tbody td:nth-child(3) { text-align: left; }
+        .rank-table tbody td:nth-child(3),
+        .rank-table tbody td:nth-child(4) { text-align: left; }
 
         .up   { color: var(--up-color);   font-weight: bold; }
         .down { color: var(--down-color); font-weight: bold; }
@@ -159,7 +161,7 @@
         const eqList   = filtered.filter(i => i.diff === 0);
 
         const theadHtml = `<thead><tr>
-            <th>영업점</th><th>업체명</th><th>키워드</th>
+            <th>영업점</th><th>MID</th><th>업체명</th><th>키워드</th>
             ${dateLabels.map(l => `<th>${l}</th>`).join('')}
             <th>전날대비</th>
         </tr></thead>`;
@@ -177,7 +179,7 @@
                           : type === 'down' ? 'color:#1967D2;font-weight:bold'
                           : 'color:#202124;font-weight:bold';
         const rows = list.length === 0
-            ? `<tr><td colspan="9" style="font-size:11px; color:#999; text-align:center; padding:12px;">데이터 없음</td></tr>`
+            ? `<tr><td colspan="10" style="font-size:11px; color:#999; text-align:center; padding:12px;">데이터 없음</td></tr>`
             : list.map(i => {
                 const diffCell = i.diff > 0
                     ? `<td class="up">↑${i.diff}</td>`
@@ -186,6 +188,7 @@
                     : `<td class="eq">-</td>`;
                 return `<tr>
                     <td style="${branchStyle}">${i.branch}</td>
+                    <td>${i.mid}</td>
                     <td>${i.company}</td>
                     <td>${i.keyword}</td>
                     ${renderRankCells(i.ranks)}
