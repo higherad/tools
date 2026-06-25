@@ -708,7 +708,7 @@ function openModal(id) {
 
   const grid = document.getElementById('ratioGrid');
   if (isYupfl) {
-    grid.innerHTML = `<div style="grid-column:1/-1;padding:8px 0;font-size:12px;color:var(--txd);"><b style="color:var(--acc)">일 300타 이상</b>: 일타수의 25% &nbsp;/&nbsp; <b style="color:var(--acc)">일 300타 미만</b>: 50타 고정</div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;padding:8px 0;font-size:12px;color:var(--txd);"><b style="color:var(--acc)">일 300타 이상</b>: 일타수의 30% &nbsp;/&nbsp; <b style="color:var(--acc)">일 300타 미만</b>: 50타 고정</div>`;
   } else {
     grid.innerHTML = actives.map(q=>`
     <div class="ratio-item">
@@ -1430,9 +1430,9 @@ function kwForProd(keywords, prod) {
   return '';
 }
 
-// 유입플 고정 수량 계산: 300타 이상 → 25%, 300 미만 → 50타
+// 유입플 고정 수량 계산: 300타 이상 → 30%, 300 미만 → 50타
 function yupflAlloc(dailyTarget) {
-  if (dailyTarget >= 300) return Math.round(dailyTarget * 0.25);
+  if (dailyTarget >= 300) return Math.round(dailyTarget * 0.3);
   return 50;
 }
 
