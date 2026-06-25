@@ -406,15 +406,21 @@ function renderTable() {
 // ── 실행 ──
 let running = false;
 
+const DONE_STATUSES = ['updated', 'skipped', 'no_row'];
+
 async function runProcess() {
   if (running) return;
-  const selected = entries.filter(e => e.checked);
-  if (!selected.length) { alert('실행할 항목을 선택해주세요.'); return; }
+  const checked = entries.filter(e => e.checked);
+  if (!checked.length) { alert('실행할 항목을 선택해주세요.'); return; }
+
+  const selected = checked.filter(e => !DONE_STATUSES.includes(e.status));
+  const skippedDone = checked.length - selected.length;
+  if (!selected.length) { alert('선택한 항목이 모두 처리 완료 상태입니다. (이미 처리된 항목은 재실행 시 자동으로 건너뜁니다)'); return; }
 
   const hasRule = selected.some(e => e.change_from || e.delete_cond);
   if (!hasRule) { alert('변경 조건 또는 삭제 조건을 입력해주세요.'); return; }
 
-  if (!confirm(`선택한 ${selected.length}개 MID의 메모를 처리하시겠습니까?`)) return;
+  if (!confirm(`선택한 ${selected.length}개 MID의 메모를 처리하시겠습니까?${skippedDone ? ` (처리완료 ${skippedDone}건은 건너뜀)` : ''}`)) return;
 
   running = true;
   document.getElementById('btn-run').disabled = true;
@@ -426,7 +432,7 @@ async function runProcess() {
 
   selected.forEach(e => { e.status = 'running'; e.result = ''; });
   renderTable();
-  addLog(`▶ 시작 — ${selected.length}개 MID`, 'info');
+  addLog(`▶ 시작 — ${selected.length}개 MID${skippedDone ? ` (처리완료 ${skippedDone}건 건너뜀)` : ''}`, 'info');
   document.getElementById('progress-bar').style.width = '20%';
   document.getElementById('progress-text').textContent = '처리 중...';
 
