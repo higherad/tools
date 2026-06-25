@@ -1330,7 +1330,7 @@ function buildJusuSheet(wb,f){
 
 function buildProdSheet(wb,f,prod){
   const ws={};
-  const ef=expandRowsByDay(f);
+  const ef=FIXED_PROD_IDS.has(prod.id)?f:expandRowsByDay(f);
   const pRows=ef.filter(r=>r.products.includes(prod.id));
 
   sc(ws,0,0,prod.ver||'',{font:{bold:true,color:{rgb:'DC2626'}},nb:true});
@@ -1359,10 +1359,10 @@ function buildProdSheet(wb,f,prod){
 }
 
 // ── XLSX: 주문 sheet 공통 빌더 ──
-function buildJumuSheet_(wb,f,label,filterFn){
+function buildJumuSheet_(wb,f,label,filterFn,splittable=true){
   const ws={};
   const AP=ap();
-  const ef=expandRowsByDay(f);
+  const ef=splittable?expandRowsByDay(f):f;
   const usedIds=new Set(); ef.forEach(r=>r.products.forEach(id=>usedIds.add(id)));
   const pList=AP.filter(p=>filterFn(p)&&usedIds.has(p.id));
   if(!pList.length) return;
@@ -1401,8 +1401,8 @@ function buildJumuSheet_(wb,f,label,filterFn){
   XLSX.utils.book_append_sheet(wb,ws,label);
 }
 
-function buildJumuNormalSheet(wb,f){ buildJumuSheet_(wb,f,'일반',p=>!FIXED_PROD_IDS.has(p.id)); }
-function buildJumuFixedSheet(wb,f){  buildJumuSheet_(wb,f,'고정',p=> FIXED_PROD_IDS.has(p.id)); }
+function buildJumuNormalSheet(wb,f){ buildJumuSheet_(wb,f,'일반',p=>!FIXED_PROD_IDS.has(p.id), true); }
+function buildJumuFixedSheet(wb,f){  buildJumuSheet_(wb,f,'고정',p=> FIXED_PROD_IDS.has(p.id), false); }
 
 function kwForProd(keywords, prod) {
   if (!keywords) return '';
@@ -1482,9 +1482,9 @@ function buildJusuPrev(f){
       '검색키워드':r.searchKeywords,'키워드 수':kwCount,...pc,'합계':r.dailyTarget*r.days};
   });
 }
-function buildJumuPrev_(f,filterFn){
+function buildJumuPrev_(f,filterFn,splittable=true){
   const AP=ap();
-  const ef=expandRowsByDay(f);
+  const ef=splittable?expandRowsByDay(f):f;
   const usedIds=new Set(); ef.forEach(r=>r.products.forEach(id=>usedIds.add(id)));
   const pList=AP.filter(p=>filterFn(p)&&usedIds.has(p.id));
   const result=[];
@@ -1503,8 +1503,8 @@ function buildJumuPrev_(f,filterFn){
   });
   return result;
 }
-function buildJumuNormalPrev(f) { return buildJumuPrev_(f, p=>!FIXED_PROD_IDS.has(p.id)); }
-function buildJumuFixedPrev(f)  { return buildJumuPrev_(f, p=> FIXED_PROD_IDS.has(p.id)); }
+function buildJumuNormalPrev(f) { return buildJumuPrev_(f, p=>!FIXED_PROD_IDS.has(p.id), true); }
+function buildJumuFixedPrev(f)  { return buildJumuPrev_(f, p=> FIXED_PROD_IDS.has(p.id), false); }
 </script>
 </body>
 </html>
