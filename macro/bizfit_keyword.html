@@ -399,11 +399,15 @@ function addLog(msg, type='') {
 }
 
 async function startProcess() {
-  const selected = entries.filter(e => e.checked);
-  if (!selected.length) { alert('항목을 선택해주세요.'); return; }
+  const checked = entries.filter(e => e.checked);
+  if (!checked.length) { alert('항목을 선택해주세요.'); return; }
+
+  const selected = checked.filter(e => e.status !== 'success');
+  const skipped  = checked.length - selected.length;
+  if (!selected.length) { alert('선택한 항목이 모두 완료 상태입니다. (이미 완료된 항목은 재실행 시 자동으로 건너뜁니다)'); return; }
 
   const summary = selected.map(e => `  · [${e.id_type.toUpperCase()}] ${e.id}${e.name?' ('+e.name+')':''}`).join('\n');
-  if (!confirm(`아래 캠페인의 키워드를 변경하시겠습니까?\n\n${summary}\n\n총 ${selected.length}건`)) return;
+  if (!confirm(`아래 캠페인의 키워드를 변경하시겠습니까?\n\n${summary}\n\n총 ${selected.length}건${skipped ? ` (완료된 ${skipped}건은 건너뜀)` : ''}`)) return;
 
   document.getElementById('btn-run').disabled = true;
   document.getElementById('progress-wrap').style.display = 'block';
@@ -412,7 +416,7 @@ async function startProcess() {
   selected.forEach(e => { e.status = 'running'; e.result = ''; });
   renderList();
 
-  addLog(`▶ 시작 — ${selected.length}개 캠페인`, 'info');
+  addLog(`▶ 시작 — ${selected.length}개 캠페인${skipped ? ` (완료 ${skipped}건 건너뜀)` : ''}`, 'info');
   document.getElementById('progress-bar').style.width = '10%';
   document.getElementById('progress-text').textContent = '로그인 중...';
 

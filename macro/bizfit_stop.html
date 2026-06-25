@@ -551,14 +551,18 @@ function addLog(msg, type='') {
 
 // ── 실행 ──
 async function startProcess() {
-  const selected = entries.filter(e => e.checked);
-  if (!selected.length) { alert('항목을 선택해주세요.'); return; }
+  const checked = entries.filter(e => e.checked);
+  if (!checked.length) { alert('항목을 선택해주세요.'); return; }
+
+  const selected = checked.filter(e => e.status !== 'success');
+  const skipped  = checked.length - selected.length;
+  if (!selected.length) { alert('선택한 항목이 모두 완료 상태입니다. (이미 완료된 항목은 재실행 시 자동으로 건너뜁니다)'); return; }
 
   const summary = selected.map(e => {
     const acts = [e.do_pause?'임시중단B':'', e.do_force?'강제종료':''].filter(Boolean).join('+') || '메모만';
     return `  · ${e.mid}${e.name?' ('+e.name+')':''}: ${acts}`;
   }).join('\n');
-  if (!confirm(`아래 항목을 처리하시겠습니까?\n\n${summary}\n\n총 ${selected.length}건`)) return;
+  if (!confirm(`아래 항목을 처리하시겠습니까?\n\n${summary}\n\n총 ${selected.length}건${skipped ? ` (완료된 ${skipped}건은 건너뜀)` : ''}`)) return;
 
   document.getElementById('btn-run').disabled = true;
   document.getElementById('progress-wrap').style.display = 'block';
@@ -570,7 +574,7 @@ async function startProcess() {
   selected.forEach(e => { e.status = 'running'; e.result = ''; });
   renderList();
 
-  addLog(`▶ 시작 — ${selected.length}개 항목`, 'info');
+  addLog(`▶ 시작 — ${selected.length}개 항목${skipped ? ` (완료 ${skipped}건 건너뜀)` : ''}`, 'info');
   document.getElementById('progress-bar').style.width = '10%';
   document.getElementById('progress-text').textContent = '로그인 중...';
 
