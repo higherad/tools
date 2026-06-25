@@ -307,7 +307,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
 
   <!-- Download & Preview -->
   <div class="panel">
-    <div class="ph"><span>⬇️</span><h2>대행사별 다운로드</h2><span class="m" id="agMeta">대행사 미설정</span></div>
+    <div class="ph"><span>⬇️</span><h2>대행사별 다운로드</h2><button class="btn btn-s" id="splitToggleBtn" style="font-size:11px;padding:4px 10px;margin-left:10px;" onclick="toggleSplitByDays()">📅 캠페인 분할: OFF</button><span class="m" id="agMeta">대행사 미설정</span></div>
     <div class="stats" id="statsEl" style="display:none;padding:8px 18px;border-bottom:1px solid var(--brd);flex-wrap:wrap;"></div>
 
     <div class="pgw" id="pgw">
@@ -350,6 +350,62 @@ let rows = [], rid = 0;
 let groups = [];
 let activeGroupId = null;
 let defaultProds = null;
+
+// ── 캠페인 분할 (일수별 날짜·키워드 배분) — 주문 시트(일반/고정/상품별)에만 적용 ──
+const SPLIT_KEY = '캠페인_split_by_days';
+let splitByDays = false;
+try { splitByDays = localStorage.getItem(SPLIT_KEY) === '1'; } catch(e){}
+
+function toggleSplitByDays() {
+  splitByDays = !splitByDays;
+  try { localStorage.setItem(SPLIT_KEY, splitByDays ? '1' : '0'); } catch(e){}
+  const btn = document.getElementById('splitToggleBtn');
+  if (btn) {
+    btn.textContent = `📅 캠페인 분할: ${splitByDays ? 'ON' : 'OFF'}`;
+    btn.classList.toggle('btn-p', splitByDays);
+    btn.classList.toggle('btn-s', !splitByDays);
+  }
+  refreshUI();
+}
+
+function addDays(dateStr, n) {
+  if (!dateStr) return dateStr;
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m-1, d));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return dt.toISOString().split('T')[0];
+}
+
+// total개를 n일에 최대한 균등 배분 (나머지는 앞 날짜부터 1개씩 추가)
+function distributeCounts(total, n) {
+  if (n <= 0) return [];
+  const base = Math.floor(total / n);
+  const rem = total - base * n;
+  const arr = new Array(n).fill(base);
+  for (let i = 0; i < rem; i++) arr[i]++;
+  return arr;
+}
+
+// 일수(N) > 1인 행을 날짜별 1행씩(일수=1)으로 분할하고, 검색키워드를 일수만큼 나눠 배정
+// 주문 시트(일반/고정/상품별)에서만 사용 — 접수 시트는 영향 없음
+function expandRowsByDay(list) {
+  if (!splitByDays) return list;
+  const out = [];
+  list.forEach(r => {
+    const days = r.days || 1;
+    if (days <= 1) { out.push(r); return; }
+    const kwParts = r.searchKeywords ? r.searchKeywords.split(',').map(k=>k.trim()).filter(k=>k) : [];
+    const counts = distributeCounts(kwParts.length, days);
+    let offset = 0;
+    for (let i = 0; i < days; i++) {
+      const cnt = counts[i];
+      const dayKw = kwParts.slice(offset, offset + cnt).join(',');
+      offset += cnt;
+      out.push({ ...r, id: `${r.id}_d${i+1}`, days: 1, startDate: addDays(r.startDate, i), searchKeywords: dayKw });
+    }
+  });
+  return out;
+}
 
 function saveDefaultState() {
   defaultProds = prods.map(p=>({id:p.id,active:p.active,ratio:p.ratio,name:p.name,ver:p.ver,kwPct:p.kwPct}));
@@ -552,6 +608,12 @@ function scheduleSave() {
 
 // ── Init ──
 window.onload = () => {
+  const splitBtn = document.getElementById('splitToggleBtn');
+  if (splitBtn) {
+    splitBtn.textContent = `📅 캠페인 분할: ${splitByDays ? 'ON' : 'OFF'}`;
+    splitBtn.classList.toggle('btn-p', splitByDays);
+    splitBtn.classList.toggle('btn-s', !splitByDays);
+  }
   renderPS();
   renderGroups();
   addRow(); addRow(); addRow();
@@ -1268,7 +1330,8 @@ function buildJusuSheet(wb,f){
 
 function buildProdSheet(wb,f,prod){
   const ws={};
-  const pRows=f.filter(r=>r.products.includes(prod.id));
+  const ef=expandRowsByDay(f);
+  const pRows=ef.filter(r=>r.products.includes(prod.id));
 
   sc(ws,0,0,prod.ver||'',{font:{bold:true,color:{rgb:'DC2626'}},nb:true});
 
@@ -1299,7 +1362,8 @@ function buildProdSheet(wb,f,prod){
 function buildJumuSheet_(wb,f,label,filterFn){
   const ws={};
   const AP=ap();
-  const usedIds=new Set(); f.forEach(r=>r.products.forEach(id=>usedIds.add(id)));
+  const ef=expandRowsByDay(f);
+  const usedIds=new Set(); ef.forEach(r=>r.products.forEach(id=>usedIds.add(id)));
   const pList=AP.filter(p=>filterFn(p)&&usedIds.has(p.id));
   if(!pList.length) return;
 
@@ -1312,7 +1376,7 @@ function buildJumuSheet_(wb,f,label,filterFn){
 
   let curRow=1;
   pList.forEach((prod)=>{
-    const pRows=f.filter(r=>r.products.includes(prod.id));
+    const pRows=ef.filter(r=>r.products.includes(prod.id));
     pRows.forEach((r)=>{
       const asgn=ap().filter(p=>r.products.includes(p.id));
       const alloc=allocate(asgn, r.dailyTarget);
@@ -1420,11 +1484,12 @@ function buildJusuPrev(f){
 }
 function buildJumuPrev_(f,filterFn){
   const AP=ap();
-  const usedIds=new Set(); f.forEach(r=>r.products.forEach(id=>usedIds.add(id)));
+  const ef=expandRowsByDay(f);
+  const usedIds=new Set(); ef.forEach(r=>r.products.forEach(id=>usedIds.add(id)));
   const pList=AP.filter(p=>filterFn(p)&&usedIds.has(p.id));
   const result=[];
   pList.forEach((prod)=>{
-    const pRows=f.filter(r=>r.products.includes(prod.id));
+    const pRows=ef.filter(r=>r.products.includes(prod.id));
     pRows.forEach(r=>{
       const asgn=ap().filter(p=>r.products.includes(p.id));
       const alloc=allocate(asgn, r.dailyTarget);
