@@ -433,7 +433,7 @@ async function doRestore(item) {
     const res  = await fetch(`${SERVER}/restore`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pcode: item.pcode, uid_b64: item.uid_b64, adrole: item.adrole }),
+      body: JSON.stringify({ pcode: item.pcode, uid_b64: item.uid_b64, adrole: item.adrole, form_data: item.form_data || null }),
       signal: AbortSignal.timeout(60000),
     });
     const json = await res.json();
