@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BizFit 캐시복구</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+
+  .container { max-width: 900px; margin: 24px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 18px; }
+
+  .card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
+  .card-header {
+    background: #f8f9fb; padding: 13px 18px; border-bottom: 1px solid #e8eaf0;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title { font-size: 13px; font-weight: 700; color: #2d3748; display: flex; align-items: center; gap: 7px; }
+  .card-body { padding: 18px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 18px; border-radius: 7px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none; transition: all 0.15s;
+  }
+  .btn-teal     { background: #00897b; color: #fff; }
+  .btn-teal:hover { background: #00695c; }
+  .btn-teal:disabled { background: #a0aec0; cursor: not-allowed; }
+  .btn-restore  { background: #e0f2f1; color: #00695c; border: 1.5px solid #80cbc4; padding: 4px 12px; font-size: 12px; font-weight: 700; border-radius: 6px; white-space: nowrap; }
+  .btn-restore:hover { background: #b2dfdb; }
+  .btn-confirm  { background: #00897b; color: #fff; flex: 1; font-size: 14px; font-weight: 800; padding: 11px; border-radius: 8px; }
+  .btn-confirm:hover { background: #00695c; }
+  .btn-cancel   { background: #f0f2f5; color: #718096; flex: 1; font-size: 14px; font-weight: 700; padding: 11px; border-radius: 8px; }
+  .btn-cancel:hover { background: #e2e8f0; }
+
+  /* 테이블 */
+  .table-wrap { overflow-x: auto; }
+  .cr-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .cr-table thead th {
+    background: #f8f9fb; padding: 9px 12px; text-align: left;
+    font-size: 11px; font-weight: 700; color: #718096;
+    text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid #e8eaf0; white-space: nowrap;
+  }
+  .cr-table tbody tr { border-bottom: 1px solid #f0f2f5; transition: background 0.1s; }
+  .cr-table tbody tr:last-child { border-bottom: none; }
+  .cr-table tbody tr:hover { background: #f7fffe; }
+  .cr-table td { padding: 10px 12px; vertical-align: middle; }
+
+  .td-pcode { font-family: monospace; font-size: 11.5px; color: #2d3748; font-weight: 700; }
+  .td-mid   { font-family: monospace; font-size: 12px; color: #4a5568; }
+  .td-name  { font-size: 12px; color: #718096; margin-top: 2px; }
+  .td-cache { font-weight: 700; color: #00695c; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 700; }
+  .badge-teal { background: #e0f2f1; color: #00695c; border: 1px solid #b2dfdb; }
+
+  .empty-state { text-align: center; padding: 56px 20px; color: #a0aec0; font-size: 13px; }
+  .empty-icon  { font-size: 36px; margin-bottom: 12px; }
+
+  /* 모달 */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 14px; width: 420px; max-width: calc(100vw - 32px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    animation: modal-in 0.18s ease;
+  }
+  @keyframes modal-in { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal-header {
+    padding: 18px 20px 14px; border-bottom: 1px solid #e8eaf0;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-size: 15px; font-weight: 800; color: #1a202c; }
+  .modal-close {
+    width: 28px; height: 28px; border: none; background: #f0f2f5; border-radius: 50%;
+    cursor: pointer; font-size: 16px; color: #718096; display: flex; align-items: center; justify-content: center;
+  }
+  .modal-close:hover { background: #e2e8f0; }
+  .modal-body { padding: 20px; }
+  .modal-footer { padding: 0 20px 20px; display: flex; gap: 10px; }
+
+  .info-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid #f0f2f5; font-size: 13px;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { font-weight: 600; color: #718096; min-width: 80px; font-size: 12px; padding-top: 1px; }
+  .info-value { color: #2d3748; font-weight: 500; word-break: break-all; }
+  .info-value.mono { font-family: monospace; font-size: 12.5px; }
+  .info-value.cache-amount { color: #00695c; font-weight: 800; font-size: 15px; }
+
+  .warn-box {
+    background: #fffbeb; border: 1.5px solid #fcd34d; border-radius: 8px;
+    padding: 10px 14px; font-size: 12px; color: #92400e; margin-bottom: 16px; line-height: 1.6;
+  }
+
+  /* 로그 */
+  .log-area {
+    background: #1a202c; border-radius: 10px; padding: 12px 14px; height: 160px;
+    overflow-y: auto; font-family: 'Consolas', 'Monaco', monospace; font-size: 12px; line-height: 1.7;
+  }
+  .log-line    { display: flex; gap: 10px; }
+  .log-time    { color: #4a5568; flex-shrink: 0; }
+  .log-msg     { color: #e2e8f0; }
+  .log-success .log-msg { color: #68d391; }
+  .log-fail    .log-msg { color: #fc8181; }
+  .log-info    .log-msg { color: #4fd1c5; }
+  .log-warn    .log-msg { color: #f6e05e; }
+
+  .top-bar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 0 0 6px;
+  }
+  .top-bar h1 { font-size: 18px; font-weight: 800; color: #1a202c; flex: 1; }
+
+  .mid-input-wrap {
+    display: flex; align-items: center; gap: 6px;
+    background: #f0f2f5; border: 1.5px solid #e2e8f0;
+    border-radius: 7px; padding: 4px 10px; transition: border-color 0.2s;
+  }
+  .mid-input-wrap:focus-within { border-color: #00897b; background: #fff; }
+  .mid-input-wrap label { font-size: 11px; font-weight: 700; color: #718096; white-space: nowrap; }
+  .mid-input-wrap input { border: none; background: transparent; outline: none; font-size: 13px; font-family: monospace; color: #2d3748; width: 130px; padding: 0; height: 22px; }
+  .mid-input-wrap input::placeholder { color: #a0aec0; font-family: 'Segoe UI', sans-serif; font-size: 12px; }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="top-bar">
+    <h1>💰 캐시복구</h1>
+    <div class="mid-input-wrap">
+      <label>MID</label>
+      <input type="text" id="inp-mid" placeholder="비우면 전체 조회" inputmode="numeric" onkeydown="if(event.key==='Enter')loadList()" />
+    </div>
+    <button class="btn btn-teal" id="btn-load" onclick="loadList()">🔄 목록 불러오기</button>
+  </div>
+
+  <!-- 목록 카드 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📋 캐시복구 대상 <span class="badge badge-teal" id="item-count">0</span></span>
+    </div>
+    <div class="table-wrap">
+      <table class="cr-table">
+        <thead>
+          <tr>
+            <th>Pcode</th>
+            <th>MID / 캠페인명</th>
+            <th>캐시 금액</th>
+            <th>신청일</th>
+            <th style="width:90px;"></th>
+          </tr>
+        </thead>
+        <tbody id="item-tbody">
+          <tr><td colspan="5">
+            <div class="empty-state">
+              <div class="empty-icon">💰</div>
+              <div>목록 불러오기를 눌러 캐시복구 대상을 조회하세요.</div>
+            </div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 로그 카드 -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">📝 로그</span></div>
+    <div class="card-body" style="padding:12px 18px;">
+      <div class="log-area" id="log-area">
+        <div class="log-line log-info">
+          <span class="log-time">--:--:--</span>
+          <span class="log-msg">목록 불러오기를 눌러 시작하세요.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 캐시복구 모달 -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalIfOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">💰 캐시복구 설정</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="warn-box">캐시복구를 진행하면 해당 캠페인의 캐시가 복구됩니다. 신중히 확인하세요.</div>
+      <div class="info-row">
+        <span class="info-label">Pcode</span>
+        <span class="info-value mono" id="modal-pcode">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">MID</span>
+        <span class="info-value mono" id="modal-mid">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">캠페인명</span>
+        <span class="info-value" id="modal-name">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">캐시 금액</span>
+        <span class="info-value cache-amount" id="modal-cache">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">신청일</span>
+        <span class="info-value" id="modal-date">—</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="closeModal()">취소</button>
+      <button class="btn btn-confirm" onclick="confirmRestore()">설정하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SERVER = 'https://macro-8-bizfit-cache-restore-938928195180.asia-northeast3.run.app';
+
+let allItems = [];
+let modalItem = null;
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function addLog(msg, type = '') {
+  const area = document.getElementById('log-area');
+  const now  = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+  const div  = document.createElement('div');
+  div.className = `log-line ${type ? 'log-' + type : ''}`;
+  div.innerHTML = `<span class="log-time">${now}</span><span class="log-msg">${esc(msg)}</span>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+async function loadList() {
+  const btn = document.getElementById('btn-load');
+  const mid = document.getElementById('inp-mid').value.trim();
+
+  btn.disabled = true;
+  btn.textContent = '⏳ 불러오는 중...';
+  addLog(mid ? `MID ${mid} 캐시복구 목록 조회 중...` : '전체 캐시복구 목록 조회 중...', 'info');
+
+  try {
+    const url = mid ? `${SERVER}/list?mid=${encodeURIComponent(mid)}` : `${SERVER}/list`;
+    const res  = await fetch(url, { signal: AbortSignal.timeout(30000) });
+    const json = await res.json();
+
+    if (!json.success) throw new Error(json.message || '서버 오류');
+
+    allItems = json.items || [];
+    document.getElementById('item-count').textContent = allItems.length;
+    renderList();
+
+    if (allItems.length === 0) {
+      addLog(mid ? `MID ${mid} — 캐시복구 대상 없음` : '캐시복구 대상이 없습니다.', 'warn');
+    } else {
+      addLog(`✅ ${allItems.length}건 조회 완료${mid ? ` (MID: ${mid})` : ''}`, 'success');
+    }
+  } catch (e) {
+    addLog(`❌ 조회 실패: ${e.message}`, 'fail');
+    renderEmpty('조회 중 오류가 발생했습니다.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🔄 목록 불러오기';
+}
+
+function renderList() {
+  const tbody = document.getElementById('item-tbody');
+  const filtered = allItems;
+
+  if (!filtered.length) {
+    renderEmpty(allItems.length ? '검색 결과가 없습니다.' : '캐시복구 대상이 없습니다.');
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(it => `
+    <tr>
+      <td><div class="td-pcode">${esc(it.pcode)}</div></td>
+      <td>
+        <div class="td-mid">${esc(it.mid)}</div>
+        ${it.name ? `<div class="td-name">${esc(it.name)}</div>` : ''}
+      </td>
+      <td><span class="td-cache">${esc(it.cache || '—')}</span></td>
+      <td style="font-size:12px;color:#718096;">${esc(it.date || '—')}</td>
+      <td><button class="btn btn-restore" onclick="openModal(${JSON.stringify(it).replace(/"/g,'&quot;')})">캐시복구</button></td>
+    </tr>
+  `).join('');
+}
+
+function renderEmpty(msg) {
+  document.getElementById('item-tbody').innerHTML = `
+    <tr><td colspan="5">
+      <div class="empty-state"><div class="empty-icon">💰</div><div>${esc(msg)}</div></div>
+    </td></tr>`;
+}
+
+// ── 모달 ──
+function openModal(item) {
+  modalItem = item;
+  document.getElementById('modal-pcode').textContent = item.pcode || '—';
+  document.getElementById('modal-mid').textContent   = item.mid   || '—';
+  document.getElementById('modal-name').textContent  = item.name  || '—';
+  document.getElementById('modal-cache').textContent = item.cache || '—';
+  document.getElementById('modal-date').textContent  = item.date  || '—';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  modalItem = null;
+}
+
+function closeModalIfOutside(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+function confirmRestore() {
+  if (!modalItem) return;
+  const pcode = modalItem.pcode;
+  const name  = modalItem.name || modalItem.mid || pcode;
+
+  if (!confirm(`복구하시겠습니까?\n\n캠페인: ${name}\nPcode: ${pcode}`)) return;
+
+  closeModal();
+  doRestore(modalItem);
+}
+
+async function doRestore(item) {
+  addLog(`▶ 캐시복구 시작: ${item.pcode}${item.name ? ' (' + item.name + ')' : ''}`, 'info');
+
+  try {
+    const res  = await fetch(`${SERVER}/restore`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pcode: item.pcode }),
+      signal: AbortSignal.timeout(60000),
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      addLog(`✅ 복구 완료: ${item.pcode} — ${json.message || ''}`, 'success');
+    } else {
+      addLog(`❌ 복구 실패: ${item.pcode} — ${json.message || ''}`, 'fail');
+    }
+  } catch (e) {
+    addLog(`❌ 오류: ${e.message}`, 'fail');
+  }
+}
+
+(async function checkServer() {
+  for (let i = 0; i < 5; i++) {
+    if (i > 0) await new Promise(r => setTimeout(r, 3000));
+    try {
+      const res = await fetch(`${SERVER}/ping`, { signal: AbortSignal.timeout(5000) });
+      if (res.ok) { addLog('✅ 서버 연결됨', 'success'); return; }
+    } catch(_) {}
+  }
+  addLog('⚠️  서버 연결 실패 — 잠시 후 다시 시도해주세요.', 'warn');
+})();
+</script>
+
+<script type="module">
+  import { db } from "../ha-tools.js";
+  import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+
+  const userId = localStorage.getItem('ha_user');
+  if (!userId) { location.replace("../login.html"); }
+</script>
+
+</body>
+</html>
