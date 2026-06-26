@@ -6,5 +6,5 @@
   { "file": "macro/adlog_reward.html",   "label": "경쟁사 데이터",     "addedAt": "2026-06-11" },
   { "file": "macro/adlog_hidden.html",   "label": "히든키워드 조회",   "addedAt": "2026-06-11" },
   { "file": "macro/bizfit_stop.html",         "label": "임시중단/강제종료", "addedAt": "2026-06-11", "updatedAt": "2026-06-25" },
-  { "file": "macro/bizfit_cache_restore.html", "label": "캐시복구",        "addedAt": "2026-06-26" }
+  { "file": "macro/bizfit_restore.html", "label": "캐시복구",        "addedAt": "2026-06-26" }
 ]
