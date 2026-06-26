@@ -26,9 +26,7 @@
   .btn-teal     { background: #00897b; color: #fff; }
   .btn-teal:hover { background: #00695c; }
   .btn-teal:disabled { background: #a0aec0; cursor: not-allowed; }
-  .btn-bulk     { background: #00897b; color: #fff; padding: 6px 14px; font-size: 12px; font-weight: 700; border-radius: 6px; white-space: nowrap; }
-  .btn-bulk:hover { background: #00695c; }
-  .btn-bulk:disabled { background: #a0aec0; cursor: not-allowed; }
+  .btn-bulk { padding: 6px 14px; font-size: 12px; font-weight: 700; border-radius: 6px; white-space: nowrap; }
   .btn-restore  { background: #e0f2f1; color: #00695c; border: 1.5px solid #80cbc4; padding: 4px 12px; font-size: 12px; font-weight: 700; border-radius: 6px; white-space: nowrap; }
   .btn-restore:hover { background: #b2dfdb; }
   .btn-confirm  { background: #00897b; color: #fff; flex: 1; font-size: 14px; font-weight: 800; padding: 11px; border-radius: 8px; }
@@ -157,7 +155,7 @@
       <span class="card-title">📋 캐시복구 대상 <span class="badge badge-teal" id="item-count">0</span></span>
       <div style="display:flex;align-items:center;gap:10px;">
         <span class="selected-bar" id="selected-bar" style="display:none;"></span>
-        <button class="btn btn-bulk" id="btn-bulk" onclick="bulkRestore()" disabled>✅ 일괄 복구</button>
+        <button class="btn btn-teal btn-bulk" id="btn-bulk" onclick="bulkRestore()" disabled>✅ 일괄 복구</button>
       </div>
     </div>
     <div class="table-wrap">
@@ -258,8 +256,15 @@ const SERVER = 'https://macro-8-bizfit-cache-restore-938928195180.asia-northeast
 let allItems = [];
 let modalItem = null;
 
+const btnBulk = document.getElementById('btn-bulk');
+const selBar  = document.getElementById('selected-bar');
+
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function fmtCash(v) {
+  return v ? Number(v).toLocaleString() + '원' : '—';
 }
 
 function addLog(msg, type = '') {
@@ -306,26 +311,23 @@ async function loadList() {
 }
 
 function renderList() {
-  const tbody = document.getElementById('item-tbody');
-  const filtered = allItems;
-
-  if (!filtered.length) {
-    renderEmpty(allItems.length ? '검색 결과가 없습니다.' : '캐시복구 대상이 없습니다.');
+  if (!allItems.length) {
+    renderEmpty('캐시복구 대상이 없습니다.');
     return;
   }
 
-  tbody.innerHTML = filtered.map((it, idx) => `
-    <tr id="row-${idx}">
+  document.getElementById('item-tbody').innerHTML = allItems.map((it, idx) => `
+    <tr>
       <td style="text-align:center;"><input type="checkbox" class="cr-chk row-chk" data-idx="${idx}" onchange="onRowCheck(this)"></td>
-      <td><div class="td-org">${esc(it.branch || '—')}</div></td>
-      <td><div class="td-org">${esc(it.sales_office || '—')}</div></td>
-      <td><div class="td-pcode">${esc(it.pcode)}</div></td>
-      <td><div class="td-type">${esc(it.camp_type || '—')}</div></td>
-      <td><div class="td-mid">${esc(it.mid || '—')}</div></td>
-      <td><div class="td-biz">${esc(it.biz_name || '—')}</div></td>
-      <td><span class="td-cash">${it.cash_sales ? Number(it.cash_sales).toLocaleString() + '원' : '—'}</span></td>
-      <td><span class="td-cash">${it.cash_branch ? Number(it.cash_branch).toLocaleString() + '원' : '—'}</span></td>
-      <td><button class="btn btn-restore" onclick="openModal(${JSON.stringify(it).replace(/"/g,'&quot;')})">캐시복구</button></td>
+      <td class="td-org">${esc(it.branch || '—')}</td>
+      <td class="td-org">${esc(it.sales_office || '—')}</td>
+      <td class="td-pcode">${esc(it.pcode)}</td>
+      <td class="td-type">${esc(it.camp_type || '—')}</td>
+      <td class="td-mid">${esc(it.mid || '—')}</td>
+      <td class="td-biz">${esc(it.biz_name || '—')}</td>
+      <td class="td-cash">${fmtCash(it.cash_sales)}</td>
+      <td class="td-cash">${fmtCash(it.cash_branch)}</td>
+      <td><button class="btn btn-restore" onclick="openModal(${idx})">캐시복구</button></td>
     </tr>
   `).join('');
   updateBulkBtn();
@@ -336,92 +338,71 @@ function renderEmpty(msg) {
     <tr><td colspan="10">
       <div class="empty-state"><div class="empty-icon">💰</div><div>${esc(msg)}</div></div>
     </td></tr>`;
-  updateBulkBtn();
+  btnBulk.disabled = true;
+  selBar.style.display = 'none';
 }
 
 // ── 체크박스 / 일괄복구 ──
 function toggleAll(checked) {
-  document.querySelectorAll('.row-chk').forEach(c => {
+  const all = document.querySelectorAll('.row-chk');
+  all.forEach(c => {
     c.checked = checked;
-    const row = c.closest('tr');
-    if (row) row.classList.toggle('checked', checked);
+    c.closest('tr').classList.toggle('checked', checked);
   });
-  updateBulkBtn();
+  updateBulkBtn(checked ? all.length : 0);
 }
 
 function onRowCheck(chk) {
-  const row = chk.closest('tr');
-  if (row) row.classList.toggle('checked', chk.checked);
-  const all  = document.querySelectorAll('.row-chk');
-  const done = document.querySelectorAll('.row-chk:checked');
-  const allChk = document.getElementById('chk-all');
-  if (allChk) {
-    allChk.checked       = done.length === all.length && all.length > 0;
-    allChk.indeterminate = done.length > 0 && done.length < all.length;
-  }
-  updateBulkBtn();
+  chk.closest('tr').classList.toggle('checked', chk.checked);
+  const all     = document.querySelectorAll('.row-chk');
+  const doneLen = [...all].filter(c => c.checked).length;
+  const allChk  = document.getElementById('chk-all');
+  allChk.checked       = doneLen === all.length && all.length > 0;
+  allChk.indeterminate = doneLen > 0 && doneLen < all.length;
+  updateBulkBtn(doneLen);
 }
 
-function updateBulkBtn() {
-  const cnt = document.querySelectorAll('.row-chk:checked').length;
-  const btn = document.getElementById('btn-bulk');
-  const bar = document.getElementById('selected-bar');
-  if (cnt > 0) {
-    btn.disabled = false;
-    bar.textContent = `${cnt}건 선택됨`;
-    bar.style.display = '';
-  } else {
-    btn.disabled = true;
-    bar.style.display = 'none';
-  }
+function updateBulkBtn(cnt = document.querySelectorAll('.row-chk:checked').length) {
+  btnBulk.disabled     = cnt === 0;
+  selBar.textContent   = cnt > 0 ? `${cnt}건 선택됨` : '';
+  selBar.style.display = cnt > 0 ? '' : 'none';
 }
 
 async function bulkRestore() {
   const checks = document.querySelectorAll('.row-chk:checked');
   if (!checks.length) return;
-  const selected = Array.from(checks).map(c => allItems[parseInt(c.dataset.idx)]);
+  const selected = [...checks].map(c => allItems[+c.dataset.idx]);
 
   const names = selected.map(it => it.biz_name || it.mid || it.pcode).join('\n  ');
   if (!confirm(`선택한 ${selected.length}건을 일괄 복구하시겠습니까?\n\n  ${names}`)) return;
 
-  document.getElementById('btn-bulk').disabled = true;
+  btnBulk.disabled = true;
   addLog(`▶ 일괄 복구 시작: ${selected.length}건`, 'info');
 
   let ok = 0, fail = 0;
   for (const item of selected) {
     addLog(`  → ${item.pcode} (${item.biz_name || item.mid}) 복구 중...`, 'info');
-    try {
-      const res  = await fetch(`${SERVER}/restore`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pcode: item.pcode, uid_b64: item.uid_b64, adrole: item.adrole }),
-        signal: AbortSignal.timeout(60000),
-      });
-      const json = await res.json();
-      if (json.success) { addLog(`  ✅ 완료: ${item.pcode}`, 'success'); ok++; }
-      else              { addLog(`  ❌ 실패: ${item.pcode} — ${json.message || ''}`, 'fail'); fail++; }
-    } catch (e) {
-      addLog(`  ❌ 오류: ${item.pcode} — ${e.message}`, 'fail'); fail++;
-    }
+    const { success, message } = await doRestore(item);
+    if (success) { addLog(`  ✅ 완료: ${item.pcode}`, 'success'); ok++; }
+    else         { addLog(`  ❌ 실패: ${item.pcode} — ${message}`, 'fail'); fail++; }
   }
 
   addLog(`일괄 복구 완료 — 성공 ${ok}건 / 실패 ${fail}건`, ok > 0 ? 'success' : 'fail');
-  document.getElementById('btn-bulk').disabled = false;
+  updateBulkBtn();
 }
 
 // ── 모달 ──
-function openModal(item) {
-  modalItem = item;
-  document.getElementById('modal-branch').textContent      = item.branch       || '—';
+function openModal(idx) {
+  const item = allItems[idx];
+  modalItem  = item;
+  document.getElementById('modal-branch').textContent       = item.branch       || '—';
   document.getElementById('modal-sales-office').textContent = item.sales_office || '—';
-  document.getElementById('modal-pcode').textContent       = item.pcode        || '—';
-  document.getElementById('modal-camp-type').textContent   = item.camp_type    || '—';
-  document.getElementById('modal-mid').textContent         = item.mid          || '—';
-  document.getElementById('modal-biz-name').textContent    = item.biz_name     || '—';
-  const cs = item.cash_sales  ? Number(item.cash_sales).toLocaleString()  + '원' : '—';
-  const cb = item.cash_branch ? Number(item.cash_branch).toLocaleString() + '원' : '—';
-  document.getElementById('modal-cash-sales').textContent  = cs;
-  document.getElementById('modal-cash-branch').textContent = cb;
+  document.getElementById('modal-pcode').textContent        = item.pcode        || '—';
+  document.getElementById('modal-camp-type').textContent    = item.camp_type    || '—';
+  document.getElementById('modal-mid').textContent          = item.mid          || '—';
+  document.getElementById('modal-biz-name').textContent     = item.biz_name     || '—';
+  document.getElementById('modal-cash-sales').textContent   = fmtCash(item.cash_sales);
+  document.getElementById('modal-cash-branch').textContent  = fmtCash(item.cash_branch);
   document.getElementById('modal-overlay').classList.add('open');
 }
 
@@ -438,17 +419,15 @@ function confirmRestore() {
   if (!modalItem) return;
   const pcode = modalItem.pcode;
   const label = modalItem.biz_name || modalItem.mid || pcode;
-  const cs    = modalItem.cash_sales  ? Number(modalItem.cash_sales).toLocaleString()  + '원' : '—';
-  const cb    = modalItem.cash_branch ? Number(modalItem.cash_branch).toLocaleString() + '원' : '—';
 
-  if (!confirm(`복구하시겠습니까?\n\n업체명: ${label}\nPcode: ${pcode}\n영업점 캐시: ${cs}\n지사 캐시: ${cb}`)) return;
+  if (!confirm(`복구하시겠습니까?\n\n업체명: ${label}\nPcode: ${pcode}\n영업점 캐시: ${fmtCash(modalItem.cash_sales)}\n지사 캐시: ${fmtCash(modalItem.cash_branch)}`)) return;
 
   closeModal();
   doRestore(modalItem);
 }
 
 async function doRestore(item) {
-  addLog(`▶ 캐시복구 시작: ${item.pcode}${item.name ? ' (' + item.name + ')' : ''}`, 'info');
+  addLog(`▶ 캐시복구 시작: ${item.pcode} (${item.biz_name || item.mid || ''})`, 'info');
 
   try {
     const res  = await fetch(`${SERVER}/restore`, {
@@ -458,14 +437,15 @@ async function doRestore(item) {
       signal: AbortSignal.timeout(60000),
     });
     const json = await res.json();
-
     if (json.success) {
       addLog(`✅ 복구 완료: ${item.pcode} — ${json.message || ''}`, 'success');
-    } else {
-      addLog(`❌ 복구 실패: ${item.pcode} — ${json.message || ''}`, 'fail');
+      return { success: true,  message: json.message || '' };
     }
+    addLog(`❌ 복구 실패: ${item.pcode} — ${json.message || ''}`, 'fail');
+    return { success: false, message: json.message || '' };
   } catch (e) {
     addLog(`❌ 오류: ${e.message}`, 'fail');
+    return { success: false, message: e.message };
   }
 }
 
