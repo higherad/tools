@@ -8,7 +8,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
 
-  .container { max-width: 900px; margin: 24px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 18px; }
+  .container { max-width: 1500px; margin: 24px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 18px; }
 
   .card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
   .card-header {
@@ -46,10 +46,12 @@
   .cr-table tbody tr:hover { background: #f7fffe; }
   .cr-table td { padding: 10px 12px; vertical-align: middle; }
 
-  .td-pcode { font-family: monospace; font-size: 11.5px; color: #2d3748; font-weight: 700; }
-  .td-mid   { font-family: monospace; font-size: 12px; color: #4a5568; }
-  .td-name  { font-size: 12px; color: #718096; margin-top: 2px; }
-  .td-cache { font-weight: 700; color: #00695c; }
+  .td-pcode  { font-family: monospace; font-size: 11px; color: #2d3748; font-weight: 700; }
+  .td-mid    { font-family: monospace; font-size: 11.5px; color: #4a5568; }
+  .td-type   { font-size: 11.5px; color: #4a5568; }
+  .td-biz    { font-size: 12px; color: #2d3748; font-weight: 600; }
+  .td-org    { font-size: 11.5px; color: #718096; }
+  .td-cash   { font-weight: 700; color: #00695c; font-size: 12.5px; }
 
   .badge { display: inline-block; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 700; }
   .badge-teal { background: #e0f2f1; color: #00695c; border: 1px solid #b2dfdb; }
@@ -151,15 +153,19 @@
       <table class="cr-table">
         <thead>
           <tr>
+            <th>지사</th>
+            <th>영업점</th>
             <th>Pcode</th>
-            <th>MID / 캠페인명</th>
-            <th>캐시 금액</th>
-            <th>신청일</th>
+            <th>참여유형</th>
+            <th>MID</th>
+            <th>업체명</th>
+            <th>영업점 캐시</th>
+            <th>지사 캐시</th>
             <th style="width:90px;"></th>
           </tr>
         </thead>
         <tbody id="item-tbody">
-          <tr><td colspan="5">
+          <tr><td colspan="9">
             <div class="empty-state">
               <div class="empty-icon">💰</div>
               <div>목록 불러오기를 눌러 캐시복구 대상을 조회하세요.</div>
@@ -195,24 +201,36 @@
     <div class="modal-body">
       <div class="warn-box">캐시복구를 진행하면 해당 캠페인의 캐시가 복구됩니다. 신중히 확인하세요.</div>
       <div class="info-row">
+        <span class="info-label">지사</span>
+        <span class="info-value" id="modal-branch">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">영업점</span>
+        <span class="info-value" id="modal-sales-office">—</span>
+      </div>
+      <div class="info-row">
         <span class="info-label">Pcode</span>
         <span class="info-value mono" id="modal-pcode">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">참여유형</span>
+        <span class="info-value" id="modal-camp-type">—</span>
       </div>
       <div class="info-row">
         <span class="info-label">MID</span>
         <span class="info-value mono" id="modal-mid">—</span>
       </div>
       <div class="info-row">
-        <span class="info-label">캠페인명</span>
-        <span class="info-value" id="modal-name">—</span>
+        <span class="info-label">업체명</span>
+        <span class="info-value" id="modal-biz-name">—</span>
       </div>
       <div class="info-row">
-        <span class="info-label">캐시 금액</span>
-        <span class="info-value cache-amount" id="modal-cache">—</span>
+        <span class="info-label">영업점 캐시</span>
+        <span class="info-value cache-amount" id="modal-cash-sales">—</span>
       </div>
       <div class="info-row">
-        <span class="info-label">신청일</span>
-        <span class="info-value" id="modal-date">—</span>
+        <span class="info-label">지사 캐시</span>
+        <span class="info-value cache-amount" id="modal-cash-branch">—</span>
       </div>
     </div>
     <div class="modal-footer">
@@ -252,7 +270,7 @@ async function loadList() {
 
   try {
     const url = mid ? `${SERVER}/list?mid=${encodeURIComponent(mid)}` : `${SERVER}/list`;
-    const res  = await fetch(url, { signal: AbortSignal.timeout(30000) });
+    const res  = await fetch(url, { signal: AbortSignal.timeout(120000) });
     const json = await res.json();
 
     if (!json.success) throw new Error(json.message || '서버 오류');
@@ -286,13 +304,14 @@ function renderList() {
 
   tbody.innerHTML = filtered.map(it => `
     <tr>
+      <td><div class="td-org">${esc(it.branch || '—')}</div></td>
+      <td><div class="td-org">${esc(it.sales_office || '—')}</div></td>
       <td><div class="td-pcode">${esc(it.pcode)}</div></td>
-      <td>
-        <div class="td-mid">${esc(it.mid)}</div>
-        ${it.name ? `<div class="td-name">${esc(it.name)}</div>` : ''}
-      </td>
-      <td><span class="td-cache">${esc(it.cache || '—')}</span></td>
-      <td style="font-size:12px;color:#718096;">${esc(it.date || '—')}</td>
+      <td><div class="td-type">${esc(it.camp_type || '—')}</div></td>
+      <td><div class="td-mid">${esc(it.mid || '—')}</div></td>
+      <td><div class="td-biz">${esc(it.biz_name || '—')}</div></td>
+      <td><span class="td-cash">${it.cash_sales ? Number(it.cash_sales).toLocaleString() + '원' : '—'}</span></td>
+      <td><span class="td-cash">${it.cash_branch ? Number(it.cash_branch).toLocaleString() + '원' : '—'}</span></td>
       <td><button class="btn btn-restore" onclick="openModal(${JSON.stringify(it).replace(/"/g,'&quot;')})">캐시복구</button></td>
     </tr>
   `).join('');
@@ -300,7 +319,7 @@ function renderList() {
 
 function renderEmpty(msg) {
   document.getElementById('item-tbody').innerHTML = `
-    <tr><td colspan="5">
+    <tr><td colspan="9">
       <div class="empty-state"><div class="empty-icon">💰</div><div>${esc(msg)}</div></div>
     </td></tr>`;
 }
@@ -308,11 +327,16 @@ function renderEmpty(msg) {
 // ── 모달 ──
 function openModal(item) {
   modalItem = item;
-  document.getElementById('modal-pcode').textContent = item.pcode || '—';
-  document.getElementById('modal-mid').textContent   = item.mid   || '—';
-  document.getElementById('modal-name').textContent  = item.name  || '—';
-  document.getElementById('modal-cache').textContent = item.cache || '—';
-  document.getElementById('modal-date').textContent  = item.date  || '—';
+  document.getElementById('modal-branch').textContent      = item.branch       || '—';
+  document.getElementById('modal-sales-office').textContent = item.sales_office || '—';
+  document.getElementById('modal-pcode').textContent       = item.pcode        || '—';
+  document.getElementById('modal-camp-type').textContent   = item.camp_type    || '—';
+  document.getElementById('modal-mid').textContent         = item.mid          || '—';
+  document.getElementById('modal-biz-name').textContent    = item.biz_name     || '—';
+  const cs = item.cash_sales  ? Number(item.cash_sales).toLocaleString()  + '원' : '—';
+  const cb = item.cash_branch ? Number(item.cash_branch).toLocaleString() + '원' : '—';
+  document.getElementById('modal-cash-sales').textContent  = cs;
+  document.getElementById('modal-cash-branch').textContent = cb;
   document.getElementById('modal-overlay').classList.add('open');
 }
 
@@ -328,9 +352,11 @@ function closeModalIfOutside(e) {
 function confirmRestore() {
   if (!modalItem) return;
   const pcode = modalItem.pcode;
-  const name  = modalItem.name || modalItem.mid || pcode;
+  const label = modalItem.biz_name || modalItem.mid || pcode;
+  const cs    = modalItem.cash_sales  ? Number(modalItem.cash_sales).toLocaleString()  + '원' : '—';
+  const cb    = modalItem.cash_branch ? Number(modalItem.cash_branch).toLocaleString() + '원' : '—';
 
-  if (!confirm(`복구하시겠습니까?\n\n캠페인: ${name}\nPcode: ${pcode}`)) return;
+  if (!confirm(`복구하시겠습니까?\n\n업체명: ${label}\nPcode: ${pcode}\n영업점 캐시: ${cs}\n지사 캐시: ${cb}`)) return;
 
   closeModal();
   doRestore(modalItem);
