@@ -159,6 +159,15 @@
       </div>
     </div>
 
+    <!-- 수동 MID 추가 -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">➕ MID 직접 추가</span></div>
+      <div class="card-body">
+        <input type="text" id="inp-mid" placeholder="MID 입력" />
+        <button class="btn btn-blue btn-full" onclick="addMid()">➕ 추가</button>
+      </div>
+    </div>
+
     <!-- 엑셀 등록 -->
     <div class="card">
       <div class="card-header"><span class="card-title">📂 엑셀 등록</span></div>
@@ -170,15 +179,6 @@
         </div>
         <input type="file" id="excel-file-input" accept=".xlsx,.xls" style="display:none;" onchange="loadExcel(this.files[0])" />
         <div id="excel-status" style="font-size:11.5px;color:#718096;margin-top:6px;text-align:center;"></div>
-      </div>
-    </div>
-
-    <!-- 수동 MID 추가 -->
-    <div class="card">
-      <div class="card-header"><span class="card-title">➕ MID 직접 추가</span></div>
-      <div class="card-body">
-        <input type="text" id="inp-mid" placeholder="MID 입력" />
-        <button class="btn btn-blue btn-full" onclick="addMid()">➕ 추가</button>
       </div>
     </div>
 
