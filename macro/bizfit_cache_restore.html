@@ -26,12 +26,19 @@
   .btn-teal     { background: #00897b; color: #fff; }
   .btn-teal:hover { background: #00695c; }
   .btn-teal:disabled { background: #a0aec0; cursor: not-allowed; }
+  .btn-bulk     { background: #00897b; color: #fff; padding: 6px 14px; font-size: 12px; font-weight: 700; border-radius: 6px; white-space: nowrap; }
+  .btn-bulk:hover { background: #00695c; }
+  .btn-bulk:disabled { background: #a0aec0; cursor: not-allowed; }
   .btn-restore  { background: #e0f2f1; color: #00695c; border: 1.5px solid #80cbc4; padding: 4px 12px; font-size: 12px; font-weight: 700; border-radius: 6px; white-space: nowrap; }
   .btn-restore:hover { background: #b2dfdb; }
   .btn-confirm  { background: #00897b; color: #fff; flex: 1; font-size: 14px; font-weight: 800; padding: 11px; border-radius: 8px; }
   .btn-confirm:hover { background: #00695c; }
   .btn-cancel   { background: #f0f2f5; color: #718096; flex: 1; font-size: 14px; font-weight: 700; padding: 11px; border-radius: 8px; }
   .btn-cancel:hover { background: #e2e8f0; }
+
+  .cr-table tbody tr.checked { background: #e0f2f1; }
+  .cr-chk { width: 15px; height: 15px; accent-color: #00897b; cursor: pointer; }
+  .selected-bar { font-size: 12px; color: #00695c; font-weight: 600; }
 
   /* 테이블 */
   .table-wrap { overflow-x: auto; }
@@ -148,11 +155,16 @@
   <div class="card">
     <div class="card-header">
       <span class="card-title">📋 캐시복구 대상 <span class="badge badge-teal" id="item-count">0</span></span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="selected-bar" id="selected-bar" style="display:none;"></span>
+        <button class="btn btn-bulk" id="btn-bulk" onclick="bulkRestore()" disabled>✅ 일괄 복구</button>
+      </div>
     </div>
     <div class="table-wrap">
       <table class="cr-table">
         <thead>
           <tr>
+            <th style="width:36px;text-align:center;"><input type="checkbox" class="cr-chk" id="chk-all" onchange="toggleAll(this.checked)" title="전체 선택"></th>
             <th>지사</th>
             <th>영업점</th>
             <th>Pcode</th>
@@ -165,7 +177,7 @@
           </tr>
         </thead>
         <tbody id="item-tbody">
-          <tr><td colspan="9">
+          <tr><td colspan="10">
             <div class="empty-state">
               <div class="empty-icon">💰</div>
               <div>목록 불러오기를 눌러 캐시복구 대상을 조회하세요.</div>
@@ -302,8 +314,9 @@ function renderList() {
     return;
   }
 
-  tbody.innerHTML = filtered.map(it => `
-    <tr>
+  tbody.innerHTML = filtered.map((it, idx) => `
+    <tr id="row-${idx}">
+      <td style="text-align:center;"><input type="checkbox" class="cr-chk row-chk" data-idx="${idx}" onchange="onRowCheck(this)"></td>
       <td><div class="td-org">${esc(it.branch || '—')}</div></td>
       <td><div class="td-org">${esc(it.sales_office || '—')}</div></td>
       <td><div class="td-pcode">${esc(it.pcode)}</div></td>
@@ -315,13 +328,85 @@ function renderList() {
       <td><button class="btn btn-restore" onclick="openModal(${JSON.stringify(it).replace(/"/g,'&quot;')})">캐시복구</button></td>
     </tr>
   `).join('');
+  updateBulkBtn();
 }
 
 function renderEmpty(msg) {
   document.getElementById('item-tbody').innerHTML = `
-    <tr><td colspan="9">
+    <tr><td colspan="10">
       <div class="empty-state"><div class="empty-icon">💰</div><div>${esc(msg)}</div></div>
     </td></tr>`;
+  updateBulkBtn();
+}
+
+// ── 체크박스 / 일괄복구 ──
+function toggleAll(checked) {
+  document.querySelectorAll('.row-chk').forEach(c => {
+    c.checked = checked;
+    const row = c.closest('tr');
+    if (row) row.classList.toggle('checked', checked);
+  });
+  updateBulkBtn();
+}
+
+function onRowCheck(chk) {
+  const row = chk.closest('tr');
+  if (row) row.classList.toggle('checked', chk.checked);
+  const all  = document.querySelectorAll('.row-chk');
+  const done = document.querySelectorAll('.row-chk:checked');
+  const allChk = document.getElementById('chk-all');
+  if (allChk) {
+    allChk.checked       = done.length === all.length && all.length > 0;
+    allChk.indeterminate = done.length > 0 && done.length < all.length;
+  }
+  updateBulkBtn();
+}
+
+function updateBulkBtn() {
+  const cnt = document.querySelectorAll('.row-chk:checked').length;
+  const btn = document.getElementById('btn-bulk');
+  const bar = document.getElementById('selected-bar');
+  if (cnt > 0) {
+    btn.disabled = false;
+    bar.textContent = `${cnt}건 선택됨`;
+    bar.style.display = '';
+  } else {
+    btn.disabled = true;
+    bar.style.display = 'none';
+  }
+}
+
+async function bulkRestore() {
+  const checks = document.querySelectorAll('.row-chk:checked');
+  if (!checks.length) return;
+  const selected = Array.from(checks).map(c => allItems[parseInt(c.dataset.idx)]);
+
+  const names = selected.map(it => it.biz_name || it.mid || it.pcode).join('\n  ');
+  if (!confirm(`선택한 ${selected.length}건을 일괄 복구하시겠습니까?\n\n  ${names}`)) return;
+
+  document.getElementById('btn-bulk').disabled = true;
+  addLog(`▶ 일괄 복구 시작: ${selected.length}건`, 'info');
+
+  let ok = 0, fail = 0;
+  for (const item of selected) {
+    addLog(`  → ${item.pcode} (${item.biz_name || item.mid}) 복구 중...`, 'info');
+    try {
+      const res  = await fetch(`${SERVER}/restore`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pcode: item.pcode, uid_b64: item.uid_b64, adrole: item.adrole }),
+        signal: AbortSignal.timeout(60000),
+      });
+      const json = await res.json();
+      if (json.success) { addLog(`  ✅ 완료: ${item.pcode}`, 'success'); ok++; }
+      else              { addLog(`  ❌ 실패: ${item.pcode} — ${json.message || ''}`, 'fail'); fail++; }
+    } catch (e) {
+      addLog(`  ❌ 오류: ${item.pcode} — ${e.message}`, 'fail'); fail++;
+    }
+  }
+
+  addLog(`일괄 복구 완료 — 성공 ${ok}건 / 실패 ${fail}건`, ok > 0 ? 'success' : 'fail');
+  document.getElementById('btn-bulk').disabled = false;
 }
 
 // ── 모달 ──
