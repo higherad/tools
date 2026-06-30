@@ -744,7 +744,8 @@ renderList();
       if (res.ok) { addLog('✅ 서버 연결됨', 'success'); return; }
     } catch(_) {}
     attempt++;
-    addLog(`↻ 서버 연결 실패 — ${attempt}번째 재시도 중...`, 'warn');
+    if (attempt === 1 || attempt % 10 === 0) addLog(`↻ 서버 연결 실패 — ${attempt}번째 재시도 중...`, 'warn');
+    await new Promise(r => setTimeout(r, 5000));
   }
 })();
 </script>
