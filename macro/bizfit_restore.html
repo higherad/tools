@@ -216,7 +216,7 @@
 
 <!-- 일괄복구 확인 모달 -->
 <div class="modal-overlay" id="modal-bulk-overlay" onclick="closeBulkModalIfOutside(event)">
-  <div class="modal" style="width:560px;max-width:calc(100vw - 32px);">
+  <div class="modal" style="width:780px;max-width:calc(100vw - 32px);">
     <div class="modal-header">
       <span class="modal-title">✅ 일괄 복구 확인</span>
       <button class="modal-close" onclick="closeBulkModal()">✕</button>
@@ -227,8 +227,12 @@
         <table class="bulk-table">
           <thead>
             <tr>
-              <th>업체명</th>
+              <th>지사</th>
+              <th>영업점</th>
               <th>Pcode</th>
+              <th>참여유형</th>
+              <th>MID</th>
+              <th>업체명</th>
               <th>영업점 캐시</th>
               <th>지사 캐시</th>
             </tr>
@@ -239,7 +243,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-cancel" onclick="closeBulkModal()">취소</button>
-      <button class="btn btn-confirm" id="btn-bulk-confirm" onclick="executeBulkRestore()">일괄 복구 시작</button>
+      <button class="btn btn-confirm" id="btn-bulk-confirm" onclick="executeBulkRestore()">설정하기</button>
     </div>
   </div>
 </div>
@@ -455,14 +459,20 @@ async function fetchFormIfNeeded(item) {
 }
 
 function renderBulkTable(items) {
-  document.getElementById('bulk-confirm-tbody').innerHTML = items.map(it => `
+  document.getElementById('bulk-confirm-tbody').innerHTML = items.map(it => {
+    const loading = !it.form_data || Object.keys(it.form_data).length === 0;
+    return `
     <tr>
-      <td>${esc(it.biz_name || it.mid || it.pcode)}</td>
+      <td class="td-org">${esc(it.sales_office || '—')}</td>
+      <td class="td-org">${esc(it.branch || '—')}</td>
       <td class="td-pcode">${esc(it.pcode)}</td>
-      <td class="${it.cash_sales ? 'td-cash' : 'td-loading'}">${it.cash_sales ? fmtCash(it.cash_sales) : '조회 중...'}</td>
-      <td class="${it.cash_branch ? 'td-cash' : 'td-loading'}">${it.cash_branch ? fmtCash(it.cash_branch) : '조회 중...'}</td>
-    </tr>
-  `).join('');
+      <td class="td-type">${esc(it.camp_type || '—')}</td>
+      <td class="td-mid">${esc(it.mid || '—')}</td>
+      <td class="td-biz">${esc(it.biz_name || '—')}</td>
+      <td class="${loading ? 'td-loading' : 'td-cash'}">${loading ? '조회 중...' : fmtCash(it.cash_sales)}</td>
+      <td class="${loading ? 'td-loading' : 'td-cash'}">${loading ? '조회 중...' : fmtCash(it.cash_branch)}</td>
+    </tr>`;
+  }).join('');
 }
 
 async function bulkRestore() {
@@ -495,6 +505,7 @@ function closeBulkModalIfOutside(e) {
 async function executeBulkRestore() {
   if (!bulkSelected.length) return;
   const selected = bulkSelected;
+  if (!confirm(`${selected.length}건 캐시복구 하시겠습니까?`)) return;
   closeBulkModal();
 
   btnBulk.disabled = true;
