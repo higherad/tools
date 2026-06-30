@@ -417,13 +417,14 @@ function closeModalIfOutside(e) {
 
 function confirmRestore() {
   if (!modalItem) return;
-  const pcode = modalItem.pcode;
-  const label = modalItem.biz_name || modalItem.mid || pcode;
+  const item  = modalItem;
+  const pcode = item.pcode;
+  const label = item.biz_name || item.mid || pcode;
 
-  if (!confirm(`복구하시겠습니까?\n\n업체명: ${label}\nPcode: ${pcode}\n영업점 캐시: ${fmtCash(modalItem.cash_sales)}\n지사 캐시: ${fmtCash(modalItem.cash_branch)}`)) return;
+  if (!confirm(`복구하시겠습니까?\n\n업체명: ${label}\nPcode: ${pcode}\n영업점 캐시: ${fmtCash(item.cash_sales)}\n지사 캐시: ${fmtCash(item.cash_branch)}`)) return;
 
   closeModal();
-  doRestore(modalItem);
+  doRestore(item);
 }
 
 async function doRestore(item) {
