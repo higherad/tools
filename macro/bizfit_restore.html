@@ -30,6 +30,20 @@
   .btn-restore  { background: #e0f2f1; color: #00695c; border: 1.5px solid #80cbc4; padding: 4px 12px; font-size: 12px; font-weight: 700; border-radius: 6px; white-space: nowrap; }
   .btn-restore:hover { background: #b2dfdb; }
   .btn-restored { background: #e2e8f0; color: #718096; border: 1.5px solid #cbd5e0; padding: 4px 12px; font-size: 12px; font-weight: 700; border-radius: 6px; white-space: nowrap; cursor: default; }
+
+  /* 일괄복구 모달 */
+  .bulk-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .bulk-table thead th {
+    background: #f8f9fb; padding: 7px 10px; text-align: left;
+    font-size: 11px; font-weight: 700; color: #718096;
+    text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid #e8eaf0;
+  }
+  .bulk-table tbody tr { border-bottom: 1px solid #f0f2f5; }
+  .bulk-table tbody tr:last-child { border-bottom: none; }
+  .bulk-table td { padding: 7px 10px; vertical-align: middle; }
+  .bulk-table .td-cash { font-weight: 700; color: #00695c; }
+  .bulk-table .td-loading { color: #a0aec0; font-style: italic; }
+  .bulk-scroll { max-height: 320px; overflow-y: auto; border: 1px solid #e8eaf0; border-radius: 8px; margin-bottom: 14px; }
   .btn-confirm  { background: #00897b; color: #fff; flex: 1; font-size: 14px; font-weight: 800; padding: 11px; border-radius: 8px; }
   .btn-confirm:hover { background: #00695c; }
   .btn-cancel   { background: #f0f2f5; color: #718096; flex: 1; font-size: 14px; font-weight: 700; padding: 11px; border-radius: 8px; }
@@ -198,6 +212,36 @@
     </div>
   </div>
 
+</div>
+
+<!-- 일괄복구 확인 모달 -->
+<div class="modal-overlay" id="modal-bulk-overlay" onclick="closeBulkModalIfOutside(event)">
+  <div class="modal" style="width:560px;max-width:calc(100vw - 32px);">
+    <div class="modal-header">
+      <span class="modal-title">✅ 일괄 복구 확인</span>
+      <button class="modal-close" onclick="closeBulkModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="warn-box">아래 항목을 일괄 복구합니다.<br><span style="color:#dc2626;font-weight:700;">신중히 확인하세요.</span></div>
+      <div class="bulk-scroll">
+        <table class="bulk-table">
+          <thead>
+            <tr>
+              <th>업체명</th>
+              <th>Pcode</th>
+              <th>영업점 캐시</th>
+              <th>지사 캐시</th>
+            </tr>
+          </thead>
+          <tbody id="bulk-confirm-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="closeBulkModal()">취소</button>
+      <button class="btn btn-confirm" id="btn-bulk-confirm" onclick="executeBulkRestore()">일괄 복구 시작</button>
+    </div>
+  </div>
 </div>
 
 <!-- 캐시복구 모달 -->
@@ -394,13 +438,64 @@ function updateBulkBtn(cnt = document.querySelectorAll('.row-chk:checked').lengt
   selBar.style.display = cnt > 0 ? '' : 'none';
 }
 
+let bulkSelected = [];
+
+async function fetchFormIfNeeded(item) {
+  if (item.form_data && Object.keys(item.form_data).length > 0) return;
+  try {
+    const params = new URLSearchParams({ pcode: item.pcode, uid_b64: item.uid_b64, adrole: item.adrole });
+    const res  = await fetch(`${SERVER}/form?${params}`, { signal: AbortSignal.timeout(15000) });
+    const json = await res.json();
+    if (json.success) {
+      item.form_data   = json.form_data;
+      item.cash_sales  = json.cash_sales;
+      item.cash_branch = json.cash_branch;
+    }
+  } catch { /* 조회 실패 시 공란으로 표시 */ }
+}
+
+function renderBulkTable(items) {
+  document.getElementById('bulk-confirm-tbody').innerHTML = items.map(it => `
+    <tr>
+      <td>${esc(it.biz_name || it.mid || it.pcode)}</td>
+      <td class="td-pcode">${esc(it.pcode)}</td>
+      <td class="${it.cash_sales ? 'td-cash' : 'td-loading'}">${it.cash_sales ? fmtCash(it.cash_sales) : '조회 중...'}</td>
+      <td class="${it.cash_branch ? 'td-cash' : 'td-loading'}">${it.cash_branch ? fmtCash(it.cash_branch) : '조회 중...'}</td>
+    </tr>
+  `).join('');
+}
+
 async function bulkRestore() {
   const checks = document.querySelectorAll('.row-chk:checked');
   if (!checks.length) return;
-  const selected = [...checks].map(c => allItems[+c.dataset.idx]);
+  bulkSelected = [...checks].map(c => allItems[+c.dataset.idx]);
 
-  const names = selected.map(it => it.biz_name || it.mid || it.pcode).join('\n  ');
-  if (!confirm(`선택한 ${selected.length}건을 일괄 복구하시겠습니까?\n\n  ${names}`)) return;
+  // 모달 먼저 열고 "조회 중..." 표시
+  renderBulkTable(bulkSelected);
+  document.getElementById('btn-bulk-confirm').disabled = true;
+  document.getElementById('modal-bulk-overlay').classList.add('open');
+
+  // form_data 미로드 항목 병렬 조회
+  await Promise.all(bulkSelected.map(fetchFormIfNeeded));
+
+  // 조회 완료 후 테이블 업데이트
+  renderBulkTable(bulkSelected);
+  document.getElementById('btn-bulk-confirm').disabled = false;
+}
+
+function closeBulkModal() {
+  document.getElementById('modal-bulk-overlay').classList.remove('open');
+  bulkSelected = [];
+}
+
+function closeBulkModalIfOutside(e) {
+  if (e.target === document.getElementById('modal-bulk-overlay')) closeBulkModal();
+}
+
+async function executeBulkRestore() {
+  if (!bulkSelected.length) return;
+  const selected = bulkSelected;
+  closeBulkModal();
 
   btnBulk.disabled = true;
   addLog(`▶ 일괄 복구 시작: ${selected.length}건`, 'info');
