@@ -170,13 +170,11 @@
             <th>참여유형</th>
             <th>MID</th>
             <th>업체명</th>
-            <th>영업점 캐시</th>
-            <th>지사 캐시</th>
             <th style="width:90px;"></th>
           </tr>
         </thead>
         <tbody id="item-tbody">
-          <tr><td colspan="10">
+          <tr><td colspan="8">
             <div class="empty-state">
               <div class="empty-icon">💰</div>
               <div>목록 불러오기를 눌러 캐시복구 대상을 조회하세요.</div>
@@ -280,7 +278,7 @@ function addLog(msg, type = '') {
 
 function renderLoading() {
   document.getElementById('item-tbody').innerHTML = `
-    <tr><td colspan="10">
+    <tr><td colspan="8">
       <div class="empty-state">
         <div style="font-size:32px;margin-bottom:10px;">⏳</div>
         <div id="loading-text">목록을 불러오는 중입니다...</div>
@@ -352,8 +350,6 @@ function renderList() {
       <td class="td-type">${esc(it.camp_type || '—')}</td>
       <td class="td-mid">${esc(it.mid || '—')}</td>
       <td class="td-biz">${esc(it.biz_name || '—')}</td>
-      <td class="td-cash">${fmtCash(it.cash_sales)}</td>
-      <td class="td-cash">${fmtCash(it.cash_branch)}</td>
       <td>${it.restored
         ? `<button class="btn btn-restored" disabled>✅ 복구완료</button>`
         : `<button class="btn btn-restore" id="btn-restore-${idx}" onclick="openModal(${idx})">캐시복구</button>`
@@ -365,7 +361,7 @@ function renderList() {
 
 function renderEmpty(msg) {
   document.getElementById('item-tbody').innerHTML = `
-    <tr><td colspan="10">
+    <tr><td colspan="8">
       <div class="empty-state"><div class="empty-icon">💰</div><div>${esc(msg)}</div></div>
     </td></tr>`;
   btnBulk.disabled = true;
@@ -422,18 +418,44 @@ async function bulkRestore() {
 }
 
 // ── 모달 ──
-function openModal(idx) {
+async function openModal(idx) {
   const item = allItems[idx];
   modalItem  = item;
+
   document.getElementById('modal-branch').textContent       = item.sales_office || '—';
   document.getElementById('modal-sales-office').textContent = item.branch       || '—';
   document.getElementById('modal-pcode').textContent        = item.pcode        || '—';
   document.getElementById('modal-camp-type').textContent    = item.camp_type    || '—';
   document.getElementById('modal-mid').textContent          = item.mid          || '—';
   document.getElementById('modal-biz-name').textContent     = item.biz_name     || '—';
-  document.getElementById('modal-cash-sales').textContent   = fmtCash(item.cash_sales);
-  document.getElementById('modal-cash-branch').textContent  = fmtCash(item.cash_branch);
+  document.getElementById('modal-cash-sales').textContent   = '조회 중...';
+  document.getElementById('modal-cash-branch').textContent  = '조회 중...';
   document.getElementById('modal-overlay').classList.add('open');
+
+  try {
+    const params = new URLSearchParams({ pcode: item.pcode, uid_b64: item.uid_b64, adrole: item.adrole });
+    const res  = await fetch(`${SERVER}/form?${params}`, { signal: AbortSignal.timeout(15000) });
+    const json = await res.json();
+    if (json.success) {
+      item.form_data   = json.form_data;
+      item.cash_sales  = json.cash_sales;
+      item.cash_branch = json.cash_branch;
+      if (modalItem === item) {
+        document.getElementById('modal-cash-sales').textContent  = fmtCash(json.cash_sales);
+        document.getElementById('modal-cash-branch').textContent = fmtCash(json.cash_branch);
+      }
+    } else {
+      if (modalItem === item) {
+        document.getElementById('modal-cash-sales').textContent  = '조회 실패';
+        document.getElementById('modal-cash-branch').textContent = '조회 실패';
+      }
+    }
+  } catch {
+    if (modalItem === item) {
+      document.getElementById('modal-cash-sales').textContent  = '조회 실패';
+      document.getElementById('modal-cash-branch').textContent = '조회 실패';
+    }
+  }
 }
 
 function closeModal() {
