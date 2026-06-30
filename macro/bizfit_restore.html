@@ -39,10 +39,9 @@
     text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid #e8eaf0;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .bulk-table colgroup .col-branch   { width: 70px; }
-  .bulk-table colgroup .col-office   { width: 70px; }
+  .bulk-table colgroup .col-office   { width: 90px; }
   .bulk-table colgroup .col-pcode    { width: 90px; }
-  .bulk-table colgroup .col-type     { width: 60px; }
+  .bulk-table colgroup .col-type     { width: 80px; }
   .bulk-table colgroup .col-mid      { width: 80px; }
   .bulk-table colgroup .col-biz      { width: auto; }
   .bulk-table colgroup .col-cash-s   { width: 90px; }
@@ -238,7 +237,6 @@
       <div class="bulk-scroll">
         <table class="bulk-table">
           <colgroup>
-            <col class="col-branch">
             <col class="col-office">
             <col class="col-pcode">
             <col class="col-type">
@@ -249,7 +247,6 @@
           </colgroup>
           <thead>
             <tr>
-              <th>지사</th>
               <th>영업점</th>
               <th>Pcode</th>
               <th>참여유형</th>
@@ -486,7 +483,6 @@ function renderBulkTable(items) {
     return `
     <tr>
       <td class="td-org">${esc(it.sales_office || '—')}</td>
-      <td class="td-org">${esc(it.branch || '—')}</td>
       <td class="td-pcode">${esc(it.pcode)}</td>
       <td class="td-type">${esc(it.camp_type || '—')}</td>
       <td class="td-mid">${esc(it.mid || '—')}</td>
