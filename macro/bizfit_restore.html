@@ -32,18 +32,30 @@
   .btn-restored { background: #e2e8f0; color: #718096; border: 1.5px solid #cbd5e0; padding: 4px 12px; font-size: 12px; font-weight: 700; border-radius: 6px; white-space: nowrap; cursor: default; }
 
   /* 일괄복구 모달 */
-  .bulk-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .bulk-table { width: 100%; border-collapse: collapse; font-size: 12.5px; table-layout: fixed; }
   .bulk-table thead th {
     background: #f8f9fb; padding: 7px 10px; text-align: left;
     font-size: 11px; font-weight: 700; color: #718096;
     text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid #e8eaf0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
+  .bulk-table colgroup .col-branch   { width: 70px; }
+  .bulk-table colgroup .col-office   { width: 70px; }
+  .bulk-table colgroup .col-pcode    { width: 90px; }
+  .bulk-table colgroup .col-type     { width: 60px; }
+  .bulk-table colgroup .col-mid      { width: 80px; }
+  .bulk-table colgroup .col-biz      { width: auto; }
+  .bulk-table colgroup .col-cash-s   { width: 90px; }
+  .bulk-table colgroup .col-cash-b   { width: 90px; }
   .bulk-table tbody tr { border-bottom: 1px solid #f0f2f5; }
   .bulk-table tbody tr:last-child { border-bottom: none; }
-  .bulk-table td { padding: 7px 10px; vertical-align: middle; }
-  .bulk-table .td-cash { font-weight: 700; color: #00695c; }
+  .bulk-table td {
+    padding: 7px 10px; vertical-align: middle;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .bulk-table .td-cash { font-weight: 700; color: #00695c; white-space: nowrap; overflow: visible; }
   .bulk-table .td-loading { color: #a0aec0; font-style: italic; }
-  .bulk-scroll { max-height: 320px; overflow-y: auto; border: 1px solid #e8eaf0; border-radius: 8px; margin-bottom: 14px; }
+  .bulk-scroll { max-height: 320px; overflow-y: auto; overflow-x: auto; border: 1px solid #e8eaf0; border-radius: 8px; margin-bottom: 14px; }
   .btn-confirm  { background: #00897b; color: #fff; flex: 1; font-size: 14px; font-weight: 800; padding: 11px; border-radius: 8px; }
   .btn-confirm:hover { background: #00695c; }
   .btn-cancel   { background: #f0f2f5; color: #718096; flex: 1; font-size: 14px; font-weight: 700; padding: 11px; border-radius: 8px; }
@@ -225,6 +237,16 @@
       <div class="warn-box">아래 항목을 일괄 복구합니다.<br><span style="color:#dc2626;font-weight:700;">신중히 확인하세요.</span></div>
       <div class="bulk-scroll">
         <table class="bulk-table">
+          <colgroup>
+            <col class="col-branch">
+            <col class="col-office">
+            <col class="col-pcode">
+            <col class="col-type">
+            <col class="col-mid">
+            <col class="col-biz">
+            <col class="col-cash-s">
+            <col class="col-cash-b">
+          </colgroup>
           <thead>
             <tr>
               <th>지사</th>
