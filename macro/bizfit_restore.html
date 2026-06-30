@@ -278,13 +278,38 @@ function addLog(msg, type = '') {
   area.scrollTop = area.scrollHeight;
 }
 
+function renderLoading() {
+  document.getElementById('item-tbody').innerHTML = `
+    <tr><td colspan="10">
+      <div class="empty-state">
+        <div style="font-size:32px;margin-bottom:10px;">⏳</div>
+        <div id="loading-text">목록을 불러오는 중입니다...</div>
+        <div style="margin-top:10px;">
+          <div style="display:inline-block;width:180px;height:5px;background:#e2e8f0;border-radius:100px;overflow:hidden;">
+            <div id="loading-bar" style="height:100%;background:linear-gradient(90deg,#00897b,#4db6ac);border-radius:100px;width:0%;transition:width 0.4s ease;"></div>
+          </div>
+        </div>
+      </div>
+    </td></tr>`;
+}
+
 async function loadList() {
   const btn = document.getElementById('btn-load');
   const mid = document.getElementById('inp-mid').value.trim();
 
   btn.disabled = true;
   btn.textContent = '⏳ 불러오는 중...';
+  document.getElementById('item-count').textContent = '…';
   addLog(mid ? `MID ${mid} 캐시복구 목록 조회 중...` : '전체 캐시복구 목록 조회 중...', 'info');
+  renderLoading();
+
+  // 로딩바 애니메이션 (서버 응답 전까지 서서히 진행)
+  let pct = 0;
+  const barTimer = setInterval(() => {
+    pct = Math.min(pct + (pct < 60 ? 3 : pct < 85 ? 1 : 0.3), 92);
+    const bar = document.getElementById('loading-bar');
+    if (bar) bar.style.width = pct + '%';
+  }, 400);
 
   try {
     const url = mid ? `${SERVER}/list?mid=${encodeURIComponent(mid)}` : `${SERVER}/list`;
@@ -307,6 +332,7 @@ async function loadList() {
     renderEmpty('조회 중 오류가 발생했습니다.');
   }
 
+  clearInterval(barTimer);
   btn.disabled = false;
   btn.textContent = '🔄 목록 불러오기';
 }
