@@ -319,8 +319,8 @@ function renderList() {
   document.getElementById('item-tbody').innerHTML = allItems.map((it, idx) => `
     <tr>
       <td style="text-align:center;"><input type="checkbox" class="cr-chk row-chk" data-idx="${idx}" onchange="onRowCheck(this)"></td>
-      <td class="td-org">${esc(it.branch || '—')}</td>
       <td class="td-org">${esc(it.sales_office || '—')}</td>
+      <td class="td-org">${esc(it.branch || '—')}</td>
       <td class="td-pcode">${esc(it.pcode)}</td>
       <td class="td-type">${esc(it.camp_type || '—')}</td>
       <td class="td-mid">${esc(it.mid || '—')}</td>
@@ -395,8 +395,8 @@ async function bulkRestore() {
 function openModal(idx) {
   const item = allItems[idx];
   modalItem  = item;
-  document.getElementById('modal-branch').textContent       = item.branch       || '—';
-  document.getElementById('modal-sales-office').textContent = item.sales_office || '—';
+  document.getElementById('modal-branch').textContent       = item.sales_office || '—';
+  document.getElementById('modal-sales-office').textContent = item.branch       || '—';
   document.getElementById('modal-pcode').textContent        = item.pcode        || '—';
   document.getElementById('modal-camp-type').textContent    = item.camp_type    || '—';
   document.getElementById('modal-mid').textContent          = item.mid          || '—';
