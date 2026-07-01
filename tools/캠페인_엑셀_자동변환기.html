@@ -251,22 +251,22 @@ tr:hover td{background:rgba(255,255,255,.015);}
       </div>
       <div class="modal-body">
         <div class="mf-row">
-          <div class="mf" style="flex:1;">
+          <div class="mf" style="flex:0 0 166px;">
             <label>상품명</label>
             <input type="text" id="mName" placeholder="블랙" />
           </div>
-          <div class="mf" style="flex:1.5;">
+          <div class="mf" id="mVerWrap" style="flex:1.5;">
             <label>엑셀 버전</label>
             <input type="text" id="mVer" placeholder="ver.5.1/3.2" style="font-family:'JetBrains Mono',monospace;font-size:12px;" />
           </div>
         </div>
         <div class="mf">
-          <label>키워드 배분 <span style="font-weight:400;text-transform:none;letter-spacing:0;">— 활성 상품 간 검색키워드 분배 (합계 10)</span></label>
+          <label>키워드 배분</label>
           <div class="ratio-grid" id="kwPctGrid"></div>
           <div class="ratio-note" id="kwPctNote">합계: 0%</div>
         </div>
         <div class="mf">
-          <label>일 목표 배분 <span style="font-weight:400;text-transform:none;letter-spacing:0;">— 활성 상품 간 일 목표 분배 (합계 10)</span></label>
+          <label>일 목표 배분</label>
           <div class="ratio-grid" id="ratioGrid"></div>
           <div class="ratio-note" id="ratioNote">합계: 0%</div>
         </div>
@@ -337,8 +337,8 @@ let prods = [
   {id:'p6',    name:'X6',    color:'#84cc16',active:false, ver:'ver.5.0/3.2', ratio:0, kwPct:0},
   {id:'p7',    name:'X7',    color:'#ec4899',active:false, ver:'ver.5.0/3.2', ratio:0, kwPct:0},
   {id:'p8',    name:'X8',    color:'#eab308',active:false, ver:'ver.5.0/3.2', ratio:0, kwPct:0},
-  {id:'charlie',name:'찰리', color:'#f43f5e',active:false, ver:'ver.4.1/3.2', ratio:0, kwPct:0},
-  {id:'yupfl', name:'유입플', color:'#f59e0b',active:false, ver:'ver.5.0/3.2', ratio:0, kwPct:0},
+  {id:'charlie',name:'찰리', color:'#f43f5e',active:false, ver:'ver.4.1/3.2', ratio:0, kwPct:0, daysMultiplied:true},
+  {id:'yupfl', name:'유입플', color:'#f59e0b',active:false, ver:'ver.5.0/3.2', ratio:0, kwPct:0, fixedAlloc:true, kwLimit:5, fixedPct:30},
 ];
 
 // 고정 상품 ID 목록 — 이 Set에 등록된 상품은 UI에서 삭제 버튼이 숨겨지고 삭제가 차단됩니다.
@@ -687,15 +687,22 @@ function openModal(id) {
   document.getElementById('mVer').value = p.ver||'';
   const delBtn = document.getElementById('mdDeleteBtn');
   if (delBtn) delBtn.style.display = FIXED_PROD_IDS.has(id) ? 'none' : 'inline-flex';
+  const verWrap = document.getElementById('mVerWrap');
+  if (verWrap) verWrap.style.display = p.fixedAlloc ? 'none' : '';
 
-  const isYupfl = id === 'yupfl';
-  const actives = isYupfl ? [] : ap().filter(q => q.id !== 'yupfl');
+  const isFixed = !!p.fixedAlloc;
+  const actives = isFixed ? [] : ap().filter(q => !q.fixedAlloc);
   const n = actives.length || 1;
   const defVal = () => Math.round(10 / n * 10) / 10;
 
   const kwGrid = document.getElementById('kwPctGrid');
-  if (isYupfl) {
-    kwGrid.innerHTML = `<div style="grid-column:1/-1;padding:8px 0;font-size:12px;color:var(--txd);">검색키워드 앞 <b style="color:var(--acc)">5개</b> 고정 배분 — 비율 설정 없음</div>`;
+  if (isFixed) {
+    kwGrid.innerHTML = `<div class="ratio-item" style="grid-column:1/-1;">
+      <span class="ri-name" style="color:${p.color}">검색키워드</span>
+      <span style="font-size:12px;color:var(--txd);white-space:nowrap;">고정 배분</span>
+      <input type="number" step="1" min="1" value="${p.kwLimit ?? 5}" id="kwlimit-input" />
+      <span style="font-size:12px;color:var(--txd);">개</span>
+    </div>`;
   } else {
     kwGrid.innerHTML = actives.map(q=>`
     <div class="ratio-item">
@@ -707,8 +714,13 @@ function openModal(id) {
   }
 
   const grid = document.getElementById('ratioGrid');
-  if (isYupfl) {
-    grid.innerHTML = `<div style="grid-column:1/-1;padding:8px 0;font-size:12px;color:var(--txd);">일타수의 <b style="color:var(--acc)">30% 고정</b></div>`;
+  if (isFixed) {
+    grid.innerHTML = `<div class="ratio-item" style="grid-column:1/-1;">
+      <span class="ri-name" style="color:${p.color}">일 목표</span>
+      <span style="font-size:12px;color:var(--txd);white-space:nowrap;">고정 배분</span>
+      <input type="number" step="1" min="0" max="100" value="${p.fixedPct ?? 30}" id="fixedpct-input" oninput="updatePctNotes()" />
+      <span style="font-size:12px;color:var(--txd);">%</span>
+    </div>`;
   } else {
     grid.innerHTML = actives.map(q=>`
     <div class="ratio-item">
@@ -724,14 +736,25 @@ function openModal(id) {
 }
 
 function updatePctNotes() {
-  if (_modalId === 'yupfl') {
+  const curP = _modalId ? prods.find(x=>x.id===_modalId) : null;
+  if (curP && curP.fixedAlloc) {
     const kwNote = document.getElementById('kwPctNote');
-    if (kwNote) { kwNote.textContent = '5개 고정'; kwNote.className = 'ratio-note ok'; }
+    if (kwNote) kwNote.textContent = '';
     const ratioNote = document.getElementById('ratioNote');
-    if (ratioNote) { ratioNote.textContent = '고정 등급'; ratioNote.className = 'ratio-note ok'; }
+    if (ratioNote) {
+      const pctEl = document.getElementById('fixedpct-input');
+      const pctVal = pctEl ? parseFloat(pctEl.value) : NaN;
+      if (pctVal === 100) {
+        ratioNote.textContent = '⚠️ 100%로 설정하면 일반 상품은 배분되지 않습니다';
+        ratioNote.className = 'ratio-note ng';
+      } else {
+        ratioNote.textContent = '';
+        ratioNote.className = 'ratio-note';
+      }
+    }
     return;
   }
-  const actives = ap().filter(p => p.id !== 'yupfl');
+  const actives = ap().filter(p => !p.fixedAlloc);
   const kwSum = actives.reduce((s,q)=>{
     const el = document.getElementById(`kwpct-${q.id}`);
     return s + (el ? (parseFloat(el.value)||0) : (q.kwPct||0));
@@ -776,8 +799,8 @@ function saveModal() {
   p.name = document.getElementById('mName').value.trim() || p.name;
   p.ver  = document.getElementById('mVer').value.trim();
 
-  if (_modalId !== 'yupfl') {
-    const actives = ap().filter(q => q.id !== 'yupfl');
+  if (!p.fixedAlloc) {
+    const actives = ap().filter(q => !q.fixedAlloc);
     if (actives.length > 0) {
       const kwSum = actives.reduce((s,q)=>{
         const el = document.getElementById(`kwpct-${q.id}`);
@@ -810,6 +833,15 @@ function saveModal() {
         if(ratEl) q.ratio = Math.round((parseFloat(ratEl.value)||0) * 10) / 10;
       });
     }
+  } else {
+    const kwLimitEl  = document.getElementById('kwlimit-input');
+    const fixedPctEl = document.getElementById('fixedpct-input');
+    if (fixedPctEl && parseFloat(fixedPctEl.value) > 100) {
+      alert('일 목표 배분은 100%를 초과할 수 없습니다.');
+      return;
+    }
+    if (kwLimitEl)  p.kwLimit  = Math.max(1, parseInt(kwLimitEl.value, 10) || 1);
+    if (fixedPctEl) p.fixedPct = Math.max(0, Math.min(100, parseFloat(fixedPctEl.value) || 0));
   }
 
   // 그룹에 상품명/버전 동기화
@@ -826,13 +858,13 @@ function saveModal() {
 }
 
 function rebalanceActive(field) {
-  const active = ap().filter(p => p.id !== 'yupfl');
+  const active = ap().filter(p => !p.fixedAlloc);
   const n = active.length;
   if (!n) return;
   const each = Math.round(10 / n * 10) / 10;
   const last = Math.round((10 - each * (n - 1)) * 10) / 10;
   active.forEach((p, i) => { p[field] = i === n - 1 ? last : each; });
-  prods.forEach(p => { if (!p.active || p.id === 'yupfl') p[field] = 0; });
+  prods.forEach(p => { if (!p.active || p.fixedAlloc) p[field] = 0; });
 }
 
 function toggleP(id) {
@@ -840,9 +872,9 @@ function toggleP(id) {
   p.active = !p.active;
   if (!p.active) {
     rows.forEach(r => { r.products=(r.products||[]).filter(mid=>mid!==id); });
-  } else if (id === 'yupfl') {
-    // 유입플 ON 시 모든 행에 자동 배정
-    rows.forEach(r => { r.products=r.products||[]; if(!r.products.includes('yupfl')) r.products.push('yupfl'); });
+  } else if (p.fixedAlloc) {
+    // 고정 배분 상품 ON 시 모든 행에 자동 배정
+    rows.forEach(r => { r.products=r.products||[]; if(!r.products.includes(id)) r.products.push(id); });
   }
   rebalanceActive('kwPct');
   rebalanceActive('ratio');
@@ -1329,13 +1361,15 @@ function buildJusuSheet(wb,f){
 }
 
 function buildProdSheet(wb,f,prod){
+  if (prod.fixedAlloc) { buildYoupflSheet(wb, f, prod.name); return; }
   const ws={};
   const ef=FIXED_PROD_IDS.has(prod.id)?f:expandRowsByDay(f);
   const pRows=ef.filter(r=>r.products.includes(prod.id));
 
   sc(ws,0,0,prod.ver||'',{font:{bold:true,color:{rgb:'DC2626'}},nb:true});
 
-  const headers=['상품등급명','업체명','URL','MID','순위키워드','일 목표','일 수','예약일','검색키워드'];
+  const daysColLabel = prod.daysMultiplied ? '전체 목표' : '일 수';
+  const headers=['상품등급명','업체명','URL','MID','순위키워드','일 목표',daysColLabel,'예약일','검색키워드'];
   headers.forEach((h,ci)=>{
     sc(ws,1,ci,h,{font:{bold:true,color:{rgb:'FFFFFF'}},fill:h==='검색키워드'?'DC2626':'1F2937'});
   });
@@ -1344,7 +1378,7 @@ function buildProdSheet(wb,f,prod){
     const asgn=ap().filter(p=>r.products.includes(p.id));
     const alloc=allocate(asgn, r.dailyTarget);
     const pp=alloc[prod.id]??0;
-    const daysVal=prod.id==='charlie'?pp*r.days:r.days;
+    const daysVal=prod.daysMultiplied?pp*r.days:r.days;
     const row=[prod.name,r.name,r.url,r.mid,r.keyword,pp,daysVal,null,kwForProd(r.searchKeywords,prod)];
     row.forEach((v,ci)=>{
       if(ci===7){ scDate(ws,2+ri,7,r.startDate); return; }
@@ -1354,7 +1388,7 @@ function buildProdSheet(wb,f,prod){
 
   const lr=Math.max(1,pRows.length+1);
   ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:lr,c:8}});
-  ws['!cols']=[{wch:10},{wch:22},{wch:44},{wch:14},{wch:18},{wch:8},{wch:6},{wch:13},{wch:52}];
+  ws['!cols']=[{wch:10},{wch:22},{wch:44},{wch:14},{wch:18},{wch:8},{wch:8},{wch:13},{wch:52}];
   XLSX.utils.book_append_sheet(wb,ws,prod.name);
 }
 
@@ -1367,7 +1401,8 @@ function buildJumuSheet_(wb,f,label,filterFn,splittable=true){
   const pList=AP.filter(p=>filterFn(p)&&usedIds.has(p.id));
   if(!pList.length) return;
 
-  const headers=['상품등급명','업체명','URL','MID','순위키워드','일 목표','일 수','예약일','검색키워드'];
+  const daysColLabel = pList.every(p => p.daysMultiplied) ? '전체 목표' : '일 수';
+  const headers=['상품등급명','업체명','URL','MID','순위키워드','일 목표',daysColLabel,'예약일','검색키워드'];
 
   headers.forEach((h,ci)=>{
     const fill=h==='검색키워드'?'DC2626':'1F2937';
@@ -1381,7 +1416,7 @@ function buildJumuSheet_(wb,f,label,filterFn,splittable=true){
       const asgn=ap().filter(p=>r.products.includes(p.id));
       const alloc=allocate(asgn, r.dailyTarget);
       const pp=alloc[prod.id]??0;
-      const daysVal=prod.id==='charlie'?pp*r.days:r.days;
+      const daysVal=prod.daysMultiplied?pp*r.days:r.days;
       const prodColor=prod.color.replace('#','');
       const row=[prod.name,r.name,r.url,r.mid,r.keyword,pp,daysVal,null,kwForProd(r.searchKeywords,prod)];
       row.forEach((v,ci)=>{
@@ -1397,21 +1432,59 @@ function buildJumuSheet_(wb,f,label,filterFn,splittable=true){
 
   if(curRow<2) curRow=2;
   ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:curRow-1,c:8}});
-  ws['!cols']=[{wch:10},{wch:22},{wch:44},{wch:14},{wch:18},{wch:8},{wch:6},{wch:13},{wch:52}];
+  ws['!cols']=[{wch:10},{wch:22},{wch:44},{wch:14},{wch:18},{wch:8},{wch:8},{wch:13},{wch:52}];
   XLSX.utils.book_append_sheet(wb,ws,label);
 }
 
 function buildJumuNormalSheet(wb,f){ buildJumuSheet_(wb,f,'일반',p=>!FIXED_PROD_IDS.has(p.id), true); }
-function buildJumuFixedSheet(wb,f){  buildJumuSheet_(wb,f,'고정',p=> FIXED_PROD_IDS.has(p.id), false); }
+function buildJumuFixedSheet(wb,f){
+  ap().filter(p => FIXED_PROD_IDS.has(p.id)).forEach(prod => {
+    if (prod.fixedAlloc) buildYoupflSheet(wb, f, prod.name);
+    else buildJumuSheet_(wb, f, prod.name, p => p.id === prod.id, false);
+  });
+}
+
+// ── XLSX: 유입플 업로드 양식 시트 ──
+function buildYoupflSheet(wb, f, sheetName) {
+  const yupfl = ap().find(p => p.fixedAlloc);
+  if (!yupfl || !yupfl.fixedPct) return;
+  const ws = {};
+  const headers = ['순위키워드', '작업키워드', '플레이스ID', '작업타수', '신청일수', '미션', '익일시작'];
+  headers.forEach((h, ci) => {
+    sc(ws, 0, ci, h, {font:{bold:true,color:{rgb:'FFFFFF'}}, fill:'1F2937'});
+  });
+  const pRows = f.filter(r => r.products.includes(yupfl.id));
+  const today0 = new Date(); today0.setHours(0,0,0,0);
+  let curRow = 1;
+  pRows.forEach(r => {
+    const asgn = ap().filter(p => r.products.includes(p.id));
+    const alloc = allocate(asgn, r.dailyTarget);
+    const yAmt = alloc[yupfl.id] ?? 0;
+    if (yAmt <= 0) return;
+    const workKw = kwForProd(r.searchKeywords||'', yupfl);
+    const start  = r.startDate ? new Date(r.startDate) : today0;
+    start.setHours(0,0,0,0);
+    const ikil = Math.max(0, Math.round((start - today0) / 86400000));
+    const row  = [r.keyword||'', workKw, r.mid||'', yAmt, r.days||0, 0, ikil];
+    row.forEach((v, ci) => {
+      sc(ws, curRow, ci, v, { align: ci <= 2 ? 'left' : 'center' });
+    });
+    curRow++;
+  });
+  if (curRow < 2) curRow = 2;
+  ws['!ref']  = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:curRow-1,c:6}});
+  ws['!cols'] = [{wch:18},{wch:40},{wch:14},{wch:8},{wch:8},{wch:8},{wch:8}];
+  XLSX.utils.book_append_sheet(wb, ws, sheetName || '유입플');
+}
 
 function kwForProd(keywords, prod) {
   if (!keywords) return '';
   const parts = keywords.split(',').map(k => k.trim()).filter(k => k);
   if (!parts.length) return '';
-  // 유입플: 항상 앞 5개 고정 (독립)
-  if (prod.id === 'yupfl') return parts.slice(0, 5).join(',');
-  // 일반 상품: 유입플과 무관하게 전체 키워드를 비율로 배분 (독립)
-  const activeOthers = ap().filter(p => p.id !== 'yupfl');
+  // 고정 배분 상품: 항상 앞 kwLimit개 고정 (독립)
+  if (prod.kwLimit) return parts.slice(0, prod.kwLimit).join(',');
+  // 일반 상품: 고정 배분 상품과 무관하게 전체 키워드를 비율로 배분 (독립)
+  const activeOthers = ap().filter(p => !p.fixedAlloc);
   const totalKw = parts.length;
   const pcts = activeOthers.map(p => p.kwPct || 0);
   const totalPct = pcts.reduce((s,v) => s+v, 0);
@@ -1430,21 +1503,21 @@ function kwForProd(keywords, prod) {
   return '';
 }
 
-// 유입플 고정 수량 계산: 무조건 일타수의 30%
-function yupflAlloc(dailyTarget) {
-  return Math.round(dailyTarget * 0.3);
+// 고정 배분 상품 수량 계산: 일타수의 fixedPct%
+function yupflAlloc(dailyTarget, pct) {
+  return Math.round(dailyTarget * ((pct ?? 30) / 100));
 }
 
 // ratio 비율로 target 분배, Largest Remainder로 정수 오차 보정
-// 유입플이 포함된 경우 먼저 고정 수량 선취 후 나머지를 비율로 배분
+// 고정 배분 상품이 포함된 경우 먼저 고정 수량 선취 후 나머지를 비율로 배분
 function allocate(asgn, target) {
   if (!asgn.length) return {};
-  const yupfl = asgn.find(p => p.id === 'yupfl');
+  const yupfl = asgn.find(p => p.fixedAlloc);
   if (yupfl) {
-    const yAmt = Math.min(yupflAlloc(target), target);
+    const yAmt = Math.min(yupflAlloc(target, yupfl.fixedPct), target);
     const remaining = Math.max(0, target - yAmt);
-    const others = asgn.filter(p => p.id !== 'yupfl');
-    const map = { yupfl: yAmt };
+    const others = asgn.filter(p => !p.fixedAlloc);
+    const map = { [yupfl.id]: yAmt };
     if (others.length) {
       const totalW = others.reduce((s,p) => s + p.ratio, 0) || 1;
       const exact = others.map(p => remaining * p.ratio / totalW);
@@ -1493,7 +1566,7 @@ function buildJumuPrev_(f,filterFn,splittable=true){
       const asgn=ap().filter(p=>r.products.includes(p.id));
       const alloc=allocate(asgn, r.dailyTarget);
       const pp=alloc[prod.id]??0;
-      const daysVal=prod.id==='charlie'?pp*r.days:r.days;
+      const daysVal=prod.daysMultiplied?pp*r.days:r.days;
       const kw=kwForProd(r.searchKeywords,prod);
       const kwCount=kw?kw.split(',').map(k=>k.trim()).filter(k=>k).length:0;
       result.push({'상품등급명':prod.name,'업체명':r.name,'URL':r.url,'MID':r.mid,
