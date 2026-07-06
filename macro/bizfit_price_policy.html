@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BizFit 영업점 단가 정책</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+
+  .container { max-width: 1200px; margin: 24px auto; padding: 0 20px 60px; display: flex; flex-direction: column; gap: 18px; }
+
+  .top-bar { display: flex; align-items: center; justify-content: space-between; }
+  .top-bar h1 { font-size: 18px; font-weight: 800; color: #1a202c; }
+
+  .card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
+  .card-header {
+    background: #f8f9fb; padding: 13px 18px; border-bottom: 1px solid #e8eaf0;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+  .card-title { font-size: 13px; font-weight: 700; color: #2d3748; display: flex; align-items: center; gap: 7px; }
+  .card-body { padding: 18px; }
+
+  .form-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+  .form-group { flex: 1; min-width: 180px; }
+  .form-group label {
+    display: block; font-size: 11px; font-weight: 700; color: #718096;
+    text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px;
+  }
+  input[type="text"], input[type="password"] {
+    width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+    font-size: 14px; color: #2d3748; outline: none; transition: border-color 0.2s;
+  }
+  input:focus { border-color: #00897b; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 9px 18px; border-radius: 8px; font-size: 13.5px; font-weight: 700;
+    cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-teal { background: #00897b; color: #fff; }
+  .btn-teal:hover { background: #00695c; }
+  .btn-teal:disabled { background: #a0aec0; cursor: not-allowed; }
+  .btn-success { background: #276749; color: #fff; font-size: 15px; padding: 13px 24px; border-radius: 10px; width: 100%; }
+  .btn-success:hover { background: #1e5138; }
+  .btn-success:disabled { background: #a0aec0; cursor: not-allowed; }
+  .btn-ghost { background: #edf2f7; color: #4a5568; padding: 6px 12px; font-size: 12px; }
+  .btn-ghost:hover { background: #e2e8f0; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 700; }
+  .badge-teal { background: #e0f2f1; color: #00695c; border: 1px solid #b2dfdb; }
+  .badge-count { background: #ebf4ff; color: #2b6cb0; }
+
+  .search-wrap {
+    display: flex; align-items: center; gap: 6px; background: #f0f2f5;
+    border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 5px 10px;
+  }
+  .search-wrap input { border: none; background: transparent; outline: none; font-size: 13px; width: 160px; padding: 0; }
+
+  .select-all-row {
+    display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+    background: #f8f9fb; border-bottom: 1px solid #e8eaf0; font-size: 13px; font-weight: 600; color: #4a5568;
+  }
+  .select-all-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #00897b; cursor: pointer; }
+
+  /* 영업점 그리드 */
+  .branch-grid {
+    max-height: 260px; overflow-y: auto; display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 2px;
+    padding: 10px 16px;
+  }
+  .chk-item {
+    display: flex; align-items: center; gap: 7px; padding: 6px 8px; border-radius: 6px;
+    font-size: 12.5px; color: #2d3748; cursor: pointer;
+  }
+  .chk-item:hover { background: #f7fafc; }
+  .chk-item input { width: 15px; height: 15px; accent-color: #00897b; cursor: pointer; flex-shrink: 0; }
+  .chk-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* 등급 그리드 */
+  .grade-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 2px;
+    padding: 10px 16px; max-height: 200px; overflow-y: auto;
+  }
+
+  /* 항목 테이블 */
+  .item-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .item-table th {
+    text-align: left; padding: 8px 10px; background: #f8f9fb; font-size: 11px; font-weight: 700;
+    color: #718096; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid #e8eaf0;
+  }
+  .item-table td { padding: 7px 10px; border-bottom: 1px solid #f0f2f5; vertical-align: middle; }
+  .item-table input[type="checkbox"] { width: 16px; height: 16px; accent-color: #00897b; cursor: pointer; }
+  .item-table input[type="text"] { width: 120px; padding: 6px 8px; font-size: 13px; border-radius: 7px; }
+  .item-table input[type="text"]:disabled { background: #f7fafc; color: #cbd5e0; }
+
+  .empty-state { text-align: center; padding: 30px 20px; color: #a0aec0; font-size: 13px; }
+
+  .radio-row { display: flex; gap: 18px; align-items: center; }
+  .radio-opt { display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; color: #4a5568; cursor: pointer; }
+  .radio-opt input { width: 16px; height: 16px; accent-color: #00897b; cursor: pointer; }
+
+  .summary-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;
+  }
+  .summary-item { background: #f8f9fb; border-radius: 10px; padding: 14px 16px; text-align: center; }
+  .summary-label { font-size: 11px; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.4px; }
+  .summary-value { font-size: 22px; font-weight: 800; color: #2d3748; margin-top: 4px; }
+  .summary-value.teal { color: #00897b; }
+
+  .progress-wrap { background: #e2e8f0; border-radius: 100px; height: 6px; overflow: hidden; display: none; margin-top: 12px; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, #00897b, #48bb78); border-radius: 100px; width: 0%; transition: width 0.4s ease; }
+  #progress-text { text-align: center; font-size: 13px; color: #718096; margin-top: 6px; }
+
+  .log-area {
+    background: #1a202c; border-radius: 10px; padding: 12px 14px; height: 320px;
+    overflow-y: auto; font-family: 'Consolas', 'Monaco', monospace; font-size: 12px; line-height: 1.7; margin-top: 16px;
+  }
+  .log-line { display: flex; gap: 10px; }
+  .log-time { color: #4a5568; flex-shrink: 0; }
+  .log-msg { color: #e2e8f0; white-space: pre-wrap; word-break: break-all; }
+  .log-success .log-msg { color: #68d391; }
+  .log-fail .log-msg { color: #fc8181; }
+  .log-info .log-msg { color: #4fd1c5; }
+  .log-warn .log-msg { color: #f6e05e; }
+
+  .divider { border: none; border-top: 1px solid #e8eaf0; margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="top-bar">
+    <h1>💵 BizFit 영업점 단가 정책</h1>
+    <span class="badge badge-teal" id="server-status">연결 확인 중...</span>
+  </div>
+
+  <!-- 로그인 -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">🔐 로그인</span></div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>아이디 (ID)</label>
+          <input type="text" id="inp-id" placeholder="BizFit 광고주센터 로그인 아이디" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>패스워드 (PW)</label>
+          <input type="password" id="inp-pw" placeholder="패스워드" autocomplete="new-password">
+        </div>
+        <div>
+          <button class="btn btn-teal" id="btn-load" onclick="loadBranches()">📥 영업점 불러오기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 영업점 목록 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🏢 영업점 목록 <span class="badge badge-count" id="branch-count">0</span></span>
+      <div class="search-wrap">
+        <span>🔍</span>
+        <input type="text" id="inp-search" placeholder="영업점명 검색" oninput="renderBranches()">
+      </div>
+    </div>
+    <div class="select-all-row">
+      <input type="checkbox" id="chk-branch-all" onchange="toggleAllBranches(this)">
+      <span>전체 선택</span>
+      <span style="color:#718096;font-weight:400;" id="branch-selected-count">0개 선택됨</span>
+    </div>
+    <div class="branch-grid" id="branch-grid">
+      <div class="empty-state" style="grid-column:1/-1;">로그인 후 영업점을 불러오세요.</div>
+    </div>
+  </div>
+
+  <!-- 등급 선택 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🎖️ 적용 등급 <span class="badge badge-count" id="grade-count">0</span></span>
+    </div>
+    <div class="select-all-row">
+      <input type="checkbox" id="chk-grade-all" onchange="toggleAllGrades(this)">
+      <span>전체 선택</span>
+      <span style="color:#718096;font-weight:400;" id="grade-selected-count">0개 선택됨</span>
+    </div>
+    <div class="grade-grid" id="grade-grid">
+      <div class="empty-state" style="grid-column:1/-1;">영업점을 먼저 불러오세요.</div>
+    </div>
+  </div>
+
+  <!-- 항목별 단가 -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">💰 적용할 단가 항목</span></div>
+    <div class="card-body" style="padding:8px 0;">
+      <table class="item-table" id="item-table">
+        <thead><tr><th style="width:40px;"></th><th>항목</th><th>적용 단가 (캐시)</th></tr></thead>
+        <tbody id="item-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 적용 실행 -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">⚡ 일괄 적용</span></div>
+    <div class="card-body">
+
+      <div class="radio-row" style="margin-bottom:16px;">
+        <label class="radio-opt"><input type="radio" name="apply-mode" value="now" checked> 즉시 적용</label>
+        <label class="radio-opt"><input type="radio" name="apply-mode" value="reserve"> 익일부터 적용</label>
+      </div>
+
+      <div class="summary-row">
+        <div class="summary-item">
+          <div class="summary-label">선택 영업점</div>
+          <div class="summary-value teal" id="sum-branches">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">선택 등급</div>
+          <div class="summary-value teal" id="sum-grades">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">총 적용 건수</div>
+          <div class="summary-value" id="sum-total">0</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <button class="btn btn-success" id="btn-apply" onclick="startApply()" disabled>⚡ 일괄 적용 실행</button>
+
+      <div class="progress-wrap" id="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+      <div id="progress-text"></div>
+
+      <div class="log-area" id="log-area">
+        <div class="log-line log-info">
+          <span class="log-time">--:--:--</span>
+          <span class="log-msg">로그인 후 영업점 · 등급 · 항목을 선택하고 적용을 실행하세요.</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SERVER = 'https://macro-10-bizfit-price-policy-938928195180.asia-northeast3.run.app';
+
+let branches = [];       // [{uid, company, checked}]
+let grades   = [];       // [{name, checked}]
+let items    = [];       // [[field, label]]
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function addLog(msg, type = '') {
+  const area = document.getElementById('log-area');
+  const now  = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+  const div  = document.createElement('div');
+  div.className = `log-line ${type ? 'log-' + type : ''}`;
+  div.innerHTML = `<span class="log-time">${now}</span><span class="log-msg">${esc(msg)}</span>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function logType(msg) {
+  if (msg.startsWith('✅') || msg.includes('✅')) return 'success';
+  if (msg.startsWith('❌') || msg.includes('❌')) return 'fail';
+  if (msg.startsWith('⚠')) return 'warn';
+  if (/^[▶🔐📥🏁━]/u.test(msg)) return 'info';
+  return '';
+}
+
+// ── 영업점 불러오기 ──
+async function loadBranches() {
+  const id = document.getElementById('inp-id').value.trim();
+  const pw = document.getElementById('inp-pw').value;
+  if (!id || !pw) { alert('아이디와 패스워드를 입력해주세요.'); return; }
+
+  const btn = document.getElementById('btn-load');
+  btn.disabled = true;
+  btn.textContent = '⏳ 불러오는 중...';
+  addLog(`▶ 로그인 및 영업점 목록 조회 중...`, 'info');
+
+  try {
+    const res = await fetch(`${SERVER}/branches`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, pw }),
+      signal: AbortSignal.timeout(60000),
+    });
+    const json = await res.json();
+
+    if (!json.success) {
+      addLog(`❌ ${json.message || '조회 실패'}`, 'fail');
+      return;
+    }
+
+    branches = (json.branches || []).map(b => ({ ...b, checked: false }));
+    grades   = (json.grades || []).map(g => ({ name: g, checked: false }));
+    items    = json.items || [];
+
+    addLog(`✅ 영업점 ${branches.length}개, 등급 ${grades.length}개 확인됨`, 'success');
+
+    renderBranches();
+    renderGrades();
+    renderItems();
+    updateSummary();
+  } catch (e) {
+    addLog(`❌ 서버 연결 실패: ${e.message}`, 'fail');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '📥 영업점 불러오기';
+}
+
+// ── 영업점 렌더링 ──
+function renderBranches() {
+  const grid = document.getElementById('branch-grid');
+  document.getElementById('branch-count').textContent = branches.length;
+
+  if (branches.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">로그인 후 영업점을 불러오세요.</div>`;
+    syncBranchAll();
+    return;
+  }
+
+  const q = document.getElementById('inp-search').value.trim().toLowerCase();
+  const filtered = q ? branches.filter(b => b.company.toLowerCase().includes(q)) : branches;
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">검색 결과가 없습니다.</div>`;
+    syncBranchAll();
+    return;
+  }
+
+  grid.innerHTML = filtered.map(b => {
+    const i = branches.indexOf(b);
+    return `<label class="chk-item">
+      <input type="checkbox" ${b.checked ? 'checked' : ''} onchange="toggleBranch(${i}, this)">
+      <span title="${esc(b.company)}">${esc(b.company)}</span>
+    </label>`;
+  }).join('');
+
+  syncBranchAll();
+}
+
+function toggleBranch(i, el) {
+  branches[i].checked = el.checked;
+  syncBranchAll();
+}
+
+function toggleAllBranches(el) {
+  const q = document.getElementById('inp-search').value.trim().toLowerCase();
+  const targets = q ? branches.filter(b => b.company.toLowerCase().includes(q)) : branches;
+  targets.forEach(b => b.checked = el.checked);
+  renderBranches();
+}
+
+function syncBranchAll() {
+  const total = branches.length;
+  const checked = branches.filter(b => b.checked).length;
+  const allChk = document.getElementById('chk-branch-all');
+  allChk.checked = total > 0 && checked === total;
+  allChk.indeterminate = checked > 0 && checked < total;
+  document.getElementById('branch-selected-count').textContent = `${checked}개 선택됨`;
+  updateSummary();
+}
+
+// ── 등급 렌더링 ──
+function renderGrades() {
+  const grid = document.getElementById('grade-grid');
+  document.getElementById('grade-count').textContent = grades.length;
+
+  if (grades.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">영업점을 먼저 불러오세요.</div>`;
+    syncGradeAll();
+    return;
+  }
+
+  grid.innerHTML = grades.map((g, i) => `<label class="chk-item">
+    <input type="checkbox" ${g.checked ? 'checked' : ''} onchange="toggleGrade(${i}, this)">
+    <span>${esc(g.name)}</span>
+  </label>`).join('');
+
+  syncGradeAll();
+}
+
+function toggleGrade(i, el) {
+  grades[i].checked = el.checked;
+  syncGradeAll();
+}
+
+function toggleAllGrades(el) {
+  grades.forEach(g => g.checked = el.checked);
+  renderGrades();
+}
+
+function syncGradeAll() {
+  const total = grades.length;
+  const checked = grades.filter(g => g.checked).length;
+  const allChk = document.getElementById('chk-grade-all');
+  allChk.checked = total > 0 && checked === total;
+  allChk.indeterminate = checked > 0 && checked < total;
+  document.getElementById('grade-selected-count').textContent = `${checked}개 선택됨`;
+  updateSummary();
+}
+
+// ── 항목 렌더링 ──
+function renderItems() {
+  const tbody = document.getElementById('item-tbody');
+  tbody.innerHTML = items.map(([field, label], i) => `
+    <tr>
+      <td><input type="checkbox" id="item-chk-${i}" onchange="onItemToggle(${i})"></td>
+      <td>${esc(label)}</td>
+      <td><input type="text" id="item-val-${i}" placeholder="가격 입력" disabled
+            oninput="this.value=this.value.replace(/[^0-9]/g,'')"></td>
+    </tr>`).join('');
+}
+
+function onItemToggle(i) {
+  const chk = document.getElementById(`item-chk-${i}`);
+  const val = document.getElementById(`item-val-${i}`);
+  val.disabled = !chk.checked;
+  if (chk.checked) val.focus();
+  else val.value = '';
+}
+
+function getSelectedItems() {
+  const result = {};
+  items.forEach(([field], i) => {
+    const chk = document.getElementById(`item-chk-${i}`);
+    const val = document.getElementById(`item-val-${i}`);
+    if (chk && chk.checked && val.value.trim() !== '') {
+      result[field] = val.value.trim();
+    }
+  });
+  return result;
+}
+
+// ── 요약 ──
+function updateSummary() {
+  const selBranches = branches.filter(b => b.checked).length;
+  const selGrades   = grades.filter(g => g.checked).length;
+  document.getElementById('sum-branches').textContent = selBranches;
+  document.getElementById('sum-grades').textContent   = selGrades;
+  document.getElementById('sum-total').textContent    = selBranches * selGrades;
+  document.getElementById('btn-apply').disabled = selBranches === 0 || selGrades === 0;
+}
+
+// ── 적용 실행 ──
+async function startApply() {
+  const id = document.getElementById('inp-id').value.trim();
+  const pw = document.getElementById('inp-pw').value;
+  const selBranches = branches.filter(b => b.checked);
+  const selGrades   = grades.filter(g => g.checked).map(g => g.name);
+  const selItems    = getSelectedItems();
+  const applyMode   = document.querySelector('input[name="apply-mode"]:checked').value;
+
+  if (selBranches.length === 0) { alert('영업점을 선택해주세요.'); return; }
+  if (selGrades.length === 0)   { alert('등급을 선택해주세요.'); return; }
+  if (Object.keys(selItems).length === 0) { alert('적용할 단가 항목을 선택하고 값을 입력해주세요.'); return; }
+
+  const itemLabels = items.filter(([f]) => selItems[f] !== undefined)
+                           .map(([f, l]) => `${l}=${selItems[f]}`).join(', ');
+  const total = selBranches.length * selGrades.length;
+  const modeLabel = applyMode === 'now' ? '즉시 적용' : '익일부터 적용';
+
+  if (!confirm(`아래 내용으로 일괄 적용하시겠습니까?\n\n영업점: ${selBranches.length}개\n등급: ${selGrades.length}개\n항목: ${itemLabels}\n적용 시점: ${modeLabel}\n총 ${total}건\n\n⚠ 실제 단가 정책에 반영됩니다.`)) return;
+
+  const btn = document.getElementById('btn-apply');
+  btn.disabled = true;
+  document.getElementById('progress-wrap').style.display = 'block';
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('progress-text').textContent = `0 / ${total} 진행중...`;
+
+  addLog(`▶ 일괄 적용 시작 — ${itemLabels} (${modeLabel})`, 'info');
+
+  try {
+    const res = await fetch(`${SERVER}/apply-stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id, pw,
+        branches: selBranches.map(b => ({ uid: b.uid, company: b.company })),
+        grades: selGrades,
+        items: selItems,
+        apply: applyMode,
+      }),
+      signal: AbortSignal.timeout(1800000),
+    });
+    if (!res.ok) throw new Error(`서버 응답 오류 (${res.status})`);
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let doneCount = 0;
+
+    outer: while (true) {
+      const { done: streamDone, value } = await reader.read();
+      if (streamDone) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        let data;
+        try { data = JSON.parse(line.slice(6)); } catch { continue; }
+        if (data.ping) continue;
+
+        if (data.log !== undefined) {
+          addLog(data.log, logType(data.log));
+          const m = data.log.match(/^\[(\d+)\/(\d+)\]/);
+          if (m) {
+            doneCount = parseInt(m[1]);
+            const t = parseInt(m[2]);
+            const pct = Math.round((doneCount / t) * 100);
+            document.getElementById('progress-bar').style.width = pct + '%';
+            document.getElementById('progress-text').textContent = `${doneCount} / ${t} 완료 (${pct}%)`;
+          }
+        }
+        if (data.done !== undefined) {
+          break outer;
+        }
+      }
+    }
+  } catch (e) {
+    addLog(`❌ 오류: ${e.message}`, 'fail');
+  }
+
+  btn.disabled = false;
+}
+
+// ── 서버 상태 확인 ──
+(async function checkServer() {
+  const badge = document.getElementById('server-status');
+  for (let i = 0; i < 5; i++) {
+    if (i > 0) await new Promise(r => setTimeout(r, 3000));
+    try {
+      const res = await fetch(`${SERVER}/ping`, { signal: AbortSignal.timeout(5000) });
+      if (res.ok) {
+        badge.textContent = '✅ 서버 연결됨';
+        return;
+      }
+    } catch(_) {}
+  }
+  badge.textContent = '⚠️ 연결 실패';
+  addLog('⚠️  서버 연결 실패 — 잠시 후 다시 시도해주세요.', 'warn');
+})();
+</script>
+
+<script type="module">
+  import { db } from "../ha-tools.js";
+  const userId = localStorage.getItem('ha_user');
+  if (!userId) { location.replace("../login.html"); }
+</script>
+
+</body>
+</html>
