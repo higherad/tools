@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BizFit 지사 단가 관리</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+
+  .container { max-width: 1000px; margin: 24px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 18px; }
+
+  .top-bar h1 { font-size: 18px; font-weight: 800; color: #1a202c; }
+
+  .card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
+  .card-header {
+    background: #f8f9fb; padding: 13px 18px; border-bottom: 1px solid #e8eaf0;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title { font-size: 13px; font-weight: 700; color: #2d3748; display: flex; align-items: center; gap: 7px; }
+  .card-body { padding: 18px; }
+
+  .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .action-grid { grid-template-columns: 1fr; } }
+
+  .action-card {
+    border: 1.5px solid #e8eaf0; border-radius: 12px; padding: 20px;
+    display: flex; flex-direction: column; gap: 10px; align-items: flex-start;
+  }
+  .action-icon { font-size: 26px; }
+  .action-title { font-size: 15px; font-weight: 800; color: #1a202c; }
+  .action-desc { font-size: 12.5px; color: #718096; line-height: 1.5; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 9px 18px; border-radius: 7px; font-size: 13px; font-weight: 700;
+    cursor: pointer; border: none; transition: all 0.15s; width: 100%;
+  }
+  .btn-teal     { background: #00897b; color: #fff; }
+  .btn-teal:hover { background: #00695c; }
+  .btn-teal:disabled { background: #a0aec0; cursor: not-allowed; }
+
+  /* 로그 */
+  .log-area {
+    background: #1a202c; border-radius: 10px; padding: 12px 14px; height: 320px;
+    overflow-y: auto; font-family: 'Consolas', 'Monaco', monospace; font-size: 12px; line-height: 1.7;
+  }
+  .log-line    { display: flex; gap: 10px; }
+  .log-time    { color: #4a5568; flex-shrink: 0; }
+  .log-msg     { color: #e2e8f0; white-space: pre-wrap; word-break: break-all; }
+  .log-success .log-msg { color: #68d391; }
+  .log-fail    .log-msg { color: #fc8181; }
+  .log-info    .log-msg { color: #4fd1c5; }
+  .log-warn    .log-msg { color: #f6e05e; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 700; }
+  .badge-teal { background: #e0f2f1; color: #00695c; border: 1px solid #b2dfdb; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="top-bar">
+    <h1>💰 BizFit 지사 단가 관리</h1>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">⚙️ 작업 선택</span>
+      <span class="badge badge-teal" id="server-status">연결 확인 중...</span>
+    </div>
+    <div class="card-body">
+      <div class="action-grid">
+        <div class="action-card">
+          <div class="action-icon">📥</div>
+          <div class="action-title">수집</div>
+          <div class="action-desc">BizFit 어드민의 지사별 등급 단가를 읽어 구글 시트에 업로드합니다.</div>
+          <button class="btn btn-teal" id="btn-collect" onclick="runJob('collect')">📥 수집 실행</button>
+        </div>
+        <div class="action-card">
+          <div class="action-icon">📤</div>
+          <div class="action-title">변경</div>
+          <div class="action-desc">구글 시트에서 수정한 단가 값을 BizFit 어드민에 반영합니다.</div>
+          <button class="btn btn-teal" id="btn-update" onclick="runJob('update')">📤 변경 실행</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 로그 카드 -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">📝 로그</span></div>
+    <div class="card-body" style="padding:12px 18px;">
+      <div class="log-area" id="log-area">
+        <div class="log-line log-info">
+          <span class="log-time">--:--:--</span>
+          <span class="log-msg">수집 또는 변경 버튼을 눌러 시작하세요.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SERVER = 'https://macro-9-bizfit-branch-price-938928195180.asia-northeast3.run.app';
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function addLog(msg, type = '') {
+  const area = document.getElementById('log-area');
+  const now  = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+  const div  = document.createElement('div');
+  div.className = `log-line ${type ? 'log-' + type : ''}`;
+  div.innerHTML = `<span class="log-time">${now}</span><span class="log-msg">${esc(msg)}</span>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+const JOBS = {
+  collect: { endpoint: '/run-collect', label: '수집', btnId: 'btn-collect', btnText: '📥 수집 실행' },
+  update:  { endpoint: '/run-update',  label: '변경', btnId: 'btn-update',  btnText: '📤 변경 실행' },
+};
+
+let running = false;
+
+async function runJob(kind) {
+  if (running) return;
+  const job = JOBS[kind];
+  const btnCollect = document.getElementById('btn-collect');
+  const btnUpdate  = document.getElementById('btn-update');
+  const btn = document.getElementById(job.btnId);
+
+  if (!confirm(`${job.label}을(를) 실행하시겠습니까?\n\n전체 지사 대상으로 실행되며 완료까지 다소 시간이 걸릴 수 있습니다.`)) return;
+
+  running = true;
+  btnCollect.disabled = true;
+  btnUpdate.disabled  = true;
+  btn.textContent = `⏳ ${job.label} 진행 중...`;
+
+  addLog(`▶ ${job.label} 시작...`, 'info');
+
+  try {
+    const res  = await fetch(`${SERVER}${job.endpoint}`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(600000),
+    });
+    const json = await res.json();
+
+    (json.logs || []).forEach(line => addLog(line));
+
+    if (json.success) {
+      addLog(`✅ ${job.label} 완료`, 'success');
+    } else {
+      addLog(`❌ ${job.label} 실패`, 'fail');
+    }
+  } catch (e) {
+    addLog(`❌ 오류: ${e.message}`, 'fail');
+  }
+
+  running = false;
+  btnCollect.disabled = false;
+  btnUpdate.disabled  = false;
+  btn.textContent = job.btnText;
+}
+
+(async function checkServer() {
+  const badge = document.getElementById('server-status');
+  for (let i = 0; i < 5; i++) {
+    if (i > 0) await new Promise(r => setTimeout(r, 3000));
+    try {
+      const res = await fetch(`${SERVER}/ping`, { signal: AbortSignal.timeout(5000) });
+      if (res.ok) {
+        badge.textContent = '✅ 서버 연결됨';
+        addLog('✅ 서버 연결됨', 'success');
+        return;
+      }
+    } catch(_) {}
+  }
+  badge.textContent = '⚠️ 연결 실패';
+  addLog('⚠️  서버 연결 실패 — 잠시 후 다시 시도해주세요.', 'warn');
+})();
+</script>
+
+<script type="module">
+  import { db } from "../ha-tools.js";
+  import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+
+  const userId = localStorage.getItem('ha_user');
+  if (!userId) { location.replace("../login.html"); }
+</script>
+
+</body>
+</html>
