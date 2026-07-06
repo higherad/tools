@@ -55,6 +55,15 @@
 
   .badge { display: inline-block; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 700; }
   .badge-teal { background: #e0f2f1; color: #00695c; border: 1px solid #b2dfdb; }
+
+  .branch-input-wrap { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+  .branch-input-wrap label { font-size: 12px; font-weight: 700; color: #718096; }
+  .branch-input-wrap input {
+    border: 1.5px solid #e2e8f0; border-radius: 7px; padding: 8px 10px;
+    font-size: 13px; outline: none; transition: border-color 0.2s;
+  }
+  .branch-input-wrap input:focus { border-color: #00897b; }
+  .branch-input-wrap .hint { font-size: 11px; color: #a0aec0; }
 </style>
 </head>
 <body>
@@ -71,6 +80,11 @@
       <span class="badge badge-teal" id="server-status">연결 확인 중...</span>
     </div>
     <div class="card-body">
+      <div class="branch-input-wrap">
+        <label for="inp-branches">대상 지사 (선택)</label>
+        <input type="text" id="inp-branches" placeholder="예) 하이어, 엠제이티  (쉼표로 구분, 비우면 전체 지사 대상)">
+        <span class="hint">지사명은 어드민에 등록된 이름과 정확히 일치해야 합니다.</span>
+      </div>
       <div class="action-grid">
         <div class="action-card">
           <div class="action-icon">📥</div>
@@ -134,18 +148,24 @@ async function runJob(kind) {
   const btnUpdate  = document.getElementById('btn-update');
   const btn = document.getElementById(job.btnId);
 
-  if (!confirm(`${job.label}을(를) 실행하시겠습니까?\n\n전체 지사 대상으로 실행되며 완료까지 다소 시간이 걸릴 수 있습니다.`)) return;
+  const rawBranches = document.getElementById('inp-branches').value.trim();
+  const targetBranches = rawBranches ? rawBranches.split(',').map(s => s.trim()).filter(Boolean) : [];
+  const targetLabel = targetBranches.length ? targetBranches.join(', ') : '전체 지사';
+
+  if (!confirm(`${job.label}을(를) 실행하시겠습니까?\n\n대상: ${targetLabel}\n완료까지 다소 시간이 걸릴 수 있습니다.`)) return;
 
   running = true;
   btnCollect.disabled = true;
   btnUpdate.disabled  = true;
   btn.textContent = `⏳ ${job.label} 진행 중...`;
 
-  addLog(`▶ ${job.label} 시작...`, 'info');
+  addLog(`▶ ${job.label} 시작... (대상: ${targetLabel})`, 'info');
 
   try {
     const res  = await fetch(`${SERVER}${job.endpoint}`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target_branches: targetBranches }),
       signal: AbortSignal.timeout(600000),
     });
     const json = await res.json();
