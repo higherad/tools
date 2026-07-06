@@ -166,17 +166,37 @@ async function runJob(kind) {
   addLog(`▶ ${job.label} 시작... (대상: ${targetLabel})`, 'info');
 
   try {
-    const res  = await fetch(`${SERVER}${job.endpoint}`, {
+    const res = await fetch(`${SERVER}${job.endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ target_branches: targetBranches }),
       signal: AbortSignal.timeout(600000),
     });
-    const json = await res.json();
 
-    (json.logs || []).forEach(line => addLog(line));
+    if (!res.body) throw new Error('스트리밍을 지원하지 않는 응답입니다.');
 
-    if (json.success) {
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let done_success = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      let idx;
+      while ((idx = buffer.indexOf('\n')) >= 0) {
+        const line = buffer.slice(0, idx).trim();
+        buffer = buffer.slice(idx + 1);
+        if (!line) continue;
+        const evt = JSON.parse(line);
+        if (evt.type === 'log') addLog(evt.message);
+        else if (evt.type === 'done') done_success = evt.success;
+      }
+    }
+
+    if (done_success) {
       addLog(`✅ ${job.label} 완료`, 'success');
     } else {
       addLog(`❌ ${job.label} 실패`, 'fail');
