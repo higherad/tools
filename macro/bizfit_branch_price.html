@@ -100,7 +100,10 @@
           <div class="action-icon">📤</div>
           <div class="action-title">변경</div>
           <div class="action-desc">구글 시트에서 수정한 단가 값을 BizFit 어드민에 반영합니다.</div>
-          <button class="btn btn-blue" id="btn-update" onclick="runJob('update')">📤 변경 실행</button>
+          <div style="display:flex; gap:8px; width:100%;">
+            <button class="btn btn-blue" id="btn-update-now" onclick="runJob('update_now')" style="flex:1;">⚡ 즉시 적용</button>
+            <button class="btn btn-blue" id="btn-update-reserve" onclick="runJob('update_reserve')" style="flex:1;">🌙 익일 적용</button>
+          </div>
         </div>
       </div>
     </div>
@@ -139,8 +142,9 @@ function addLog(msg, type = '') {
 }
 
 const JOBS = {
-  collect: { endpoint: '/run-collect', label: '수집', btnId: 'btn-collect', btnText: '📥 수집 실행' },
-  update:  { endpoint: '/run-update',  label: '변경', btnId: 'btn-update',  btnText: '📤 변경 실행' },
+  collect:        { endpoint: '/run-collect', label: '수집',      btnId: 'btn-collect',        btnText: '📥 수집 실행' },
+  update_now:      { endpoint: '/run-update', label: '즉시 적용', btnId: 'btn-update-now',      btnText: '⚡ 즉시 적용',  apply_mode: 'now' },
+  update_reserve:  { endpoint: '/run-update', label: '익일 적용', btnId: 'btn-update-reserve',  btnText: '🌙 익일 적용',  apply_mode: 'reserve' },
 };
 
 let running = false;
@@ -148,8 +152,7 @@ let running = false;
 async function runJob(kind) {
   if (running) return;
   const job = JOBS[kind];
-  const btnCollect = document.getElementById('btn-collect');
-  const btnUpdate  = document.getElementById('btn-update');
+  const allBtnIds = ['btn-collect', 'btn-update-now', 'btn-update-reserve'];
   const btn = document.getElementById(job.btnId);
 
   const rawBranches = document.getElementById('inp-branches').value.trim();
@@ -159,8 +162,7 @@ async function runJob(kind) {
   if (!confirm(`${job.label}을(를) 실행하시겠습니까?\n\n대상: ${targetLabel}\n완료까지 다소 시간이 걸릴 수 있습니다.`)) return;
 
   running = true;
-  btnCollect.disabled = true;
-  btnUpdate.disabled  = true;
+  allBtnIds.forEach(id => document.getElementById(id).disabled = true);
   btn.textContent = `⏳ ${job.label} 진행 중...`;
 
   addLog(`▶ ${job.label} 시작... (대상: ${targetLabel})`, 'info');
@@ -169,7 +171,10 @@ async function runJob(kind) {
     const res = await fetch(`${SERVER}${job.endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target_branches: targetBranches }),
+      body: JSON.stringify({
+        target_branches: targetBranches,
+        ...(job.apply_mode ? { apply_mode: job.apply_mode } : {}),
+      }),
       signal: AbortSignal.timeout(600000),
     });
 
@@ -206,8 +211,7 @@ async function runJob(kind) {
   }
 
   running = false;
-  btnCollect.disabled = false;
-  btnUpdate.disabled  = false;
+  allBtnIds.forEach(id => document.getElementById(id).disabled = false);
   btn.textContent = job.btnText;
 }
 
