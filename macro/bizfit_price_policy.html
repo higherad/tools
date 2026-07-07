@@ -228,7 +228,10 @@
 
       <hr class="divider">
 
-      <button class="btn btn-success" id="btn-apply" onclick="startApply()" disabled>⚡ 일괄 적용 실행</button>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-teal" id="btn-collect" onclick="startCollect()" disabled style="flex:1;">📥 현재 단가 수집 (시트 기록)</button>
+        <button class="btn btn-success" id="btn-apply" onclick="startApply()" disabled style="flex:1;">⚡ 일괄 적용 실행</button>
+      </div>
 
       <div class="progress-wrap" id="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
       <div id="progress-text"></div>
@@ -236,7 +239,7 @@
       <div class="log-area" id="log-area">
         <div class="log-line log-info">
           <span class="log-time">--:--:--</span>
-          <span class="log-msg">로그인 후 영업점 · 등급 · 항목을 선택하고 적용을 실행하세요.</span>
+          <span class="log-msg">로그인 후 영업점 · 등급을 선택하고 수집 또는 적용을 실행하세요.</span>
         </div>
       </div>
 
@@ -448,48 +451,28 @@ function updateSummary() {
   document.getElementById('sum-branches').textContent = selBranches;
   document.getElementById('sum-grades').textContent   = selGrades;
   document.getElementById('sum-total').textContent    = selBranches * selGrades;
-  document.getElementById('btn-apply').disabled = selBranches === 0 || selGrades === 0;
+  const noSelection = selBranches === 0 || selGrades === 0;
+  document.getElementById('btn-apply').disabled = noSelection;
+  document.getElementById('btn-collect').disabled = noSelection;
 }
 
-// ── 적용 실행 ──
-async function startApply() {
-  const id = document.getElementById('inp-id').value.trim();
-  const pw = document.getElementById('inp-pw').value;
-  const selBranches = branches.filter(b => b.checked);
-  const selGrades   = grades.filter(g => g.checked).map(g => g.name);
-  const selItems    = getSelectedItems();
-  const applyMode   = document.querySelector('input[name="apply-mode"]:checked').value;
-
-  if (selBranches.length === 0) { alert('영업점을 선택해주세요.'); return; }
-  if (selGrades.length === 0)   { alert('등급을 선택해주세요.'); return; }
-  if (Object.keys(selItems).length === 0) { alert('적용할 단가 항목을 선택하고 값을 입력해주세요.'); return; }
-
-  const itemLabels = items.filter(([f]) => selItems[f] !== undefined)
-                           .map(([f, l]) => `${l}=${selItems[f]}`).join(', ');
-  const total = selBranches.length * selGrades.length;
-  const modeLabel = applyMode === 'now' ? '즉시 적용' : '익일부터 적용';
-
-  if (!confirm(`아래 내용으로 일괄 적용하시겠습니까?\n\n영업점: ${selBranches.length}개\n등급: ${selGrades.length}개\n항목: ${itemLabels}\n적용 시점: ${modeLabel}\n총 ${total}건\n\n⚠ 실제 단가 정책에 반영됩니다.`)) return;
-
-  const btn = document.getElementById('btn-apply');
-  btn.disabled = true;
+// ── 공통 스트리밍 실행 (SSE) ──
+async function runStream(endpoint, body) {
+  const total = (body.branches?.length || 0) * (body.grades?.length || 0);
   document.getElementById('progress-wrap').style.display = 'block';
   document.getElementById('progress-bar').style.width = '0%';
   document.getElementById('progress-text').textContent = `0 / ${total} 진행중...`;
 
-  addLog(`▶ 일괄 적용 시작 — ${itemLabels} (${modeLabel})`, 'info');
+  const btnApply   = document.getElementById('btn-apply');
+  const btnCollect = document.getElementById('btn-collect');
+  btnApply.disabled = true;
+  btnCollect.disabled = true;
 
   try {
-    const res = await fetch(`${SERVER}/apply-stream`, {
+    const res = await fetch(`${SERVER}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id, pw,
-        branches: selBranches.map(b => ({ uid: b.uid, company: b.company })),
-        grades: selGrades,
-        items: selItems,
-        apply: applyMode,
-      }),
+      body: JSON.stringify(body),
       signal: AbortSignal.timeout(1800000),
     });
     if (!res.ok) throw new Error(`서버 응답 오류 (${res.status})`);
@@ -533,7 +516,61 @@ async function startApply() {
     addLog(`❌ 오류: ${e.message}`, 'fail');
   }
 
-  btn.disabled = false;
+  btnApply.disabled = false;
+  btnCollect.disabled = false;
+}
+
+// ── 적용 실행 ──
+async function startApply() {
+  const id = document.getElementById('inp-id').value.trim();
+  const pw = document.getElementById('inp-pw').value;
+  const selBranches = branches.filter(b => b.checked);
+  const selGrades   = grades.filter(g => g.checked).map(g => g.name);
+  const selItems    = getSelectedItems();
+  const applyMode   = document.querySelector('input[name="apply-mode"]:checked').value;
+
+  if (selBranches.length === 0) { alert('영업점을 선택해주세요.'); return; }
+  if (selGrades.length === 0)   { alert('등급을 선택해주세요.'); return; }
+  if (Object.keys(selItems).length === 0) { alert('적용할 단가 항목을 선택하고 값을 입력해주세요.'); return; }
+
+  const itemLabels = items.filter(([f]) => selItems[f] !== undefined)
+                           .map(([f, l]) => `${l}=${selItems[f]}`).join(', ');
+  const total = selBranches.length * selGrades.length;
+  const modeLabel = applyMode === 'now' ? '즉시 적용' : '익일부터 적용';
+
+  if (!confirm(`아래 내용으로 일괄 적용하시겠습니까?\n\n영업점: ${selBranches.length}개\n등급: ${selGrades.length}개\n항목: ${itemLabels}\n적용 시점: ${modeLabel}\n총 ${total}건\n\n⚠ 실제 단가 정책에 반영됩니다.`)) return;
+
+  addLog(`▶ 일괄 적용 시작 — ${itemLabels} (${modeLabel})`, 'info');
+
+  await runStream('/apply-stream', {
+    id, pw,
+    branches: selBranches.map(b => ({ uid: b.uid, company: b.company })),
+    grades: selGrades,
+    items: selItems,
+    apply: applyMode,
+  });
+}
+
+// ── 단가 수집 실행 ──
+async function startCollect() {
+  const id = document.getElementById('inp-id').value.trim();
+  const pw = document.getElementById('inp-pw').value;
+  const selBranches = branches.filter(b => b.checked);
+  const selGrades   = grades.filter(g => g.checked).map(g => g.name);
+
+  if (selBranches.length === 0) { alert('영업점을 선택해주세요.'); return; }
+  if (selGrades.length === 0)   { alert('등급을 선택해주세요.'); return; }
+
+  const total = selBranches.length * selGrades.length;
+  if (!confirm(`현재 단가를 수집해 구글 시트에 기록하시겠습니까?\n\n영업점: ${selBranches.length}개\n등급: ${selGrades.length}개\n총 ${total}건\n\n하나의 시트에 전체 영업점×등급 데이터가 통합 기록됩니다(기존 내용은 덮어씀).`)) return;
+
+  addLog(`▶ 단가 수집 시작 (영업점 ${selBranches.length}개 × 등급 ${selGrades.length}개)`, 'info');
+
+  await runStream('/collect-stream', {
+    id, pw,
+    branches: selBranches.map(b => ({ uid: b.uid, company: b.company })),
+    grades: selGrades,
+  });
 }
 
 // ── 서버 상태 확인 ──
