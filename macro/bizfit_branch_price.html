@@ -29,7 +29,7 @@
   }
   .action-icon { font-size: 26px; align-self: center; }
   .action-title { font-size: 15px; font-weight: 800; color: #1a202c; align-self: center; }
-  .action-desc { font-size: 12.5px; color: #718096; line-height: 1.5; }
+  .action-desc { font-size: 12.5px; color: #718096; line-height: 1.5; text-align: center; align-self: center; }
 
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -71,7 +71,7 @@
     font-size: 13px; outline: none; transition: border-color 0.2s;
   }
   .branch-input-wrap input:focus { border-color: #00897b; }
-  .branch-input-wrap .hint { font-size: 11px; color: #a0aec0; }
+  .branch-input-wrap .hint { font-size: 11px; color: #e53e3e; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -91,7 +91,7 @@
       <div class="branch-input-wrap">
         <label for="inp-branches">대상 지사 (선택)</label>
         <input type="text" id="inp-branches" placeholder="예) 하이어, 엠제이티  (쉼표로 구분, 비우면 전체 지사 대상)">
-        <span class="hint">지사명은 어드민에 등록된 이름과 정확히 일치해야 합니다.</span>
+        <span class="hint">※ 지사명은 어드민에 등록된 이름과 정확히 일치해야 합니다.</span>
       </div>
       <div class="action-grid">
         <div class="action-card">
