@@ -2,6 +2,7 @@ higherad-b9d62-firebase-adminsdk-fbsvc-a46811723b.json
 .env
 .env.*
 config.js
+회원가입.md
 
 # Cloud Run 백엔드 스크립트 (macro 하위 디렉토리)
 macro/macro-*/
