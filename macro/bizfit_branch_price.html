@@ -44,6 +44,10 @@
   .btn-blue:hover { background: #0d47a1; }
   .btn-blue:disabled { background: #a0aec0; cursor: not-allowed; }
 
+  .btn-amber     { background: #ef6c00; color: #fff; }
+  .btn-amber:hover { background: #d15f00; }
+  .btn-amber:disabled { background: #a0aec0; cursor: not-allowed; }
+
   /* 로그 */
   .log-area {
     background: #1a202c; border-radius: 10px; padding: 12px 14px; height: 320px;
@@ -102,7 +106,7 @@
           <div class="action-desc">구글 시트에서 수정한 단가 값을 BizFit 어드민에 반영합니다.</div>
           <div style="display:flex; gap:8px; width:100%;">
             <button class="btn btn-blue" id="btn-update-now" onclick="runJob('update_now')" style="flex:1;">⚡ 즉시 적용</button>
-            <button class="btn btn-blue" id="btn-update-reserve" onclick="runJob('update_reserve')" style="flex:1;">🌙 익일 적용</button>
+            <button class="btn btn-amber" id="btn-update-reserve" onclick="runJob('update_reserve')" style="flex:1;">🌙 익일 적용</button>
           </div>
         </div>
       </div>
