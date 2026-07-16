@@ -48,6 +48,21 @@
   .btn-run:disabled   { background: #a0aec0; cursor: not-allowed; }
   .btn-sm { padding: 4px 10px; font-size: 12px; }
 
+  .switch-wrap { display: flex; align-items: center; gap: 6px; }
+  .switch-label { font-size: 12px; font-weight: 700; color: #4a5568; }
+  .switch { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch .slider {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #cbd5e0; transition: 0.2s; border-radius: 20px;
+  }
+  .switch .slider::before {
+    position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px;
+    background-color: #fff; transition: 0.2s; border-radius: 50%;
+  }
+  .switch input:checked + .slider { background-color: #0277bd; }
+  .switch input:checked + .slider::before { transform: translateX(16px); }
+
   .type-badge {
     display: inline-block; padding: 2px 7px; border-radius: 100px; font-size: 10px; font-weight: 700; white-space: nowrap;
   }
@@ -148,20 +163,16 @@
 
         <div class="form-group">
           <label>Pcode / MID</label>
-          <input type="text" id="inp-id" placeholder="예: P21169CA0DAB3776F 또는 1839711962" />
+          <input type="text" id="inp-id" placeholder="Pcode 또는 MID" />
         </div>
         <div class="form-group">
           <label>키워드</label>
-          <textarea id="inp-keywords" placeholder="귀금속,귀금속방,귀금속위치"></textarea>
+          <textarea id="inp-keywords" placeholder="검색키워드를 콤마로 구분해서 넣어주세요."></textarea>
           <div class="keyword-hint">쉼표(,)로 구분 — A/B 동일하게 입력됩니다</div>
         </div>
         <div class="form-group">
           <label>메모 (선택)</label>
-          <input type="text" id="inp-memo" placeholder="비워두면 오늘 날짜(MM-DD) 자동 입력" />
-        </div>
-        <div class="form-group" style="display:flex;align-items:center;gap:6px;">
-          <input type="checkbox" id="inp-distribute" style="width:15px;height:15px;accent-color:#0277bd;cursor:pointer;">
-          <label for="inp-distribute" style="margin:0;text-transform:none;font-size:12px;font-weight:600;color:#4a5568;">배분 (MID 캠페인 수만큼 키워드 균등 배분)</label>
+          <input type="text" id="inp-memo" placeholder="미입력시 오늘 날짜(MM-DD) 자동 입력" />
         </div>
         <button class="btn btn-primary" onclick="addEntry()">➕ 추가</button>
 
@@ -171,7 +182,7 @@
         <div class="excel-upload-area" id="excel-drop-zone" onclick="document.getElementById('excel-file-input').click()">
           <div class="upload-icon">📊</div>
           <div class="upload-text">클릭 또는 드래그 업로드</div>
-          <div class="upload-hint">Pcode 또는 MID / 키워드 / 메모(선택) / 배분(선택, Y)</div>
+          <div class="upload-hint">Pcode 또는 MID / 키워드 / 메모(선택)</div>
         </div>
         <input type="file" id="excel-file-input" accept=".xlsx,.xls" onchange="handleExcelFile(this.files[0])">
       </div>
@@ -205,12 +216,11 @@
               <th>Pcode / MID</th>
               <th>키워드</th>
               <th>메모</th>
-              <th style="width:52px;">배분</th>
               <th style="width:72px;">상태</th>
             </tr>
           </thead>
           <tbody id="entry-tbody">
-            <tr><td colspan="7">
+            <tr><td colspan="6">
               <div class="empty-state"><div class="empty-icon">📋</div><div>등록된 항목이 없습니다.<br>좌측에서 캠페인을 추가해주세요.</div></div>
             </td></tr>
           </tbody>
@@ -222,7 +232,16 @@
   <!-- 우측: 실행 -->
   <div class="run-panel">
     <div class="card">
-      <div class="card-header"><span class="card-title">⚡ 실행</span></div>
+      <div class="card-header">
+        <span class="card-title">⚡ 실행</span>
+        <div class="switch-wrap" title="MID 캠페인 수만큼 키워드 균등 배분">
+          <span class="switch-label">배분</span>
+          <label class="switch">
+            <input type="checkbox" id="inp-distribute-global">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
       <div class="card-body">
         <div class="summary-row">
           <div class="summary-item">
@@ -263,23 +282,21 @@ function detectIdType(value) {
 }
 
 function addEntry() {
-  const id         = document.getElementById('inp-id').value.trim();
-  const keywords   = document.getElementById('inp-keywords').value.trim();
-  const memo       = document.getElementById('inp-memo').value.trim();
-  const distribute = document.getElementById('inp-distribute').checked;
+  const id       = document.getElementById('inp-id').value.trim();
+  const keywords = document.getElementById('inp-keywords').value.trim();
+  const memo     = document.getElementById('inp-memo').value.trim();
 
   if (!id) { alert('Pcode 또는 MID를 입력해주세요.'); return; }
   if (!keywords) { alert('키워드를 입력해주세요.'); return; }
 
   const id_type = detectIdType(id);
-  entries.push({ id, id_type, keywords, memo, distribute, status: 'ready', result: '' });
+  entries.push({ id, id_type, keywords, memo, status: 'ready', result: '' });
   save();
-  document.getElementById('inp-id').value         = '';
-  document.getElementById('inp-keywords').value   = '';
-  document.getElementById('inp-memo').value       = '';
-  document.getElementById('inp-distribute').checked = false;
+  document.getElementById('inp-id').value       = '';
+  document.getElementById('inp-keywords').value = '';
+  document.getElementById('inp-memo').value     = '';
   renderList();
-  addLog(`추가 [${id_type.toUpperCase()}]: ${id} — ${keywords.split(',').length}개 키워드${distribute?' (배분)':''}`, 'info');
+  addLog(`추가 [${id_type.toUpperCase()}]: ${id} — ${keywords.split(',').length}개 키워드`, 'info');
 }
 
 function removeChecked() {
@@ -295,10 +312,6 @@ function toggleItem(i, el) {
   const row = document.getElementById(`row-${i}`);
   if (row) row.classList.toggle('checked', el.checked);
   syncAll();
-}
-function toggleDistribute(i, el) {
-  entries[i].distribute = el.checked;
-  save();
 }
 function toggleAll(el) { entries.forEach(e => e.checked = el.checked); save(); renderList(); }
 function syncAll() {
@@ -326,7 +339,7 @@ function renderList() {
   document.getElementById('entry-count').textContent = entries.length;
 
   if (!entries.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><div>등록된 항목이 없습니다.</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div>등록된 항목이 없습니다.</div></div></td></tr>`;
     syncAll(); return;
   }
 
@@ -335,7 +348,7 @@ function renderList() {
     : entries;
 
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🔍</div><div>검색 결과가 없습니다.</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🔍</div><div>검색 결과가 없습니다.</div></div></td></tr>`;
     syncAll(); return;
   }
 
@@ -356,7 +369,6 @@ function renderList() {
       </td>
       <td><div class="td-keywords" title="${esc(e.keywords)}">${esc(e.keywords)}</div></td>
       <td><div class="td-keywords" title="${esc(e.memo||'')}">${esc(e.memo||'') || '<span style="color:#c0c8d4;font-size:10.5px;">오늘 날짜</span>'}</div></td>
-      <td style="text-align:center;"><input type="checkbox" ${e.distribute?'checked':''} onchange="toggleDistribute(${i},this)" style="width:15px;height:15px;accent-color:#0277bd;cursor:pointer;"></td>
       <td><span class="status-badge ${sc[e.status]||'s-ready'}">${st[e.status]||'대기'}</span></td>
     </tr>`;
   }).join('');
@@ -384,17 +396,19 @@ async function startProcess() {
   const skipped  = checked.length - selected.length;
   if (!selected.length) { alert('선택한 항목이 모두 완료 상태입니다. (이미 완료된 항목은 재실행 시 자동으로 건너뜁니다)'); return; }
 
+  const distribute = document.getElementById('inp-distribute-global').checked;
+
   const summary = selected.map(e => `  · [${e.id_type.toUpperCase()}] ${e.id}`).join('\n');
-  if (!confirm(`아래 캠페인의 키워드를 변경하시겠습니까?\n\n${summary}\n\n총 ${selected.length}건${skipped ? ` (완료된 ${skipped}건은 건너뜀)` : ''}`)) return;
+  if (!confirm(`아래 캠페인의 키워드를 변경하시겠습니까?${distribute ? '\n(배분 모드 ON — MID 캠페인 수만큼 키워드 균등 배분)' : ''}\n\n${summary}\n\n총 ${selected.length}건${skipped ? ` (완료된 ${skipped}건은 건너뜀)` : ''}`)) return;
 
   document.getElementById('btn-run').disabled = true;
   document.getElementById('progress-wrap').style.display = 'block';
 
-  const payload = selected.map(e => ({ id: e.id, id_type: e.id_type, keywords: e.keywords, memo: e.memo || '', distribute: e.distribute || false }));
+  const payload = selected.map(e => ({ id: e.id, id_type: e.id_type, keywords: e.keywords, memo: e.memo || '', distribute }));
   selected.forEach(e => { e.status = 'running'; e.result = ''; });
   renderList();
 
-  addLog(`▶ 시작 — ${selected.length}개 캠페인${skipped ? ` (완료 ${skipped}건 건너뜀)` : ''}`, 'info');
+  addLog(`▶ 시작 — ${selected.length}개 캠페인${distribute ? ' (배분 모드)' : ''}${skipped ? ` (완료 ${skipped}건 건너뜀)` : ''}`, 'info');
   document.getElementById('progress-bar').style.width = '10%';
   document.getElementById('progress-text').textContent = '로그인 중...';
 
@@ -489,14 +503,13 @@ function handleExcelFile(file) {
       let added = 0, skipped = 0;
 
       for (let r = start; r < rows.length; r++) {
-        const id         = String(rows[r][0] || '').trim();
-        const keywords   = String(rows[r][1] || '').trim();
-        const memo       = String(rows[r][2] || '').trim();
-        const distribute = ['y','yes','true','1','배분'].includes(String(rows[r][3] || '').trim().toLowerCase());
+        const id       = String(rows[r][0] || '').trim();
+        const keywords = String(rows[r][1] || '').trim();
+        const memo     = String(rows[r][2] || '').trim();
         if (!id || !keywords) { skipped++; continue; }
         if (entries.some(e => e.id === id)) { skipped++; continue; }
         const id_type = detectIdType(id);
-        entries.push({ id, id_type, keywords, memo, distribute, status: 'ready', result: '' });
+        entries.push({ id, id_type, keywords, memo, status: 'ready', result: '' });
         added++;
       }
 
@@ -569,7 +582,6 @@ renderList();
         status:  'ready',
         result:  '',
         checked: e.checked ?? false,
-        distribute: e.distribute ?? false,
       }));
       renderList();
       addLog(`📂 목록 불러옴 (${entries.length}개)`, 'info');
