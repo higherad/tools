@@ -48,17 +48,6 @@
   .btn-run:disabled   { background: #a0aec0; cursor: not-allowed; }
   .btn-sm { padding: 4px 10px; font-size: 12px; }
 
-  /* 토글 */
-  .type-toggle {
-    display: flex; background: #f0f2f5; border-radius: 7px; padding: 3px;
-    gap: 2px; margin-bottom: 10px;
-  }
-  .type-toggle button {
-    flex: 1; padding: 5px 0; border: none; border-radius: 5px; font-size: 12px; font-weight: 700;
-    cursor: pointer; transition: all 0.15s; background: transparent; color: #718096;
-  }
-  .type-toggle button.active { background: #fff; color: #0277bd; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
-
   .type-badge {
     display: inline-block; padding: 2px 7px; border-radius: 100px; font-size: 10px; font-weight: 700; white-space: nowrap;
   }
@@ -157,15 +146,9 @@
       <div class="card-header"><span class="card-title">➕ 캠페인 추가</span></div>
       <div class="card-body">
 
-        <!-- 타입 토글 -->
-        <div class="type-toggle">
-          <button id="toggle-pcode" class="active" onclick="setIdType('pcode')">Pcode</button>
-          <button id="toggle-mid" onclick="setIdType('mid')">MID</button>
-        </div>
-
         <div class="form-group">
-          <label id="inp-id-label">Pcode</label>
-          <input type="text" id="inp-id" placeholder="예: P21169CA0DAB3776F" />
+          <label>Pcode / MID</label>
+          <input type="text" id="inp-id" placeholder="예: P21169CA0DAB3776F 또는 1839711962" />
         </div>
         <div class="form-group">
           <label>키워드</label>
@@ -176,6 +159,10 @@
           <label>메모 (선택)</label>
           <input type="text" id="inp-memo" placeholder="비워두면 오늘 날짜(MM-DD) 자동 입력" />
         </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:6px;">
+          <input type="checkbox" id="inp-distribute" style="width:15px;height:15px;accent-color:#0277bd;cursor:pointer;">
+          <label for="inp-distribute" style="margin:0;text-transform:none;font-size:12px;font-weight:600;color:#4a5568;">배분 (MID 캠페인 수만큼 키워드 균등 배분)</label>
+        </div>
         <button class="btn btn-primary" onclick="addEntry()">➕ 추가</button>
 
         <hr style="border:none;border-top:1px solid #e8eaf0;margin:14px 0;">
@@ -184,7 +171,7 @@
         <div class="excel-upload-area" id="excel-drop-zone" onclick="document.getElementById('excel-file-input').click()">
           <div class="upload-icon">📊</div>
           <div class="upload-text">클릭 또는 드래그 업로드</div>
-          <div class="upload-hint">Pcode 또는 MID / 키워드 / 메모(선택)</div>
+          <div class="upload-hint">Pcode 또는 MID / 키워드 / 메모(선택) / 배분(선택, Y)</div>
         </div>
         <input type="file" id="excel-file-input" accept=".xlsx,.xls" onchange="handleExcelFile(this.files[0])">
       </div>
@@ -218,11 +205,12 @@
               <th>Pcode / MID</th>
               <th>키워드</th>
               <th>메모</th>
+              <th style="width:52px;">배분</th>
               <th style="width:72px;">상태</th>
             </tr>
           </thead>
           <tbody id="entry-tbody">
-            <tr><td colspan="6">
+            <tr><td colspan="7">
               <div class="empty-state"><div class="empty-icon">📋</div><div>등록된 항목이 없습니다.<br>좌측에서 캠페인을 추가해주세요.</div></div>
             </td></tr>
           </tbody>
@@ -266,17 +254,8 @@
 <script>
 const SERVER = 'https://macro-3-bizfit-keyword-938928195180.asia-northeast3.run.app';
 let entries = [];
-let currentIdType = 'pcode';
 
 function save() { if (window.fbSave) window.fbSave(entries); }
-
-function setIdType(type) {
-  currentIdType = type;
-  document.getElementById('toggle-pcode').classList.toggle('active', type === 'pcode');
-  document.getElementById('toggle-mid').classList.toggle('active', type === 'mid');
-  document.getElementById('inp-id-label').textContent = type === 'pcode' ? 'Pcode' : 'MID';
-  document.getElementById('inp-id').placeholder = type === 'pcode' ? '예: P21169CA0DAB3776F' : '예: 1839711962';
-}
 
 function detectIdType(value) {
   // P로 시작하는 영숫자 → pcode, 그 외(숫자 등) → mid
@@ -284,21 +263,23 @@ function detectIdType(value) {
 }
 
 function addEntry() {
-  const id       = document.getElementById('inp-id').value.trim();
-  const keywords = document.getElementById('inp-keywords').value.trim();
-  const memo     = document.getElementById('inp-memo').value.trim();
-  const id_type  = currentIdType;
+  const id         = document.getElementById('inp-id').value.trim();
+  const keywords   = document.getElementById('inp-keywords').value.trim();
+  const memo       = document.getElementById('inp-memo').value.trim();
+  const distribute = document.getElementById('inp-distribute').checked;
 
-  if (!id) { alert(`${id_type === 'pcode' ? 'Pcode' : 'MID'}를 입력해주세요.`); return; }
+  if (!id) { alert('Pcode 또는 MID를 입력해주세요.'); return; }
   if (!keywords) { alert('키워드를 입력해주세요.'); return; }
 
-  entries.push({ id, id_type, keywords, memo, status: 'ready', result: '' });
+  const id_type = detectIdType(id);
+  entries.push({ id, id_type, keywords, memo, distribute, status: 'ready', result: '' });
   save();
-  document.getElementById('inp-id').value       = '';
-  document.getElementById('inp-keywords').value = '';
-  document.getElementById('inp-memo').value     = '';
+  document.getElementById('inp-id').value         = '';
+  document.getElementById('inp-keywords').value   = '';
+  document.getElementById('inp-memo').value       = '';
+  document.getElementById('inp-distribute').checked = false;
   renderList();
-  addLog(`추가 [${id_type.toUpperCase()}]: ${id} — ${keywords.split(',').length}개 키워드`, 'info');
+  addLog(`추가 [${id_type.toUpperCase()}]: ${id} — ${keywords.split(',').length}개 키워드${distribute?' (배분)':''}`, 'info');
 }
 
 function removeChecked() {
@@ -314,6 +295,10 @@ function toggleItem(i, el) {
   const row = document.getElementById(`row-${i}`);
   if (row) row.classList.toggle('checked', el.checked);
   syncAll();
+}
+function toggleDistribute(i, el) {
+  entries[i].distribute = el.checked;
+  save();
 }
 function toggleAll(el) { entries.forEach(e => e.checked = el.checked); save(); renderList(); }
 function syncAll() {
@@ -341,7 +326,7 @@ function renderList() {
   document.getElementById('entry-count').textContent = entries.length;
 
   if (!entries.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div>등록된 항목이 없습니다.</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><div>등록된 항목이 없습니다.</div></div></td></tr>`;
     syncAll(); return;
   }
 
@@ -350,7 +335,7 @@ function renderList() {
     : entries;
 
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🔍</div><div>검색 결과가 없습니다.</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🔍</div><div>검색 결과가 없습니다.</div></div></td></tr>`;
     syncAll(); return;
   }
 
@@ -371,6 +356,7 @@ function renderList() {
       </td>
       <td><div class="td-keywords" title="${esc(e.keywords)}">${esc(e.keywords)}</div></td>
       <td><div class="td-keywords" title="${esc(e.memo||'')}">${esc(e.memo||'') || '<span style="color:#c0c8d4;font-size:10.5px;">오늘 날짜</span>'}</div></td>
+      <td style="text-align:center;"><input type="checkbox" ${e.distribute?'checked':''} onchange="toggleDistribute(${i},this)" style="width:15px;height:15px;accent-color:#0277bd;cursor:pointer;"></td>
       <td><span class="status-badge ${sc[e.status]||'s-ready'}">${st[e.status]||'대기'}</span></td>
     </tr>`;
   }).join('');
@@ -404,7 +390,7 @@ async function startProcess() {
   document.getElementById('btn-run').disabled = true;
   document.getElementById('progress-wrap').style.display = 'block';
 
-  const payload = selected.map(e => ({ id: e.id, id_type: e.id_type, keywords: e.keywords, memo: e.memo || '' }));
+  const payload = selected.map(e => ({ id: e.id, id_type: e.id_type, keywords: e.keywords, memo: e.memo || '', distribute: e.distribute || false }));
   selected.forEach(e => { e.status = 'running'; e.result = ''; });
   renderList();
 
@@ -503,13 +489,14 @@ function handleExcelFile(file) {
       let added = 0, skipped = 0;
 
       for (let r = start; r < rows.length; r++) {
-        const id       = String(rows[r][0] || '').trim();
-        const keywords = String(rows[r][1] || '').trim();
-        const memo     = String(rows[r][2] || '').trim();
+        const id         = String(rows[r][0] || '').trim();
+        const keywords   = String(rows[r][1] || '').trim();
+        const memo       = String(rows[r][2] || '').trim();
+        const distribute = ['y','yes','true','1','배분'].includes(String(rows[r][3] || '').trim().toLowerCase());
         if (!id || !keywords) { skipped++; continue; }
         if (entries.some(e => e.id === id)) { skipped++; continue; }
         const id_type = detectIdType(id);
-        entries.push({ id, id_type, keywords, memo, status: 'ready', result: '' });
+        entries.push({ id, id_type, keywords, memo, distribute, status: 'ready', result: '' });
         added++;
       }
 
@@ -582,6 +569,7 @@ renderList();
         status:  'ready',
         result:  '',
         checked: e.checked ?? false,
+        distribute: e.distribute ?? false,
       }));
       renderList();
       addLog(`📂 목록 불러옴 (${entries.length}개)`, 'info');
