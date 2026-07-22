@@ -191,10 +191,6 @@
 
         .status-mark { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 
-        .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-        .status-yes .dot { box-shadow: 0 0 6px var(--signal); animation: pulse-dot 1.8s ease-in-out infinite; }
-        .status-no .dot { display: none; }
-
         .tag-count {
             background: var(--signal-dim);
             color: var(--signal);
@@ -310,7 +306,7 @@
             <tr>
                 <td>${currentIndex + 1}</td>
                 <td class="kw-cell">${query}</td>
-                <td class="${hasRelated ? 'status-yes' : 'status-no'}"><span class="status-mark"><span class="dot"></span>${hasRelated ? 'O' : 'X'}</span></td>
+                <td class="${hasRelated ? 'status-yes' : 'status-no'}"><span class="status-mark">${hasRelated ? 'O' : 'X'}</span></td>
                 <td><span class="tag-count">${count}개</span></td>
                 <td class="col-tags"><div class="tag-wrap">${tagsHTML}</div></td>
             </tr>
