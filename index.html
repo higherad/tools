@@ -132,7 +132,7 @@
     body.macro-mode .tool-button:hover { background: #181e38; color: #fff; border-left-color: transparent; }
     body.macro-mode .tool-button.active { background: #181e38; color: #fff; border-left-color: #6b7699; }
     body.macro-mode .page-footer { background: #0d1122; border-top-color: #232a45; }
-    body.macro-mode .page-footer #displayUser { color: #c7d0ea; }
+    body.macro-mode .display-user { color: #c7d0ea; }
     body.macro-mode .footer-btn { background: #181e38; border-color: #2c3454; color: #9aa3c9; }
     body.macro-mode .footer-btn:hover { background: #2c3454; color: #fff; border-color: #6b7699; }
     body.macro-mode .pc-toggle-btn { color: #6b7699; }
@@ -455,12 +455,14 @@
       padding: 2px 6px; letter-spacing: 0.3px;
     }
 
-    .page-footer {
+    .sidebar-footer, .page-footer {
       height: 34px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: flex-end; gap: 10px;
       padding: 0 16px; border-top: 1px solid var(--border-color);
       background: var(--tint); font-size: 11px; color: var(--text-sub);
     }
+    .page-footer { display: none; }
+    #sidebar.collapsed .sidebar-footer { display: none; }
     .footer-btn {
       font-size: 11px; padding: 5px 10px; cursor: pointer;
       background: var(--tint); border: 1px solid var(--tint-border);
@@ -482,6 +484,8 @@
       #sidebar.collapsed { height: 62px !important; width: 100% !important; }
       #sidebar.collapsed .scroll-area, #sidebar.collapsed .sidebar-header { display: none; }
       #toggleMenuBtn { display: flex; }
+      .sidebar-footer { display: none; }
+      .page-footer { display: flex; }
       .pc-toggle-btn { display: none; }
       #content { height: 100%; flex-grow: 1; padding-top: 0; }
       #tabBar { display: none !important; }
@@ -552,6 +556,10 @@
         <div class="section-title">⚡ 매크로</div>
         <div id="macroTools" class="section"></div>
       </div>
+    </div>
+    <div class="sidebar-footer">
+      <span class="display-user"></span>
+      <button class="footer-btn" onclick="handleLogout()">로그아웃</button>
     </div>
     <button id="toggleMenuBtn" onclick="toggleSidebar()">
       <span id="toggleIcon" class="material-symbols-outlined">expand_less</span>
@@ -662,7 +670,7 @@
   </div><!-- /.shell -->
 
   <div class="page-footer">
-    <span id="displayUser"></span>
+    <span class="display-user"></span>
     <button class="footer-btn" onclick="handleLogout()">로그아웃</button>
   </div>
 
@@ -674,7 +682,7 @@
     const currentUserId = localStorage.getItem('ha_user');
 
     if (currentUserId) {
-      document.getElementById('displayUser').textContent = currentUserId + "님"; // 이름 로드 후 교체됨
+      document.querySelectorAll('.display-user').forEach(el => el.textContent = currentUserId + "님"); // 이름 로드 후 교체됨
 
       // 유저 데이터 로드 및 실시간 동기화
       initUserData();
@@ -692,7 +700,7 @@
         if (snapshot.exists()) {
           const data = snapshot.val();
           if (data.name) {
-            document.getElementById('displayUser').textContent = data.name + "님";
+            document.querySelectorAll('.display-user').forEach(el => el.textContent = data.name + "님");
           }
           // 데이터 구조가 toolDashboardState(문자열)인 경우와 fav/active(객체)인 경우 모두 대응
           let state;
