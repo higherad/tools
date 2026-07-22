@@ -6,9 +6,10 @@
   <title>로그인 - 하이어애드 통합 도구</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <style>
-    :root { 
-      --primary-color: #2e7d32; 
-      --bg-color: #f4f7f9;
+    :root {
+      --primary-color: #16234f;
+      --accent: #f2611c;
+      --bg-color: #f3f5f9;
     }
     
     body {
@@ -41,21 +42,21 @@
     .auth-card input:focus {
       border-color: var(--primary-color);
       background-color: #fff;
-      box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.1);
+      box-shadow: 0 0 0 4px rgba(22, 35, 79, 0.1);
     }
 
-    .auth-btn { 
-      width: 100%; padding: 16px; 
-      background: var(--primary-color); color: white; 
-      border: none; border-radius: 12px; 
-      cursor: pointer; margin-top: 20px; 
+    .auth-btn {
+      width: 100%; padding: 16px;
+      background: var(--accent); color: white;
+      border: none; border-radius: 12px;
+      cursor: pointer; margin-top: 20px;
       font-weight: 700; font-size: 17px;
       transition: all 0.1s ease;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    
+
     .auth-btn:hover {
-      background: #1b5e20;
+      filter: brightness(0.94);
       transform: translateY(-1px);
     }
 
@@ -64,7 +65,7 @@
     .auth-btn.is-active {
       transform: translateY(2px) scale(0.98);
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      background: #1b5e20;
+      filter: brightness(0.9);
     }
 
     .auth-footer { 
