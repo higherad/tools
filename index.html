@@ -20,13 +20,10 @@
   <style>
     :root {
       --primary-color: #16234f;
-      --green-mid: #2a3d72;
-      --green-light: #eef1f8;
-      --green-border: #dde3ef;
+      --primary-dark: #2a3d72;
+      --tint: #eef1f8;
+      --tint-border: #dde3ef;
       --accent: #f2611c;
-      --hover-color: #eef1f8;
-      --active-bg: #e3e8f5;
-      --sidebar-bg: #ffffff;
       --border-color: #e2e6ee;
       --text-main: #1a2033;
       --text-sub: #6b7280;
@@ -70,7 +67,7 @@
     .auth-card h3 { margin-top: 0; color: var(--primary-color); font-size: 17px; }
     .auth-card input {
       width: 100%; padding: 11px 14px; margin: 7px 0;
-      border: 1px solid var(--green-border); border-radius: 8px; outline: none;
+      border: 1px solid var(--tint-border); border-radius: 8px; outline: none;
       font-size: 14px; transition: border-color 0.2s;
     }
     .auth-card input:focus { border-color: var(--primary-color); }
@@ -79,7 +76,7 @@
       border: none; border-radius: 8px; cursor: pointer; margin-top: 10px;
       font-weight: bold; font-size: 14px; transition: background 0.2s;
     }
-    .auth-btn:hover { background: var(--green-mid); }
+    .auth-btn:hover { background: var(--primary-dark); }
     .auth-footer { font-size: 13px; color: #888; margin-top: 18px; cursor: pointer; text-decoration: underline; }
 
     #sidebar {
@@ -97,7 +94,7 @@
       border-bottom: 1px solid var(--border-color);
       display: flex; align-items: center; gap: 8px;
       height: 44px; overflow: hidden;
-      background: var(--green-light);
+      background: var(--tint);
     }
     #sidebar.collapsed .sidebar-header { justify-content: center; padding: 12px 0; }
     #sidebar.collapsed .pc-toggle-btn { margin-left: 0; }
@@ -105,13 +102,13 @@
     .home-btn, .macro-btn {
       display: flex; align-items: center; justify-content: center;
       padding: 4px 10px; height: 26px;
-      border-radius: 5px; border: 1px solid var(--green-border);
+      border-radius: 5px; border: 1px solid var(--tint-border);
       background: transparent; color: var(--text-sub); cursor: pointer;
       transition: all 0.2s; flex-shrink: 0;
       font-size: 10.5px; font-weight: 800; letter-spacing: 0.8px;
     }
-    .home-btn:hover { background: var(--green-light); color: var(--primary-color); border-color: var(--primary-color); }
-    .home-btn.active { background: var(--green-light); color: var(--primary-color); border-color: var(--primary-color); }
+    .home-btn:hover { background: var(--tint); color: var(--primary-color); border-color: var(--primary-color); }
+    .home-btn.active { background: var(--tint); color: var(--primary-color); border-color: var(--primary-color); }
 
     .macro-btn { border-color: #2c3454; color: #4b5578; }
     .macro-btn:hover { background: #11162a; color: #aab2d1; border-color: #4b5578; }
@@ -233,7 +230,7 @@
       color: var(--text-sub); padding: 4px; border-radius: 4px; flex-shrink: 0;
       margin-left: auto;
     }
-    .pc-toggle-btn:hover { background: var(--green-light); color: var(--primary-color); }
+    .pc-toggle-btn:hover { background: var(--tint); color: var(--primary-color); }
 
     .scroll-area { flex-grow: 1; overflow-y: auto; padding: 12px 0; }
     #sidebar.collapsed .scroll-area { padding: 12px 0; }
@@ -265,12 +262,12 @@
       color: var(--text-sub);
     }
     .tool-button:hover {
-      background: var(--green-light);
+      background: var(--tint);
       color: var(--primary-color);
       border-left-color: transparent;
     }
     .tool-button.active {
-      background: var(--green-light);
+      background: var(--tint);
       color: var(--primary-color);
       border-left-color: var(--primary-color);
       font-weight: 700;
@@ -290,8 +287,8 @@
     #sidebar.collapsed .tool-icon { margin: 0; font-size: 20px; }
 
     #tabBar {
-      display: none; background: var(--green-light);
-      border-bottom: 1px solid var(--green-border);
+      display: none; background: var(--tint);
+      border-bottom: 1px solid var(--tint-border);
       overflow-x: auto; white-space: nowrap;
       padding: 8px 12px; gap: 5px;
       scrollbar-width: none; flex-shrink: 0;
@@ -308,7 +305,7 @@
       cursor: pointer; user-select: none;
       transition: all 0.15s;
     }
-    .tab:hover { background: var(--green-light); color: var(--primary-color); border-color: var(--green-border); }
+    .tab:hover { background: var(--tint); color: var(--primary-color); border-color: var(--tint-border); }
     .tab.active {
       background: var(--primary-color);
       color: #fff;
@@ -325,16 +322,16 @@
     #tabOverflowBtn {
       display: inline-flex; align-items: center; gap: 4px;
       padding: 5px 10px; flex-shrink: 0;
-      background: transparent; border: 1px solid var(--green-border);
+      background: transparent; border: 1px solid var(--tint-border);
       border-radius: 20px; font-size: 12px; font-weight: 600;
       color: var(--text-sub); cursor: pointer;
       transition: all 0.15s; user-select: none; white-space: nowrap;
     }
-    #tabOverflowBtn:hover { background: var(--green-light); color: var(--primary-color); border-color: var(--primary-color); }
+    #tabOverflowBtn:hover { background: var(--tint); color: var(--primary-color); border-color: var(--primary-color); }
 
     #tabOverflowMenu {
       position: fixed; background: #fff;
-      border: 1px solid var(--green-border); border-radius: 12px;
+      border: 1px solid var(--tint-border); border-radius: 12px;
       box-shadow: 0 4px 20px rgba(46,125,50,0.13);
       z-index: 200; min-width: 180px; overflow: hidden;
       display: none;
@@ -345,7 +342,7 @@
       padding: 9px 14px; font-size: 13px; color: var(--text-sub);
       cursor: pointer; transition: background 0.1s; gap: 10px;
     }
-    .overflow-item:hover { background: var(--green-light); color: var(--primary-color); }
+    .overflow-item:hover { background: var(--tint); color: var(--primary-color); }
     .overflow-item-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .overflow-item-close { font-size: 14px; color: #ccc; flex-shrink: 0; }
     .overflow-item:hover .overflow-item-close { color: #bbb; }
@@ -412,7 +409,7 @@
       color: var(--text-sub); text-transform: uppercase;
       margin-bottom: 6px; display: flex; align-items: center; gap: 8px;
     }
-    .group-eyebrow::after { content: ''; flex: 1; height: 1px; background: var(--green-border); }
+    .group-eyebrow::after { content: ''; flex: 1; height: 1px; background: var(--tint-border); }
     .group-title { font-size: 14px; font-weight: 700; color: var(--text-main); margin: 0; }
 
     /* ── 카드 그리드 ── */
@@ -432,10 +429,10 @@
     .link-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 5px 16px rgba(22,35,79,0.10);
-      background: var(--green-light);
-      border-color: var(--green-border);
+      background: var(--tint);
+      border-color: var(--tint-border);
     }
-    .link-card .material-symbols-outlined { font-size: 20px; color: var(--green-mid); }
+    .link-card .material-symbols-outlined { font-size: 20px; color: var(--primary-dark); }
 
     /* ── NEW / UPDATE 배지 ── */
     .badge {
@@ -461,20 +458,20 @@
     .sidebar-footer {
       padding: 10px 16px; border-top: 1px solid var(--border-color);
       display: flex; flex-wrap: wrap; gap: 5px;
-      background: var(--green-light);
+      background: var(--tint);
     }
     #sidebar.collapsed .sidebar-footer { display: none; }
     .footer-btn {
       flex: 1; font-size: 11px; padding: 7px 5px; cursor: pointer;
-      background: var(--green-light); border: 1px solid var(--green-border);
+      background: var(--tint); border: 1px solid var(--tint-border);
       border-radius: 6px; color: var(--text-sub); transition: all 0.15s;
     }
     .footer-btn:hover { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
 
     #toggleMenuBtn {
       display: none; width: 100%; padding: 6px;
-      background: var(--green-light); border: none;
-      border-top: 1px solid var(--green-border);
+      background: var(--tint); border: none;
+      border-top: 1px solid var(--tint-border);
       cursor: pointer; align-items: center; justify-content: center;
       color: var(--primary-color);
     }
