@@ -5,49 +5,241 @@
     <title>대량 키워드 자동완성 체커</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <style>
-        :root { --main: #03c75a; --bg: #f8f9fa; }
-        body { font-family: 'Pretendard', sans-serif; background: var(--bg); padding: 40px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        h2 { color: var(--main); text-align: center; margin-bottom: 25px; }
+        :root {
+            --bg: #f0f2f5;
+            --panel: #ffffff;
+            --panel-alt: #f6f7f9;
+            --border: #e2e5eb;
+            --text: #1a1f27;
+            --muted: #6b7280;
+            --muted-2: #9aa1ac;
+            --signal: #0d9488;
+            --signal-dim: rgba(13,148,136,.10);
+            --silence: #d9483c;
+            --accent: #f97316;
+            --accent-dim: rgba(249,115,22,.18);
+            --font-ui: 'Pretendard', -apple-system, sans-serif;
+            --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+        }
 
-        textarea { width: 100%; height: 150px; padding: 15px; border: 1px solid #ddd; border-radius: 10px; resize: none; box-sizing: border-box; font-size: 14px; margin-bottom: 15px; }
-        .btn-group { display: flex; gap: 10px; margin-bottom: 25px; }
-        button { flex: 1; padding: 15px; background: var(--main); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
+        * { box-sizing: border-box; }
 
-        .status-bar { margin-bottom: 15px; font-size: 14px; color: #666; font-weight: bold; }
+        body {
+            font-family: var(--font-ui);
+            background-color: var(--bg);
+            background-image:
+                linear-gradient(rgba(0,0,0,.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,.03) 1px, transparent 1px);
+            background-size: 32px 32px;
+            color: var(--text);
+            padding: 40px 20px;
+        }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; table-layout: fixed; }
-        th { background: #f1f3f4; padding: 12px; border: 1px solid #ddd; text-align: center; }
-        td { padding: 10px 12px; border: 1px solid #ddd; text-align: center; vertical-align: middle; }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 32px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(20,25,35,.04), 0 8px 24px rgba(20,25,35,.05);
+        }
 
-        .col-num  { width: 52px; }
-        .col-kw   { width: 110px; }
-        .col-yn   { width: 90px; }
-        .col-cnt  { width: 64px; }
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--signal), transparent);
+            background-size: 50% 100%;
+            opacity: 0;
+        }
+        .container:has(#startBtn:disabled)::before {
+            opacity: 1;
+            animation: scanline 1.2s linear infinite;
+        }
+
+        .scan-header { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+
+        .logo-chip {
+            flex: none;
+            width: 40px; height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--panel-alt);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .logo-dot {
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        .eyebrow {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: .18em;
+            color: var(--muted-2);
+            text-transform: uppercase;
+            margin: 0 0 4px;
+        }
+        h1 { font-size: 21px; font-weight: 700; margin: 0; color: var(--text); }
+
+        .hint {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--muted-2);
+            margin: 14px 0 10px;
+        }
+
+        textarea {
+            width: 100%; height: 150px;
+            padding: 14px 16px;
+            background: var(--panel-alt);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            resize: none;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text);
+            caret-color: var(--signal);
+            margin-bottom: 16px;
+        }
+        textarea::placeholder { color: var(--muted-2); }
+        textarea:focus {
+            outline: none;
+            border-color: var(--signal);
+            box-shadow: 0 0 0 3px var(--signal-dim);
+        }
+
+        .btn-group { display: flex; gap: 10px; margin-bottom: 24px; }
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            transition: filter .15s ease, border-color .15s ease, color .15s ease;
+        }
+        .btn-primary { background: var(--accent); color: #ffffff; }
+        .btn-primary::before {
+            content: '';
+            width: 0; height: 0;
+            border-top: 7px solid transparent;
+            border-bottom: 7px solid transparent;
+            border-left: 11px solid currentColor;
+            opacity: .9;
+        }
+        .btn-primary:hover { filter: brightness(.94); }
+        .btn-primary:disabled { background: var(--panel-alt); color: var(--muted-2); cursor: not-allowed; }
+        .btn-primary:disabled::before { border-left-color: var(--muted-2); }
+
+        .btn-ghost { background: transparent; border-color: var(--border); color: var(--text); gap: 6px; }
+        .icon-copy { flex: none; opacity: .8; display: block; }
+        .btn-ghost:hover { border-color: var(--signal); color: var(--signal); }
+
+        .status-bar {
+            margin-bottom: 16px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .container:has(#startBtn:disabled) .status-bar::after {
+            content: '▍';
+            color: var(--signal);
+            margin-left: 4px;
+            animation: blink 1s step-start infinite;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; table-layout: fixed; }
+        th {
+            background: var(--panel-alt);
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 600;
+        }
+        td { padding: 10px 12px; border: 1px solid var(--border); text-align: center; vertical-align: middle; color: var(--text); }
+        tbody tr:hover { background: var(--panel-alt); }
+
+        .col-num  { width: 48px; }
+        .col-kw   { width: 210px; }
+        .col-yn   { width: 108px; white-space: nowrap; }
+        .col-cnt  { width: 68px; }
         .col-tags { text-align: left; }
+        th.col-tags { text-align: center; }
 
-        .status-yes { color: #03c75a; font-weight: bold; }
-        .status-no  { color: #d93025; font-weight: bold; }
+        .status-yes, .status-no {
+            font-family: var(--font-ui);
+            font-weight: 700;
+        }
+        .status-yes { color: var(--signal); }
+        .status-no  { color: var(--silence); }
 
-        .tag-count { background: #e8f5e9; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        .status-mark { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 
-        .kw-cell { white-space: nowrap; font-weight: bold; }
+        .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+        .status-yes .dot { box-shadow: 0 0 6px var(--signal); animation: pulse-dot 1.8s ease-in-out infinite; }
+        .status-no .dot { display: none; }
 
-        .tag-wrap { display: flex; flex-wrap: wrap; gap: 5px; }
-        .tag { display: inline-block; background: #f1f3f4; color: #444; font-size: 12px; padding: 3px 9px; border-radius: 20px; border: 1px solid #ddd; white-space: nowrap; }
+        .tag-count {
+            background: var(--signal-dim);
+            color: var(--signal);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .kw-cell { white-space: nowrap; font-weight: 600; }
+
+        .tag-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tag {
+            display: inline-block;
+            background: var(--panel-alt);
+            color: var(--muted);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 3px 9px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+        @keyframes scanline { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>📋 대량 키워드 자동완성 체커</h2>
-    <p style="font-size:13px; color:#666; margin-bottom:10px;">* 분석할 키워드를 한 줄에 하나씩 입력해 주세요.</p>
+    <div class="scan-header">
+        <div class="logo-chip"><span class="logo-dot"></span></div>
+        <div>
+            <p class="eyebrow">Naver Autocomplete Scan</p>
+            <h1>대량 키워드 자동완성 체커</h1>
+        </div>
+    </div>
+    <p class="hint">// 분석할 키워드를 한 줄에 하나씩 입력해 주세요</p>
     <textarea id="keywordList" placeholder="홍대맛집&#10;강남카페&#10;제주도여행"></textarea>
 
     <div class="btn-group">
-        <button id="startBtn" onclick="processBatch()">분석 시작하기</button>
-        <button id="copyBtn" onclick="copyTable()" style="background:#4285f4; display:none;">결과 복사하기</button>
+        <button id="startBtn" class="btn btn-primary" onclick="processBatch()">분석 시작하기</button>
+        <button id="copyBtn" class="btn btn-ghost" onclick="copyTable()" style="display:none;"><svg class="icon-copy" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>결과 복사하기</button>
     </div>
 
     <div id="status" class="status-bar"></div>
@@ -55,11 +247,11 @@
     <table id="resultTable" style="display:none;">
         <thead>
             <tr>
-                <th class="col-num">번호</th>
+                <th class="col-num">No</th>
                 <th class="col-kw">키워드</th>
-                <th class="col-yn">자동완성 유무</th>
+                <th class="col-yn">자동완성</th>
                 <th class="col-cnt">개수</th>
-                <th class="col-tags">자동완성(전체)</th>
+                <th class="col-tags">전체</th>
             </tr>
         </thead>
         <tbody id="resultBody"></tbody>
@@ -90,7 +282,7 @@
         if (currentIndex >= keywords.length) {
             document.getElementById('status').innerText = `✅ 모든 분석이 완료되었습니다. (총 ${keywords.length}개)`;
             document.getElementById('startBtn').disabled = false;
-            document.getElementById('copyBtn').style.display = 'inline-block';
+            document.getElementById('copyBtn').style.display = 'flex';
             return;
         }
 
@@ -112,13 +304,13 @@
         const count = items.length;
         const tagsHTML = items.length
             ? items.map(i => `<span class="tag">${i[0]}</span>`).join('')
-            : '<span style="color:#aaa; font-size:12px;">-</span>';
+            : '<span style="color:var(--muted-2); font-size:12px;">-</span>';
 
         const row = `
             <tr>
                 <td>${currentIndex + 1}</td>
                 <td class="kw-cell">${query}</td>
-                <td class="${hasRelated ? 'status-yes' : 'status-no'}">${hasRelated ? 'O' : 'X'}</td>
+                <td class="${hasRelated ? 'status-yes' : 'status-no'}"><span class="status-mark"><span class="dot"></span>${hasRelated ? 'O' : 'X'}</span></td>
                 <td><span class="tag-count">${count}개</span></td>
                 <td class="col-tags"><div class="tag-wrap">${tagsHTML}</div></td>
             </tr>
