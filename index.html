@@ -115,13 +115,13 @@
 
     .macro-btn { border-color: #2c3454; color: #4b5578; }
     .macro-btn:hover { background: #11162a; color: #aab2d1; border-color: #4b5578; }
-    .macro-btn.active { background: #11162a; color: var(--accent); border-color: var(--accent); }
+    .macro-btn.active { background: #11162a; color: #00e676; border-color: #00e676; }
 
     #sidebar.collapsed .home-btn, #sidebar.collapsed .macro-btn { display: none; }
 
     body.macro-mode .home-btn { color: #2c3454; border-color: #232a45; }
     body.macro-mode .home-btn:hover { background: #181e38; color: #aab2d1; border-color: #4b5578; }
-    body.macro-mode .home-btn.active { background: #181e38; color: var(--accent); border-color: var(--accent); }
+    body.macro-mode .home-btn.active { background: #181e38; color: #00e676; border-color: #00e676; }
 
     /* 매크로 모드 */
     #macroToolsArea { display: none; }
@@ -146,16 +146,16 @@
     body.macro-mode #tabBar { background: #11162a; border-bottom-color: #232a45; }
     body.macro-mode .tab { color: #aab2d1; font-weight: 500; }
     body.macro-mode .tab:hover { background: #181e38; color: #fff; border-color: #2c3454; }
-    body.macro-mode .tab.active { background: #181e38; color: var(--accent); border-color: var(--accent); box-shadow: 0 2px 8px rgba(242,97,28,0.15); }
+    body.macro-mode .tab.active { background: #181e38; color: #00e676; border-color: #00e676; box-shadow: 0 2px 8px rgba(0,230,118,0.15); }
     body.macro-mode .tab .close-tab { color: #4b5578; }
     body.macro-mode .tab:hover .close-tab { color: #8b96b8; }
-    body.macro-mode .tab.active .close-tab { color: rgba(242,97,28,0.5); }
-    body.macro-mode .tab.active .close-tab:hover { color: var(--accent); }
+    body.macro-mode .tab.active .close-tab { color: rgba(0,230,118,0.5); }
+    body.macro-mode .tab.active .close-tab:hover { color: #00e676; }
     body.macro-mode #tabOverflowBtn { border-color: #2c3454; color: #4b5578; }
     body.macro-mode #tabOverflowBtn:hover { background: #181e38; color: #aab2d1; border-color: #4b5578; }
     body.macro-mode #tabOverflowMenu { background: #11162a; border-color: #232a45; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
     body.macro-mode .overflow-item { color: #8b96b8; }
-    body.macro-mode .overflow-item:hover { background: #181e38; color: var(--accent); }
+    body.macro-mode .overflow-item:hover { background: #181e38; color: #00e676; }
     body.macro-mode .overflow-item-close { color: #4b5578; }
     body.macro-mode .overflow-item:hover .overflow-item-close { color: #6b7699; }
 
@@ -166,55 +166,55 @@
     #macroScreen {
       display: none;
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: #0d1122;
-      font-family: var(--font-mono);
-      color: #c7d0ea; font-size: 13px; line-height: 1.7;
+      background: #0d0d0d;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      color: #00e676; font-size: 13px; line-height: 1.7;
       overflow: hidden; flex-direction: column;
     }
     body.macro-mode #macroScreen { display: flex; }
 
     .macro-titlebar {
       display: flex; align-items: center; gap: 8px;
-      padding: 8px 16px; background: #11162a;
-      border-bottom: 1px solid #1c2340; flex-shrink: 0;
+      padding: 8px 16px; background: #161616;
+      border-bottom: 1px solid #1e1e1e; flex-shrink: 0;
     }
     .macro-dot { width: 12px; height: 12px; border-radius: 50%; }
-    .macro-dot.r { background: var(--accent); }
-    .macro-dot.y { background: #e0a83c; }
-    .macro-dot.g { background: var(--teal); }
-    .macro-titlebar span { color: #4b5578; font-size: 11px; margin-left: 8px; letter-spacing: 0.5px; }
+    .macro-dot.r { background: #ff5f57; }
+    .macro-dot.y { background: #febc2e; }
+    .macro-dot.g { background: #28c840; }
+    .macro-titlebar span { color: #555; font-size: 11px; margin-left: 8px; letter-spacing: 0.5px; }
 
     .macro-body {
       flex: 1; display: flex; overflow: hidden;
     }
     .macro-gutter {
-      width: 44px; background: #0d1122; border-right: 1px solid #1c2340;
+      width: 44px; background: #111; border-right: 1px solid #1e1e1e;
       display: flex; flex-direction: column; align-items: flex-end;
-      padding: 14px 10px 14px 0; color: #2c3454; font-size: 12px;
+      padding: 14px 10px 14px 0; color: #2e2e2e; font-size: 12px;
       user-select: none; flex-shrink: 0; overflow: hidden;
     }
     .macro-gutter span { line-height: 1.7; display: block; }
 
     .macro-code {
       flex: 1; padding: 14px 20px; overflow-y: auto;
-      scrollbar-width: thin; scrollbar-color: #232a45 transparent;
+      scrollbar-width: thin; scrollbar-color: #1e1e1e transparent;
     }
     .macro-code::-webkit-scrollbar { width: 4px; }
-    .macro-code::-webkit-scrollbar-thumb { background: #232a45; border-radius: 4px; }
+    .macro-code::-webkit-scrollbar-thumb { background: #1e1e1e; border-radius: 4px; }
 
-    .mc-line { display: flex; align-items: baseline; gap: 6px; white-space: pre; }
-    .mc-kw  { color: var(--accent); }
-    .mc-fn  { color: #6ea8fe; }
-    .mc-str { color: var(--teal); }
-    .mc-num { color: #e0a83c; }
-    .mc-cmt { color: #3a4166; font-style: italic; }
-    .mc-op  { color: #8b96b8; }
-    .mc-var { color: #eef1fb; }
-    .mc-dim { color: #232a45; }
+    .mc-line { white-space: pre; }
+    .mc-kw  { color: #bb86fc; }
+    .mc-fn  { color: #82aaff; }
+    .mc-str { color: #c3e88d; }
+    .mc-num { color: #f78c6c; }
+    .mc-cmt { color: #3a3a3a; font-style: italic; }
+    .mc-op  { color: #89ddff; }
+    .mc-var { color: #eeffff; }
+    .mc-dim { color: #2a2a2a; }
 
     .macro-cursor {
       display: inline-block; width: 8px; height: 14px;
-      background: var(--accent); vertical-align: middle;
+      background: #00e676; vertical-align: middle;
       animation: blink 1.1s step-end infinite;
       margin-left: 2px;
     }
@@ -222,7 +222,7 @@
 
     .macro-statusbar {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 3px 14px; background: var(--accent); color: #1a0d05;
+      padding: 3px 14px; background: #00e676; color: #000;
       font-size: 11px; font-weight: 700; letter-spacing: 0.3px; flex-shrink: 0;
     }
     .macro-statusbar .sb-right { display: flex; gap: 16px; opacity: 0.7; }
@@ -1230,32 +1230,19 @@
     // 매크로 코딩창 코드 라인 정의
     const MACRO_LINES = [
       `<span class="mc-cmt">// HigherAD Macro Engine v1.0</span>`,
-      `<span class="mc-cmt">// initialized at <span class="mc-num">` + new Date().toLocaleDateString('ko-KR') + `</span></span>`,
+      `<span class="mc-cmt">// scheduled tasks — Asia/Seoul</span>`,
       ``,
-      `<span class="mc-kw">import</span> <span class="mc-op">{</span> <span class="mc-var">Macro</span><span class="mc-op">,</span> <span class="mc-var">Schedule</span><span class="mc-op">,</span> <span class="mc-var">Runner</span> <span class="mc-op">}</span> <span class="mc-kw">from</span> <span class="mc-str">'./macro/core.js'</span><span class="mc-op">;</span>`,
+      `<span class="mc-kw">import</span> <span class="mc-op">{</span> <span class="mc-var">Schedule</span><span class="mc-op">,</span> <span class="mc-var">Runner</span> <span class="mc-op">}</span> <span class="mc-kw">from</span> <span class="mc-str">'./macro/core.js'</span><span class="mc-op">;</span>`,
       `<span class="mc-kw">import</span> <span class="mc-op">{</span> <span class="mc-var">db</span> <span class="mc-op">}</span> <span class="mc-kw">from</span> <span class="mc-str">'./ha-tools.js'</span><span class="mc-op">;</span>`,
       ``,
-      `<span class="mc-kw">const</span> <span class="mc-var">config</span> <span class="mc-op">=</span> <span class="mc-op">{</span>`,
-      `  <span class="mc-var">env</span><span class="mc-op">:</span>      <span class="mc-str">'production'</span><span class="mc-op">,</span>`,
-      `  <span class="mc-var">version</span><span class="mc-op">:</span>  <span class="mc-str">'1.0.0'</span><span class="mc-op">,</span>`,
-      `  <span class="mc-var">timeout</span><span class="mc-op">:</span>  <span class="mc-num">5000</span><span class="mc-op">,</span>`,
-      `  <span class="mc-var">retry</span><span class="mc-op">:</span>    <span class="mc-num">3</span><span class="mc-op">,</span>`,
-      `<span class="mc-op">};</span>`,
+      `<span class="mc-kw">const</span> <span class="mc-var">macros</span> <span class="mc-op">=</span> <span class="mc-kw">await</span> <span class="mc-fn">Runner</span><span class="mc-op">.</span><span class="mc-fn">load</span><span class="mc-op">(</span><span class="mc-str">'./macro/manifest.json'</span><span class="mc-op">);</span>`,
       ``,
-      `<span class="mc-cmt">// 매크로 목록 로드</span>`,
-      `<span class="mc-kw">async function</span> <span class="mc-fn">loadMacros</span><span class="mc-op">()</span> <span class="mc-op">{</span>`,
-      `  <span class="mc-kw">const</span> <span class="mc-var">list</span> <span class="mc-op">=</span> <span class="mc-kw">await</span> <span class="mc-fn">Runner</span><span class="mc-op">.</span><span class="mc-fn">fetch</span><span class="mc-op">(</span><span class="mc-str">'./macro/manifest.json'</span><span class="mc-op">);</span>`,
-      `  <span class="mc-kw">return</span> <span class="mc-var">list</span><span class="mc-op">.</span><span class="mc-fn">filter</span><span class="mc-op">(</span><span class="mc-var">m</span> <span class="mc-op">=></span> <span class="mc-var">m</span><span class="mc-op">.</span><span class="mc-var">enabled</span><span class="mc-op">);</span>`,
-      `<span class="mc-op">}</span>`,
-      ``,
-      `<span class="mc-cmt">// 스케줄 실행기</span>`,
       `<span class="mc-kw">const</span> <span class="mc-var">schedule</span> <span class="mc-op">=</span> <span class="mc-kw">new</span> <span class="mc-fn">Schedule</span><span class="mc-op">({</span>`,
-      `  <span class="mc-var">cron</span><span class="mc-op">:</span>   <span class="mc-str">'0 14 * * 1-5'</span><span class="mc-op">,</span>`,
-      `  <span class="mc-var">tz</span><span class="mc-op">:</span>     <span class="mc-str">'Asia/Seoul'</span><span class="mc-op">,</span>`,
-      `  <span class="mc-var">onRun</span><span class="mc-op">:</span>  <span class="mc-fn">loadMacros</span><span class="mc-op">,</span>`,
+      `  <span class="mc-var">cron</span><span class="mc-op">:</span>  <span class="mc-str">'0 14 * * 1-5'</span><span class="mc-op">,</span>  <span class="mc-cmt">// 평일 14:00</span>`,
+      `  <span class="mc-var">tz</span><span class="mc-op">:</span>    <span class="mc-str">'Asia/Seoul'</span><span class="mc-op">,</span>`,
+      `  <span class="mc-var">onRun</span><span class="mc-op">:</span> <span class="mc-op">()</span> <span class="mc-op">=></span> <span class="mc-var">macros</span><span class="mc-op">.</span><span class="mc-fn">filter</span><span class="mc-op">(</span><span class="mc-var">m</span> <span class="mc-op">=></span> <span class="mc-var">m</span><span class="mc-op">.</span><span class="mc-var">enabled</span><span class="mc-op">).</span><span class="mc-fn">forEach</span><span class="mc-op">(</span><span class="mc-fn">Runner</span><span class="mc-op">.</span><span class="mc-fn">run</span><span class="mc-op">),</span>`,
       `<span class="mc-op">});</span>`,
       ``,
-      `<span class="mc-cmt">// 실행</span>`,
       `<span class="mc-fn">schedule</span><span class="mc-op">.</span><span class="mc-fn">start</span><span class="mc-op">();</span>`,
       `<span class="mc-var">console</span><span class="mc-op">.</span><span class="mc-fn">log</span><span class="mc-op">(</span><span class="mc-str">'⚡ macro engine ready'</span><span class="mc-op">);</span>`,
       ``,
