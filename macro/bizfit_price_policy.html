@@ -55,7 +55,8 @@
     display: flex; align-items: center; gap: 6px; background: #f0f2f5;
     border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 5px 10px;
   }
-  .search-wrap input { border: none; background: transparent; outline: none; font-size: 13px; width: 160px; padding: 0; }
+  .search-icon { font-size: 13px; }
+  .search-wrap input { border: none; background: transparent; outline: none; font-size: 13px; width: 160px; padding: 0; align-self: stretch; }
 
   .select-all-row {
     display: flex; align-items: center; gap: 8px; padding: 10px 16px;
@@ -161,7 +162,7 @@
     <div class="card-header">
       <span class="card-title">🏢 영업점 목록 <span class="badge badge-count" id="branch-count">0</span></span>
       <div class="search-wrap">
-        <span>🔍</span>
+        <span class="search-icon">🔍</span>
         <input type="text" id="inp-search" placeholder="영업점명 검색" oninput="renderBranches()">
       </div>
     </div>
