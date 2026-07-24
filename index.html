@@ -797,8 +797,7 @@
     window.saveSeoData = function(slotNum, data, slotNames) {
       if (!currentUserId) return;
       const seoRef = ref(db, `users/${currentUserId}/seoKeyword`);
-      set(seoRef, { slots: { ...window._seoSlotCache, [slotNum]: data }, slotNames })
-        .then(() => { window._seoSlotCache = { ...window._seoSlotCache, [slotNum]: data }; })
+      update(seoRef, { [`slots/${slotNum}`]: data, slotNames })
         .catch(err => console.error("키워드 조합기 저장 실패:", err));
     };
 
@@ -808,7 +807,6 @@
       const seoRef = ref(db, `users/${currentUserId}/seoKeyword`);
       onValue(seoRef, (snapshot) => {
         const saved = snapshot.val();
-        window._seoSlotCache = saved ? (saved.slots || {}) : {};
         const slotData = saved ? (saved.slots || {})[slotNum] || null : null;
         const slotNames = saved ? (saved.slotNames || null) : null;
         const activeFrame = document.querySelector('#iframeContainer iframe.active, #mobileFrame');
@@ -817,8 +815,6 @@
         }
       }, { onlyOnce: true });
     };
-
-    window._seoSlotCache = {};
 
     // 기타 기존 함수 유지용 가상 auth 객체 (에러 방지)
     window.auth = { currentUser: { uid: currentUserId } };
