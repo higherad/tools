@@ -235,7 +235,7 @@
     }
 
     function copyTable() {
-        let text = "번호\t스토어명\t카테고리\t상품명\t평점\t리뷰 수\t가격\t찜(하트) 수\t상태\n";
+        let text = "번호\t스토어명\t카테고리\t상품명\t평점\t리뷰 수\t가격\t찜(하트) 수\n";
         document.querySelectorAll("#resultList .result-row").forEach(row => {
             const idx = row.querySelector('.r-idx').innerText;
             const store = row.querySelector('.r-store')?.innerText || '';
@@ -243,14 +243,14 @@
             const name = row.querySelector('.r-name').innerText;
             const statusEl = row.querySelector('.r-status');
             if (statusEl) {
-                text += `${idx}\t${store}\t${subtitle}\t${name}\t-\t-\t-\t-\t${statusEl.innerText}\n`;
+                text += `${idx}\t${store}\t${subtitle}\t${name}\t-\t-\t-\t-\n`;
                 return;
             }
             const rating = row.querySelector('.r-rating').innerText;
             const review = row.querySelector('.r-review').innerText.replace('건의 선물후기', '').trim();
             const price = row.querySelector('.r-price').innerText.replace('원', '').trim();
             const cnt = row.querySelector('.r-count').innerText.replace('💛', '').trim();
-            text += `${idx}\t${store}\t${subtitle}\t${name}\t${rating}\t${review}\t${price}\t${cnt}\t성공\n`;
+            text += `${idx}\t${store}\t${subtitle}\t${name}\t${rating}\t${review}\t${price}\t${cnt}\n`;
         });
 
         navigator.clipboard.writeText(text).then(() => {
