@@ -37,22 +37,10 @@
             background: var(--card);
             border-radius: 28px;
             padding: 36px 36px 30px;
-            position: relative;
             box-shadow: 0 2px 6px rgba(60,30,0,.05), 0 16px 40px rgba(60,30,0,.08);
         }
-        /* 말풍선 꼬리 */
-        .bubble::before {
-            content: '';
-            position: absolute;
-            top: -14px; left: 44px;
-            width: 28px; height: 28px;
-            background: var(--kakao-yellow);
-            border-radius: 8px;
-            transform: rotate(45deg);
-            z-index: 0;
-        }
 
-        .head-row { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; position: relative; z-index: 1; }
+        .head-row { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
         .badge {
             flex: none;
             width: 52px; height: 52px;
