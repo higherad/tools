@@ -427,9 +427,6 @@ function deactivateGroup() {
 // ── Product Groups ──
 const GROUPS_KEY = '캠페인_prod_groups';
 
-function loadGroups() {
-  try { const s=localStorage.getItem(GROUPS_KEY); if(s) groups=JSON.parse(s); } catch(e){}
-}
 function saveGroupsLocal() {
   try { localStorage.setItem(GROUPS_KEY, JSON.stringify(groups)); } catch(e){}
 }
@@ -912,18 +909,6 @@ function saveNewProd(){
   if(activeGroupId) updateActiveGroup(); else saveDefaultState();
   renderPS(); renderTable(); refreshUI(); scheduleSave();
 }
-function deleteProd(id){
-  if(FIXED_PROD_IDS.has(id)) return;
-  const p=prods.find(x=>x.id===id); if(!p) return;
-  if(!confirm(`'${p.name}' 상품을 삭제할까요?\n(모든 행의 배정에서도 제거됩니다)`)) return;
-  prods=prods.filter(x=>x.id!==id);
-  rows.forEach(r=>{r.products=(r.products||[]).filter(mid=>mid!==id);});
-  groups.forEach(g=>{g.state=g.state.filter(s=>s.id!==id);});
-  saveGroupsLocal();
-  if(activeGroupId) updateActiveGroup(); else saveDefaultState();
-  renderPS(); renderTable(); refreshUI(); scheduleSave();
-}
-
 // ── Upload ──
 function setupUpload() {
   const z=document.getElementById('upz');
