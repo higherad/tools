@@ -50,7 +50,8 @@
     }
     .status-strip .left, .status-strip .right { display: flex; align-items: center; gap: 14px; }
     .status-strip .divider { width: 1px; height: 14px; background: rgba(255,255,255,0.18); }
-    .status-strip .notice { color: #a9b3d6; }
+    .status-strip .notice-wrap { height: 14px; overflow: hidden; position: relative; }
+    .status-strip .notice { color: #a9b3d6; display: block; transition: transform .4s ease, opacity .4s ease; }
     .status-strip .footer-btn {
       background: transparent; border-color: rgba(255,255,255,0.25); color: #c7d0ea;
     }
@@ -530,8 +531,8 @@
     <div class="left">
       <span id="strDate">2026.07.22 (수)</span>
       <div class="divider"></div>
-      <!-- 공지 문구: 업데이트할 때 여기 한 줄만 바꿔주면 됩니다 -->
-      <span class="notice">[7/22] 메인페이지 디자인 업데이트 · 자동완성 체크 디자인 업데이트</span>
+      <!-- 공지 문구: NOTICES 배열 맨 아래에 { date, text } 한 줄만 추가하면 됩니다 (7일간 자동 순환 노출) -->
+      <div class="notice-wrap"><span class="notice" id="noticeText"></span></div>
     </div>
     <div class="right">
       <span class="display-user"></span>
@@ -724,6 +725,7 @@
 
       updateClock();
       setInterval(updateClock, 1000);
+      initNoticeTicker();
       setupDragAndDrop();
       setupTabDragAndDrop();
     }
@@ -1214,6 +1216,39 @@
         if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
         else return closest;
       }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    // 공지 이력: 새 공지는 맨 아래에 추가. 날짜로부터 7일간만 자동 노출되며, 여러 건이면 위로 슬라이드하며 순환합니다.
+    const NOTICES = [
+      { date: '2026-07-22', text: '[7/22] 메인페이지 디자인 업데이트 · 자동완성 체크 디자인 업데이트' },
+      { date: '2026-07-23', text: '[7/23] 카카오 찜 조회 기능 업데이트' },
+    ];
+
+    function initNoticeTicker() {
+      const el = document.getElementById('noticeText');
+      if (!el) return;
+      const now = new Date();
+      const active = NOTICES
+        .filter(n => (now - new Date(n.date)) / 86400000 <= 7)
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+      if (active.length === 0) return;
+      let i = 0;
+      el.textContent = active[0].text;
+      if (active.length === 1) return;
+      setInterval(() => {
+        el.style.transform = 'translateY(-100%)';
+        el.style.opacity = '0';
+        setTimeout(() => {
+          i = (i + 1) % active.length;
+          el.style.transition = 'none';
+          el.style.transform = 'translateY(100%)';
+          el.textContent = active[i].text;
+          el.offsetWidth; // reflow
+          el.style.transition = '';
+          el.style.transform = 'translateY(0)';
+          el.style.opacity = '1';
+        }, 400);
+      }, 4000);
     }
 
     function updateClock() {
