@@ -6,235 +6,169 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <style>
         :root {
-            --bg: #f0f2f5;
-            --panel: #ffffff;
-            --panel-alt: #f6f7f9;
-            --border: #e2e5eb;
-            --text: #1a1f27;
-            --muted: #6b7280;
-            --muted-2: #9aa1ac;
-            --signal: #0d9488;
-            --signal-dim: rgba(13,148,136,.10);
-            --silence: #d9483c;
-            --accent: #f97316;
-            --accent-dim: rgba(249,115,22,.18);
+            --kakao-yellow: #FEE500;
+            --kakao-yellow-dim: rgba(254,229,0,.35);
+            --brown: #3C1E1E;
+            --bg: #FFFBEF;
+            --card: #ffffff;
+            --border: #F1E7C6;
+            --text: #2b2b2b;
+            --muted: #8a8578;
+            --heart: #FF5C7A;
+            --heart-dim: rgba(255,92,122,.12);
+            --bad: #e0524a;
+            --bad-dim: rgba(224,82,74,.10);
             --font-ui: 'Pretendard', -apple-system, sans-serif;
-            --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
         }
 
         * { box-sizing: border-box; }
 
         body {
             font-family: var(--font-ui);
-            background-color: var(--bg);
-            background-image:
-                linear-gradient(rgba(0,0,0,.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,0,0,.03) 1px, transparent 1px);
-            background-size: 32px 32px;
+            background: var(--bg);
             color: var(--text);
-            padding: 40px 20px;
+            padding: 48px 20px;
+            min-height: 100vh;
         }
 
-        .container {
-            max-width: 900px;
+        .bubble {
+            max-width: 780px;
             margin: auto;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 32px;
+            background: var(--card);
+            border-radius: 28px;
+            padding: 36px 36px 30px;
             position: relative;
-            overflow: hidden;
-            box-shadow: 0 1px 2px rgba(20,25,35,.04), 0 8px 24px rgba(20,25,35,.05);
+            box-shadow: 0 2px 6px rgba(60,30,0,.05), 0 16px 40px rgba(60,30,0,.08);
         }
-
-        .container::before {
+        /* 말풍선 꼬리 */
+        .bubble::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--signal), transparent);
-            background-size: 50% 100%;
-            opacity: 0;
-        }
-        .container:has(#startBtn:disabled)::before {
-            opacity: 1;
-            animation: scanline 1.2s linear infinite;
-        }
-
-        .scan-header { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
-
-        .logo-chip {
-            flex: none;
-            width: 40px; height: 40px;
-            border: 1px solid var(--border);
+            top: -14px; left: 44px;
+            width: 28px; height: 28px;
+            background: var(--kakao-yellow);
             border-radius: 8px;
-            background: var(--panel-alt);
+            transform: rotate(45deg);
+            z-index: 0;
+        }
+
+        .head-row { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; position: relative; z-index: 1; }
+        .badge {
+            flex: none;
+            width: 52px; height: 52px;
+            border-radius: 16px;
+            background: var(--kakao-yellow);
             display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
         }
-        .logo-dot {
-            width: 9px; height: 9px;
-            border-radius: 50%;
-            background: var(--accent);
-            box-shadow: 0 0 8px var(--accent);
-            animation: pulse-dot 2s ease-in-out infinite;
-        }
+        .badge .pulse { animation: heartbeat 1.6s ease-in-out infinite; display: inline-block; }
+        h1 { font-size: 20px; font-weight: 800; margin: 0 0 2px; color: var(--brown); }
+        .sub { font-size: 13px; color: var(--muted); }
 
-        .eyebrow {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            letter-spacing: .18em;
-            color: var(--muted-2);
-            text-transform: uppercase;
-            margin: 0 0 4px;
-        }
-        h1 { font-size: 21px; font-weight: 700; margin: 0; color: var(--text); }
-
-        .hint {
-            font-family: var(--font-mono);
-            font-size: 12px;
-            color: var(--muted-2);
-            margin: 14px 0 10px;
+        label.field-label {
+            display: block;
+            font-size: 12px; font-weight: 700; color: var(--brown);
+            margin-bottom: 8px;
         }
 
         textarea {
             width: 100%; height: 150px;
-            padding: 14px 16px;
-            background: var(--panel-alt);
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            padding: 16px 18px;
+            background: #FFFDF6;
+            border: 2px solid var(--border);
+            border-radius: 18px;
             resize: none;
-            font-family: var(--font-mono);
-            font-size: 13px;
-            line-height: 1.6;
+            font-family: var(--font-ui);
+            font-size: 13.5px;
+            line-height: 1.7;
             color: var(--text);
-            caret-color: var(--signal);
-            margin-bottom: 16px;
+            margin-bottom: 18px;
         }
-        textarea::placeholder { color: var(--muted-2); }
+        textarea::placeholder { color: #c9c2a8; }
         textarea:focus {
             outline: none;
-            border-color: var(--signal);
-            box-shadow: 0 0 0 3px var(--signal-dim);
+            border-color: var(--kakao-yellow);
+            box-shadow: 0 0 0 4px var(--kakao-yellow-dim);
         }
 
-        .btn-group { display: flex; gap: 10px; margin-bottom: 24px; }
+        .action-row { display: flex; gap: 10px; margin-bottom: 22px; }
         .btn {
-            flex: 1;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
+            padding: 15px;
+            border-radius: 999px;
+            font-size: 14.5px;
+            font-weight: 800;
             cursor: pointer;
-            border: 1px solid transparent;
-            display: flex; align-items: center; justify-content: center; gap: 12px;
-            transition: filter .15s ease, border-color .15s ease, color .15s ease;
+            border: none;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: transform .1s ease, filter .15s ease;
         }
-        .btn-primary { background: var(--accent); color: #ffffff; }
-        .btn-primary::before {
-            content: '';
-            width: 0; height: 0;
-            border-top: 7px solid transparent;
-            border-bottom: 7px solid transparent;
-            border-left: 11px solid currentColor;
-            opacity: .9;
-        }
-        .btn-primary:hover { filter: brightness(.94); }
-        .btn-primary:disabled { background: var(--panel-alt); color: var(--muted-2); cursor: not-allowed; }
-        .btn-primary:disabled::before { border-left-color: var(--muted-2); }
+        .btn:active { transform: scale(.98); }
+        .btn-main { flex: 1; background: var(--kakao-yellow); color: var(--brown); }
+        .btn-main:hover { filter: brightness(.96); }
+        .btn-main:disabled { background: #f1eee3; color: #b7b1a0; cursor: not-allowed; }
+        .btn-ghost { background: #f6f3e8; color: var(--brown); padding: 15px 20px; }
+        .btn-ghost:hover { background: #efe9d6; }
 
-        .btn-ghost { background: transparent; border-color: var(--border); color: var(--text); gap: 6px; }
-        .icon-copy { flex: none; opacity: .8; display: block; }
-        .btn-ghost:hover { border-color: var(--signal); color: var(--signal); }
-
-        .status-bar {
-            margin-bottom: 16px;
-            font-family: var(--font-mono);
-            font-size: 13px;
-            color: var(--muted);
+        .status-line {
+            font-size: 13px; color: var(--muted); margin-bottom: 14px;
+            display: flex; align-items: center; gap: 8px; min-height: 18px;
         }
-        .container:has(#startBtn:disabled) .status-bar::after {
-            content: '▍';
-            color: var(--signal);
-            margin-left: 4px;
-            animation: blink 1s step-start infinite;
+        .spinner {
+            width: 12px; height: 12px; border-radius: 50%;
+            border: 2px solid var(--border); border-top-color: var(--heart);
+            animation: spin .7s linear infinite; display: none;
         }
+        .status-line.loading .spinner { display: inline-block; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; table-layout: fixed; }
-        th {
-            background: var(--panel-alt);
-            padding: 10px 12px;
+        .result-list { display: flex; flex-direction: column; gap: 8px; }
+        .result-row {
+            display: grid;
+            grid-template-columns: 28px 1fr auto auto;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: #FFFDF6;
             border: 1px solid var(--border);
-            text-align: center;
-            font-family: var(--font-mono);
-            font-size: 11px;
-            letter-spacing: .06em;
-            text-transform: uppercase;
-            color: var(--muted);
-            font-weight: 600;
+            border-radius: 14px;
         }
-        td { padding: 10px 12px; border: 1px solid var(--border); text-align: center; vertical-align: middle; color: var(--text); }
-        tbody tr:hover { background: var(--panel-alt); }
-
-        .col-num  { width: 48px; }
-        .col-url  { text-align: left; }
-        th.col-url { text-align: center; }
-        .col-cnt  { width: 110px; }
-        .col-status { width: 160px; }
-
-        .url-cell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0; text-align: left; font-family: var(--font-mono); font-size: 12px; }
-
-        .status-ok, .status-err {
-            font-family: var(--font-ui);
-            font-weight: 700;
+        .r-idx { color: #c9c2a8; font-size: 12px; font-weight: 700; text-align: center; }
+        .r-url { font-size: 12.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .r-count {
+            display: flex; align-items: center; gap: 5px;
+            background: var(--heart-dim); color: var(--heart);
+            font-weight: 800; font-size: 13px;
+            padding: 5px 12px; border-radius: 999px; white-space: nowrap;
         }
-        .status-ok  { color: var(--signal); }
-        .status-err { color: var(--silence); }
+        .r-status { font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+        .r-status.ok  { background: var(--heart-dim); color: var(--heart); }
+        .r-status.err { background: var(--bad-dim); color: var(--bad); }
 
-        .tag-count {
-            background: var(--signal-dim);
-            color: var(--signal);
-            font-family: var(--font-mono);
-            font-size: 12px;
-            padding: 2px 8px;
-            border-radius: 4px;
-        }
-
-        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-        @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
-        @keyframes scanline { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        @keyframes heartbeat { 0%,100% { transform: scale(1); } 25% { transform: scale(1.15); } 40% { transform: scale(1); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="scan-header">
-        <div class="logo-chip"><span class="logo-dot"></span></div>
+<div class="bubble">
+    <div class="head-row">
+        <div class="badge"><span class="pulse">💛</span></div>
         <div>
-            <p class="eyebrow">Kakao Gift Wish Scan</p>
-            <h1>카카오 선물하기 찜(하트) 조회</h1>
+            <h1>카카오 선물하기 찜 조회</h1>
+            <div class="sub">상품 URL을 넣으면 하트(찜) 수를 긁어옵니다</div>
         </div>
     </div>
-    <p class="hint">// 조회할 상품 URL을 한 줄에 하나씩 입력해 주세요</p>
+
+    <label class="field-label">상품 URL (한 줄에 하나씩)</label>
     <textarea id="urlList" placeholder="https://gift.kakao.com/product/7630727&#10;https://gift.kakao.com/product/1234567"></textarea>
 
-    <div class="btn-group">
-        <button id="startBtn" class="btn btn-primary" onclick="processBatch()">조회 시작하기</button>
-        <button id="copyBtn" class="btn btn-ghost" onclick="copyTable()" style="display:none;"><svg class="icon-copy" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>결과 복사하기</button>
+    <div class="action-row">
+        <button id="startBtn" class="btn btn-main" onclick="processBatch()">🔍 찜 수 조회하기</button>
+        <button id="copyBtn" class="btn btn-ghost" onclick="copyTable()" style="display:none;">📋 복사</button>
     </div>
 
-    <div id="status" class="status-bar"></div>
+    <div id="status" class="status-line"><span class="spinner"></span><span id="statusText"></span></div>
 
-    <table id="resultTable" style="display:none;">
-        <thead>
-            <tr>
-                <th class="col-num">No</th>
-                <th class="col-url">URL</th>
-                <th class="col-cnt">찜(하트) 수</th>
-                <th class="col-status">상태</th>
-            </tr>
-        </thead>
-        <tbody id="resultBody"></tbody>
-    </table>
+    <div id="resultList" class="result-list"></div>
 </div>
 
 <script>
@@ -246,11 +180,13 @@
 
         const urls = input.split('\n').map(u => u.trim()).filter(u => u);
 
-        document.getElementById('startBtn').disabled = true;
+        const startBtn = document.getElementById('startBtn');
+        const statusEl = document.getElementById('status');
+        startBtn.disabled = true;
         document.getElementById('copyBtn').style.display = 'none';
-        document.getElementById('resultTable').style.display = 'table';
-        document.getElementById('resultBody').innerHTML = '';
-        document.getElementById('status').innerText = `전체 ${urls.length}개 조회 중...`;
+        document.getElementById('resultList').innerHTML = '';
+        statusEl.classList.add('loading');
+        document.getElementById('statusText').textContent = `${urls.length}개 조회 중...`;
 
         try {
             const res = await fetch(`${SERVER}/wish-counts`, {
@@ -261,33 +197,36 @@
             const data = await res.json();
             if (!data.success) throw new Error(data.message || '조회 실패');
 
-            const tbody = document.getElementById('resultBody');
+            const list = document.getElementById('resultList');
             data.results.forEach((r, i) => {
                 const ok = r.error === null;
-                const row = `
-                    <tr>
-                        <td>${i + 1}</td>
-                        <td class="url-cell" title="${esc(r.url)}">${esc(r.url)}</td>
-                        <td>${ok ? `<span class="tag-count">${r.count.toLocaleString()}</span>` : '-'}</td>
-                        <td class="${ok ? 'status-ok' : 'status-err'}">${ok ? '성공' : esc(r.error)}</td>
-                    </tr>`;
-                tbody.insertAdjacentHTML('beforeend', row);
+                list.insertAdjacentHTML('beforeend', `
+                    <div class="result-row">
+                        <div class="r-idx">${i + 1}</div>
+                        <div class="r-url" title="${esc(r.url)}">${esc(r.url)}</div>
+                        <div class="r-count">${ok ? `💛 ${r.count.toLocaleString()}` : '-'}</div>
+                        <div class="r-status ${ok ? 'ok' : 'err'}">${ok ? '성공' : esc(r.error)}</div>
+                    </div>`);
             });
 
-            document.getElementById('status').innerText = `✅ 조회 완료 (총 ${urls.length}개)`;
+            document.getElementById('statusText').textContent = `완료 — 총 ${urls.length}개`;
         } catch (e) {
-            document.getElementById('status').innerText = `❌ 오류: ${e.message}`;
+            document.getElementById('statusText').textContent = `오류: ${e.message}`;
         } finally {
-            document.getElementById('startBtn').disabled = false;
+            statusEl.classList.remove('loading');
+            startBtn.disabled = false;
             document.getElementById('copyBtn').style.display = 'flex';
         }
     }
 
     function copyTable() {
         let text = "번호\tURL\t찜(하트) 수\t상태\n";
-        document.querySelectorAll("#resultBody tr").forEach(row => {
-            const cols = row.querySelectorAll("td");
-            text += `${cols[0].innerText}\t${cols[1].innerText}\t${cols[2].innerText}\t${cols[3].innerText}\n`;
+        document.querySelectorAll("#resultList .result-row").forEach(row => {
+            const idx = row.querySelector('.r-idx').innerText;
+            const url = row.querySelector('.r-url').innerText;
+            const cnt = row.querySelector('.r-count').innerText.replace('💛', '').trim();
+            const status = row.querySelector('.r-status').innerText;
+            text += `${idx}\t${url}\t${cnt}\t${status}\n`;
         });
 
         navigator.clipboard.writeText(text).then(() => {

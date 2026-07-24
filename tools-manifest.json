@@ -11,5 +11,5 @@
   { "file": "tools/자동완성_체크.html",          "label": "✅ 자동완성 체크",          "addedAt": "2026-03-05", "updatedAt": "2026-07-22" },
   { "file": "tools/등급_확인.html",              "label": "🎖️ 등급 확인",              "addedAt": "2026-03-05", "updatedAt": "2026-06-02" },
   { "file": "tools/자료실.html",                 "label": "📂 자료실",                 "addedAt": "2026-05-15", "updatedAt": "2026-06-02" },
-  { "file": "tools/카카오_찜조회.html",           "label": "💛 카카오 찜 조회",         "addedAt": "2026-07-24" }
+  { "file": "tools/카카오_찜조회.html",           "label": "💛 카카오 찜 조회",         "addedAt": "2026-07-24", "updatedAt": "2026-07-24" }
 ]
