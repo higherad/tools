@@ -752,27 +752,6 @@
       }
     };
 
-    // 5. 단가 계산기 업체 목록 저장 (플레이스_단가_계산기.html에서 호출)
-    window.saveClientsData = function(clients) {
-      if (!currentUserId) return;
-      const clientsRef = ref(db, `users/${currentUserId}/clients`);
-      set(clientsRef, clients).catch(err => console.error("업체 목록 저장 실패:", err));
-    };
-
-    // 6. 단가 계산기 업체 목록 로드 (플레이스_단가_계산기.html에서 호출)
-    window.loadClientsData = function() {
-      if (!currentUserId) return;
-      const clientsRef = ref(db, `users/${currentUserId}/clients`);
-      onValue(clientsRef, (snapshot) => {
-        const data = snapshot.val();
-        // 현재 활성화된 iframe에 데이터 전달
-        const activeFrame = document.querySelector('#iframeContainer iframe.active, #mobileFrame');
-        if (activeFrame && activeFrame.contentWindow && activeFrame.contentWindow.applyClientsData) {
-          activeFrame.contentWindow.applyClientsData(data);
-        }
-      });
-    };
-
     // 7. 캠페인 엑셀 변환기 데이터 저장 (캠페인_엑셀_자동변환기.html에서 호출)
     window.saveSlotData = function(data) {
       if (!currentUserId) return;
