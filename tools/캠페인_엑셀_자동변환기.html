@@ -425,12 +425,6 @@ function deactivateGroup() {
 }
 
 // ── Product Groups ──
-const GROUPS_KEY = '캠페인_prod_groups';
-
-function saveGroupsLocal() {
-  try { localStorage.setItem(GROUPS_KEY, JSON.stringify(groups)); } catch(e){}
-}
-
 function renderGroups() {
   const wrap = document.getElementById('groupWrap');
   if (!wrap) return;
@@ -469,7 +463,6 @@ function saveNewGroup() {
   if (!name) { document.getElementById('groupNameInput').focus(); return; }
   const state = prods.map(p => ({id:p.id, active:p.active, ratio:p.ratio, name:p.name, ver:p.ver, kwPct:p.kwPct}));
   groups.push({ id:'g'+Date.now(), name, state });
-  saveGroupsLocal();
   hideAddGroup();
   renderGroups();
   scheduleSave();
@@ -477,7 +470,6 @@ function saveNewGroup() {
 function deleteGroup(id) {
   if (activeGroupId === id) activeGroupId = null;
   groups = groups.filter(g=>g.id!==id);
-  saveGroupsLocal();
   renderGroups();
   scheduleSave();
 }
@@ -513,7 +505,6 @@ function startRenameGroup(id) {
     if (committed) return; committed = true;
     const v = inp.value.trim();
     if (v) g.name = v;
-    saveGroupsLocal();
     renderGroups();
     scheduleSave();
   };
@@ -526,7 +517,6 @@ function updateActiveGroup() {
   if (!activeGroupId) return;
   const g = groups.find(x=>x.id===activeGroupId); if(!g) return;
   g.state = prods.map(p => ({id:p.id, active:p.active, ratio:p.ratio, name:p.name, ver:p.ver, kwPct:p.kwPct}));
-  saveGroupsLocal();
   renderGroups();
 }
 
@@ -786,7 +776,6 @@ function deleteModalProd() {
   prods = prods.filter(x=>x.id!==id);
   rows.forEach(r=>{r.products=(r.products||[]).filter(mid=>mid!==id);});
   groups.forEach(g=>{g.state=g.state.filter(s=>s.id!==id);});
-  saveGroupsLocal();
   if(activeGroupId) updateActiveGroup(); else saveDefaultState();
   renderPS(); renderTable(); refreshUI(); scheduleSave();
 }
@@ -846,8 +835,6 @@ function saveModal() {
     const gs = g.state.find(s => s.id === p.id);
     if (gs) { gs.name = p.name; gs.ver = p.ver; }
   });
-  saveGroupsLocal();
-
   closeModal();
   if (activeGroupId) updateActiveGroup(); else saveDefaultState();
   renderPS(); renderTable(); refreshUI();
