@@ -266,7 +266,7 @@
     function renderStars(rating) {
         if (rating == null) return '';
         const full = Math.round(rating);
-        return '★'.repeat(full) + '☆'.repeat(5 - full);
+        return '★'.repeat(full) + '☆'.repeat(4 - full);
     }
 
     function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
