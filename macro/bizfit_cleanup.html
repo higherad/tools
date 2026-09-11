@@ -624,8 +624,11 @@ function handleExcelFile(file) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const wb   = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header:1, defval:'' });
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+      if (range.e.r > 5000) range.e.r = 5000;
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'', range });
       if (!rows.length) { addLog('⚠️ 빈 파일입니다.', 'warn'); return; }
       const hdr        = rows[0].map(h => String(h||'').trim());
       const hasHdr      = isNaN(Number(hdr[0]));

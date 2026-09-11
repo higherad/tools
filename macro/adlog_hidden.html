@@ -535,8 +535,11 @@ function handleExcel(file) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const wb   = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header:1, defval:'' });
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+      if (range.e.r > 5000) range.e.r = 5000;
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'', range });
       const start = rows.length > 0 && isHeaderRow(rows[0]) ? 1 : 0;
       let added = 0;
       for (let r = start; r < rows.length; r++) {
