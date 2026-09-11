@@ -177,6 +177,26 @@
     button#split-clear { background: #f1f5f9; color: var(--secondary); }
     button#split-clear:hover { background: #e2e8f0; }
 
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .label-row label { margin-bottom: 0; }
+
+    #random-toggle {
+      height: 28px;
+      flex: none;
+      padding: 0 12px;
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #f1f5f9;
+      color: var(--secondary);
+    }
+    #random-toggle.active { background: var(--primary); color: white; border-color: var(--primary); }
+
     #info, #split-info {
       font-size: 12px;
       text-align: right;
@@ -267,7 +287,10 @@
     <!-- 병합 카드 -->
     <div class="main-card">
       <div class="section-title">쉼표 병합</div>
-      <label>키워드 입력</label>
+      <div class="label-row">
+        <label>키워드 입력</label>
+        <button id="random-toggle" type="button">랜덤 OFF</button>
+      </div>
       <textarea id="keywords" placeholder="키워드를 한 줄에 하나씩 입력하세요..."></textarea>
 
       <div class="config-grid">
@@ -318,6 +341,23 @@
   const splitInfo       = document.getElementById('split-info');
 
   const results = document.getElementById('results');
+
+  const randomToggleBtn = document.getElementById('random-toggle');
+  let randomOn = false;
+  randomToggleBtn.addEventListener('click', () => {
+    randomOn = !randomOn;
+    randomToggleBtn.textContent = randomOn ? '랜덤 ON' : '랜덤 OFF';
+    randomToggleBtn.classList.toggle('active', randomOn);
+  });
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
 
   let globalKeywords = [];
   let groupSizes = [];
@@ -413,6 +453,7 @@
   function convert() {
     globalKeywords = parseKeywords(keywordsEl.value);
     if (globalKeywords.length === 0) return;
+    if (randomOn) globalKeywords = shuffle(globalKeywords);
     splitInfo.textContent = '';
     groupSizes = calculateGroupSizes(globalKeywords.length, Number(baseCountEl.value) || 1, Number(groupCountEl.value) || 1);
     buildMergeResults();
