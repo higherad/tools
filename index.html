@@ -395,7 +395,6 @@
 
     /* ── 카드 그리드 ── */
     .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
-    .card-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
 
     /* ── 링크 카드 ── */
     .link-card {
@@ -543,7 +542,7 @@
       .pc-toggle-btn { display: none; }
       #content { height: 100%; flex-grow: 1; padding-top: 0; }
       #tabBar { display: none !important; }
-      .card-grid, .card-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+      .card-grid { grid-template-columns: repeat(2, 1fr); }
       .link-card { aspect-ratio: auto; min-height: 60px; padding: 8px 5px; font-size: 11px; font-weight: 600; }
       .link-card .material-symbols-outlined { font-size: 18px; }
     }
@@ -665,7 +664,7 @@
             <div class="group-label">
               <div class="group-eyebrow">Ranking &amp; Stats</div>
             </div>
-            <div class="card-grid cols-4">
+            <div class="card-grid">
               <a href="https://docs.google.com/spreadsheets/d/1Z5bqkEGjX4cMKbV0fNlMTbb-qNIdjmwy8IgLg1u9-n8/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet" data-pipeline="ranking">
                 <span class="material-symbols-outlined">analytics</span><span>♦️ 단독 순위 분석</span>
               </a>
