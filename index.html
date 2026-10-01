@@ -395,6 +395,7 @@
 
     /* ── 카드 그리드 ── */
     .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+    .card-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
 
     /* ── 링크 카드 ── */
     .link-card {
@@ -542,7 +543,7 @@
       .pc-toggle-btn { display: none; }
       #content { height: 100%; flex-grow: 1; padding-top: 0; }
       #tabBar { display: none !important; }
-      .card-grid { grid-template-columns: repeat(2, 1fr); }
+      .card-grid, .card-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
       .link-card { aspect-ratio: auto; min-height: 60px; padding: 8px 5px; font-size: 11px; font-weight: 600; }
       .link-card .material-symbols-outlined { font-size: 18px; }
     }
@@ -664,12 +665,15 @@
             <div class="group-label">
               <div class="group-eyebrow">Ranking &amp; Stats</div>
             </div>
-            <div class="card-grid">
+            <div class="card-grid cols-4">
               <a href="https://docs.google.com/spreadsheets/d/1Z5bqkEGjX4cMKbV0fNlMTbb-qNIdjmwy8IgLg1u9-n8/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet" data-pipeline="ranking">
                 <span class="material-symbols-outlined">analytics</span><span>♦️ 단독 순위 분석</span>
               </a>
               <a href="https://docs.google.com/spreadsheets/d/1Ia3CcylXPF-Y4f2V6qBiVHmRf85vSPiJ43v9GnQPB2c/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet" data-pipeline="ranking">
                 <span class="material-symbols-outlined">reorder</span><span>♠️ 영업점 순위 분류</span>
+              </a>
+              <a href="https://docs.google.com/spreadsheets/d/1DdsC5VElC7b8DmO7k5oZKdtsYnkBC0lNYQHE1smTiU8/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card sheet" data-pipeline="ranking">
+                <span class="material-symbols-outlined">manage_search</span><span>🔍 자동완성</span>
               </a>
               <a href="https://docs.google.com/spreadsheets/d/1zUjR04Cr__GxpWi2rVUsfF9sdTYhRxUXN2IZir8MMmU/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="link-card new-stat" data-stats="hireward">
                 <span class="material-symbols-outlined">sensors</span><span>📡 Hi 리워드 통계</span>
