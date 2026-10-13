@@ -762,7 +762,7 @@
 
       const userRef = ref(db, 'users/' + currentUserId);
       
-      // 실시간으로 DB 값 감시 (ha-store.js와 동일한 방식)
+      // 실시간으로 DB 값 감시
       onValue(userRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
@@ -872,7 +872,7 @@
       if (!currentUserId) return;
       const userRef = ref(db, 'users/' + currentUserId);
       
-      // 개별 필드로 업데이트 (ha-store 방식)
+      // 개별 필드로 업데이트(다른 필드 덮어쓰기 방지)
       update(userRef, {
         fav: state.fav,
         active: state.active,
