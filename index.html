@@ -932,7 +932,7 @@
     // 기타 기존 함수 유지용 가상 auth 객체 (에러 방지)
     window.auth = { currentUser: { uid: currentUserId } };
 
-    // 파이프라인 완료 배지 — ha/pipeline/allDone 이 오늘 날짜면 카드에 UPDATE 표시
+    // 파이프라인 완료 배지 — hi/pipeline/allDone 이 오늘 날짜면 카드에 UPDATE 표시
     function getTodayYYMMDD() {
       const d = new Date();
       const yy = String(d.getFullYear()).slice(2);
@@ -959,10 +959,10 @@
     }
 
     // 순위 파이프라인 완료 배지
-    onValue(ref(db, 'ha/pipeline/allDone'), (snap) => applyCardBadge('[data-pipeline="ranking"]', snap.val()));
+    onValue(ref(db, 'hi/pipeline/allDone'), (snap) => applyCardBadge('[data-pipeline="ranking"]', snap.val()));
 
     // Hi 리워드 통계 배지
-    onValue(ref(db, 'ha/stats/hireward'), (snap) => applyCardBadge('[data-stats="hireward"]', snap.val()));
+    onValue(ref(db, 'hi/stats/hireward'), (snap) => applyCardBadge('[data-stats="hireward"]', snap.val()));
   </script>
 
   <script>
