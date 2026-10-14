@@ -120,7 +120,6 @@
     margin-right: 3px;
   }
   .ab-bizfit { background: #e9d8fd; color: #553c9a; }
-  .ab-youpfl { background: #c6f6d5; color: #276749; }
   .ab-none   { background: #fed7d7; color: #c53030; }
 
   .status-badge {
@@ -263,7 +262,7 @@
         <div class="excel-upload-area" id="excel-drop-zone" onclick="document.getElementById('excel-file-input').click()">
           <div class="upload-icon">📊</div>
           <div class="upload-text">클릭 또는 드래그 업로드</div>
-          <div class="upload-hint">영업점명 / ID / PW / MID / 비즈핏취소(O) / 유입플환불(O)</div>
+          <div class="upload-hint">영업점명 / ID / PW / MID / 비즈핏취소(O)</div>
         </div>
         <input type="file" id="excel-file-input" accept=".xlsx,.xls" onchange="handleExcelFile(this.files[0])">
       </div>
@@ -393,7 +392,7 @@ function syncAll() {
 }
 function updateSummary() {
   const sel   = entries.filter(e => e.checked);
-  const noAct = sel.filter(e => !e.do_bizfit && !e.do_youpfl).length;
+  const noAct = sel.filter(e => !e.do_bizfit).length;
   document.getElementById('sum-count').textContent = sel.length;
   document.getElementById('sum-noact').textContent = noAct;
   document.getElementById('btn-run').disabled = sel.length === 0 || noAct > 0;
@@ -436,8 +435,7 @@ function renderList() {
       </td>
       <td>
         ${e.do_bizfit ? '<span class="action-badge ab-bizfit">비즈핏취소</span>' : ''}
-        ${e.do_youpfl ? '<span class="action-badge ab-youpfl">유입플환불</span>' : ''}
-        ${(!e.do_bizfit && !e.do_youpfl) ? '<span class="action-badge ab-none">미선택</span>' : ''}
+        ${!e.do_bizfit ? '<span class="action-badge ab-none">미선택</span>' : ''}
       </td>
       <td><span class="status-badge ${sc[e.status]||'s-ready'}">${st[e.status]||'대기'}</span></td>
     </tr>`;
@@ -487,7 +485,7 @@ function addLog(msg, type='') {
   area.scrollTop = area.scrollHeight;
 }
 
-// ── 실행 — 비즈핏취소(계정별 그룹, /cleanup-cancel)와 유입플환불(/cleanup-youpfl-refund)을 각자 선택된 행만 처리 ──
+// ── 실행 — 비즈핏취소(계정별 그룹, /cleanup-cancel) ──
 async function startProcess() {
   const checked = entries.filter(e => e.checked);
   if (!checked.length) { alert('항목을 선택해주세요.'); return; }
@@ -497,19 +495,18 @@ async function startProcess() {
   if (!selected.length) { alert('선택한 항목이 모두 완료 상태입니다. (이미 완료된 항목은 재실행 시 자동으로 건너뜁니다)'); return; }
 
   const summary = selected.map(e => {
-    const acts = [e.do_bizfit?'비즈핏취소':'', e.do_youpfl?'유입플환불':''].filter(Boolean).join('+');
-    return `  · ${e.mid}: ${acts}`;
+    return `  · ${e.mid}: 비즈핏취소`;
   }).join('\n');
   if (!confirm(`아래 항목을 처리하시겠습니까?\n\n${summary}\n\n총 ${selected.length}건${skipped ? ` (완료된 ${skipped}건은 건너뜀)` : ''}\n되돌릴 수 없습니다.`)) return;
 
   document.getElementById('btn-run').disabled = true;
   document.getElementById('progress-wrap').style.display = 'block';
-  selected.forEach(e => { e.status = 'running'; e.result = ''; e._bizfitMsg = null; e._bizfitOk = null; e._youpflMsg = null; e._youpflOk = null; });
+  selected.forEach(e => { e.status = 'running'; e.result = ''; e._bizfitMsg = null; e._bizfitOk = null; });
   renderList();
   addLog(`▶ 시작 — ${selected.length}개 항목${skipped ? ` (완료 ${skipped}건 건너뜀)` : ''}`, 'info');
   document.getElementById('progress-bar').style.width = '10%';
 
-  // ── 1단계: 비즈핏취소 — 계정(ID/PW) 단위로 묶어서 순차 호출 ──
+  // ── 비즈핏취소 — 계정(ID/PW) 단위로 묶어서 순차 호출 ──
   const bizfitRows = selected.filter(e => e.do_bizfit);
   const groups = new Map(); // "id pw" -> {id, pw, mids:Set}
   bizfitRows.forEach(e => {
@@ -523,7 +520,7 @@ async function startProcess() {
   for (const [, g] of groups) {
     groupIdx++;
     document.getElementById('progress-text').textContent = `[비즈핏] 계정 ${groupIdx} / ${groups.size} 처리 중...`;
-    document.getElementById('progress-bar').style.width = Math.round(10 + (groupIdx / Math.max(groups.size,1)) * 45) + '%';
+    document.getElementById('progress-bar').style.width = Math.round(10 + (groupIdx / Math.max(groups.size,1)) * 90) + '%';
     const groupEntries = bizfitRows.filter(e => e.id === g.id && e.pw === g.pw && e._bizfitOk === null);
 
     try {
@@ -554,48 +551,13 @@ async function startProcess() {
     renderList();
   }
 
-  // ── 2단계: 유입플환불 — mid 전체 한번에(단일 관리자 계정) ──
-  const youpflRows = selected.filter(e => e.do_youpfl);
-  if (youpflRows.length) {
-    document.getElementById('progress-text').textContent = '[유입플] 환불 처리 중...';
-    document.getElementById('progress-bar').style.width = '65%';
-    const youpflMids = [...new Set(youpflRows.map(e => e.mid))];
-    try {
-      const res  = await fetch(`${SERVER}/cleanup-youpfl-refund`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mids: youpflMids }),
-      });
-      const data = await res.json();
-      if (!data.success) {
-        youpflRows.forEach(e => { e._youpflOk = false; e._youpflMsg = data.message || '서버 오류'; });
-        addLog(`❌ [유입플] 환불 요청 실패 — ${data.message || ''}`, 'fail');
-      } else {
-        const byMid = new Map();
-        (data.results || []).forEach(r => byMid.set(r.mid, r));
-        youpflRows.forEach(e => {
-          const r = byMid.get(e.mid);
-          e._youpflOk  = r ? r.success : false;
-          e._youpflMsg = r ? r.message : '결과 없음';
-          addLog(`${e._youpflOk?'✅':'❌'} [유입플] ${e.mid} — ${e._youpflMsg}`, e._youpflOk?'success':'fail');
-        });
-      }
-    } catch (err) {
-      youpflRows.forEach(e => { e._youpflOk = false; e._youpflMsg = err.message; });
-      addLog(`❌ [유입플] 오류 — ${err.message}`, 'fail');
-    }
-  }
-
   // ── 결과 종합 ──
   let successCnt = 0, failCnt = 0;
   selected.forEach(e => {
     const parts = [];
     if (e.do_bizfit) parts.push(`[비즈핏] ${e._bizfitMsg ?? '처리 안됨'}`);
-    if (e.do_youpfl) parts.push(`[유입플] ${e._youpflMsg ?? '처리 안됨'}`);
     e.result = parts.join(' | ');
-    const bizfitOk = !e.do_bizfit || e._bizfitOk === true;
-    const youpflOk = !e.do_youpfl || e._youpflOk === true;
-    if (bizfitOk && youpflOk) { e.status = 'success'; successCnt++; }
-    else if (e._bizfitOk || e._youpflOk) { e.status = 'partial'; failCnt++; }
+    if (e._bizfitOk === true) { e.status = 'success'; successCnt++; }
     else { e.status = 'fail'; failCnt++; }
   });
 
@@ -637,7 +599,6 @@ function handleExcelFile(file) {
       const pwCol       = hasHdr ? hdr.findIndex(h => /^pw$|비밀번호/i.test(h)) : 2;
       const midCol      = hasHdr ? Math.max(hdr.findIndex(h => /mid/i.test(h)), 0) : 3;
       const bizfitCol   = hasHdr ? hdr.findIndex(h => /비즈핏/i.test(h)) : 4;
-      const youpflCol   = hasHdr ? hdr.findIndex(h => /유입플/i.test(h)) : 5;
       const start       = hasHdr ? 1 : 0;
       let added = 0, skipped = 0;
 
@@ -648,11 +609,9 @@ function handleExcelFile(file) {
         const pw        = pwCol     >= 0 ? String(row[pwCol]||'').trim() : '';
         const mid       = String(row[midCol] || '').trim();
         const do_bizfit = bizfitCol >= 0 && String(row[bizfitCol] || '').trim().toUpperCase() === 'O';
-        const do_youpfl = youpflCol >= 0 && String(row[youpflCol] || '').trim().toUpperCase() === 'O';
-        if (!mid || (!do_bizfit && !do_youpfl)) { skipped++; continue; }
-        if (do_bizfit && (!id || !pw)) { skipped++; continue; }
+        if (!mid || !do_bizfit || !id || !pw) { skipped++; continue; }
         if (entries.some(e => e.id === id && e.pw === pw && e.mid === mid)) { skipped++; continue; }
-        entries.push({ agency, id, pw, mid, do_bizfit, do_youpfl, status:'ready', result:'' });
+        entries.push({ agency, id, pw, mid, do_bizfit, status:'ready', result:'' });
         added++;
       }
 

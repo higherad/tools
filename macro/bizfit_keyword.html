@@ -162,7 +162,7 @@
         <div class="excel-upload-area" id="excel-drop-zone" onclick="document.getElementById('excel-file-input').click()">
           <div class="upload-icon">📊</div>
           <div class="upload-text">클릭 또는 드래그 업로드</div>
-          <div class="upload-hint">영업점 / MID / Pcode / 비즈핏 키워드 / 유입플 키워드</div>
+          <div class="upload-hint">영업점 / MID / Pcode / 비즈핏 키워드</div>
         </div>
         <input type="file" id="excel-file-input" accept=".xlsx,.xls" onchange="handleExcelFile(this.files[0])">
       </div>
@@ -195,12 +195,11 @@
               <th>영업점</th>
               <th>MID</th>
               <th>비즈핏 키워드</th>
-              <th>유입플 키워드</th>
               <th style="width:72px;">상태</th>
             </tr>
           </thead>
           <tbody id="entry-tbody">
-            <tr><td colspan="6">
+            <tr><td colspan="5">
               <div class="empty-state"><div class="empty-icon">📋</div><div>등록된 항목이 없습니다.<br>좌측에서 엑셀로 등록해주세요.</div></div>
             </td></tr>
           </tbody>
@@ -279,14 +278,13 @@ function syncAll() {
   document.getElementById('selected-count-small').textContent = `${checked}개 선택됨`;
   updateSummary();
 }
-function isRunnable(e) { return !!e.keywords || !!e.yupflKeywords; }
+function isRunnable(e) { return !!e.keywords; }
 
 function updateSummary() {
   const sel  = entries.filter(e => e.checked);
   const noKw = sel.filter(e => !e.keywords).length;
   document.getElementById('sum-count').textContent = sel.length;
   document.getElementById('sum-nokw').textContent  = noKw;
-  // 비즈핏 키워드가 없어도 유입플 키워드만으로 실행 가능한 항목이 하나라도 있으면 막지 않는다
   document.getElementById('btn-run').disabled = sel.length === 0 || !sel.some(isRunnable);
 }
 
@@ -298,7 +296,7 @@ function renderList() {
   document.getElementById('entry-count').textContent = entries.length;
 
   if (!entries.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div>등록된 항목이 없습니다.</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><div>등록된 항목이 없습니다.</div></div></td></tr>`;
     syncAll(); return;
   }
 
@@ -307,7 +305,7 @@ function renderList() {
     : entries;
 
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🔍</div><div>검색 결과가 없습니다.</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🔍</div><div>검색 결과가 없습니다.</div></div></td></tr>`;
     syncAll(); return;
   }
 
@@ -326,7 +324,6 @@ function renderList() {
         ${e.result?`<div style="font-size:10.5px;color:#718096;margin-top:2px;">${esc(e.result)}</div>`:''}
       </td>
       <td><div class="td-keywords" title="${esc(e.keywords)}">${esc(e.keywords)}</div></td>
-      <td>${yupflBadge(e)}</td>
       <td><span class="status-badge ${sc[e.status]||'s-ready'}">${st[e.status]||'대기'}</span></td>
     </tr>`;
   }).join('');
@@ -335,13 +332,6 @@ function renderList() {
 }
 
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-// 키워드는 나열하지 않고 개수만, 전체 목록은 title 툴팁으로.
-function yupflBadge(e) {
-  const list = String(e.yupflKeywords||'').split(',').map(k=>k.trim()).filter(Boolean);
-  if (!list.length) return '<span style="color:#cbd5e0;font-size:11px;">-</span>';
-  return `<span title="${esc(list.join(', '))}" class="badge badge-blue" style="cursor:default;">${list.length}개</span>`;
-}
 
 function addLog(msg, type='') {
   const area = document.getElementById('log-area');
@@ -353,7 +343,7 @@ function addLog(msg, type='') {
   area.scrollTop = area.scrollHeight;
 }
 
-// SSE(/process-stream 형식) 응답을 소비하며 entry_result마다 onResult 호출 — 비즈핏/유입플 공용
+// SSE(/process-stream 형식) 응답을 소비하며 entry_result마다 onResult 호출
 async function runStream(url, payload, onResult) {
   const res = await fetch(url, {
     method: 'POST',
@@ -386,29 +376,10 @@ async function runStream(url, payload, onResult) {
   }
 }
 
-// 비즈핏(_bizOk/_bizMsg)과 유입플(_yupflOk/_yupflMsg) 결과를 합쳐 행 하나의 상태/메시지로 정리.
-// 해당 항목에 실제로 적용됐던 매크로들이 전부 성공해야 최종 success.
+// 비즈핏 결과(_bizOk/_bizMsg)로 행 상태·메시지 확정
 function finalizeEntry(entry) {
-  const needsBiz   = !!entry.keywords;
-  const needsYupfl = !!entry.yupflKeywords;
-  const bizDone    = !needsBiz   || entry._bizOk   !== undefined;
-  const yupflDone  = !needsYupfl || entry._yupflOk !== undefined;
-  // 둘 다 대상인 항목은 비즈핏이 먼저 끝나도(유입플은 그 뒤 스트림에서 처리) 아직
-  // 전체가 끝난 게 아니므로 성공/실패로 확정 짓지 않고 진행중으로 유지한다.
-  if (!bizDone || !yupflDone) {
-    const parts = [];
-    if (entry._bizOk   !== undefined) parts.push(`비즈핏: ${entry._bizMsg}`);
-    if (entry._yupflOk !== undefined) parts.push(`유입플: ${entry._yupflMsg}`);
-    entry.status = 'running';
-    entry.result = parts.join(' / ');
-    return;
-  }
-  const parts = [];
-  let allOk = true;
-  if (needsBiz)   { parts.push(`비즈핏: ${entry._bizMsg}`);   allOk = allOk && entry._bizOk; }
-  if (needsYupfl) { parts.push(`유입플: ${entry._yupflMsg}`); allOk = allOk && entry._yupflOk; }
-  entry.status = allOk ? 'success' : 'fail';
-  entry.result = parts.join(' / ');
+  entry.status = entry._bizOk ? 'success' : 'fail';
+  entry.result = entry._bizMsg || '';
 }
 
 async function startProcess() {
@@ -417,32 +388,25 @@ async function startProcess() {
 
   const notDone     = checked.filter(e => e.status !== 'success');
   const doneSkipped = checked.length - notDone.length;
-  const bizTargets   = notDone.filter(e => e.keywords);
-  const yupflTargets = notDone.filter(e => e.yupflKeywords);
-  const runTargets   = [...new Set([...bizTargets, ...yupflTargets])];
+  const runTargets  = notDone.filter(e => e.keywords);
 
   if (!runTargets.length) {
     alert(doneSkipped
       ? '선택한 항목이 모두 완료 상태입니다. (이미 완료된 항목은 재실행 시 자동으로 건너뜁니다)'
-      : '실행할 비즈핏/유입플 키워드가 없습니다.');
+      : '실행할 비즈핏 키워드가 없습니다.');
     return;
   }
 
   const distribute = document.getElementById('inp-distribute-global').checked;
-  const summary = runTargets.map(e => {
-    const tags = [];
-    if (e.keywords) tags.push('비즈핏');
-    if (e.yupflKeywords) tags.push('유입플');
-    return `  · ${e.mid}${e.pcode?' / '+e.pcode:''} (${tags.join('+')})`;
-  }).join('\n');
-  if (!confirm(`아래 캠페인의 키워드를 변경하시겠습니까?${distribute ? '\n(배분 모드 ON — MID 캠페인 수만큼 키워드 균등 배분, 비즈핏에만 적용)' : ''}\n\n${summary}\n\n총 ${runTargets.length}건${doneSkipped ? ` (완료된 ${doneSkipped}건은 건너뜀)` : ''}`)) return;
+  const summary = runTargets.map(e => `  · ${e.mid}${e.pcode?' / '+e.pcode:''}`).join('\n');
+  if (!confirm(`아래 캠페인의 키워드를 변경하시겠습니까?${distribute ? '\n(배분 모드 ON — MID 캠페인 수만큼 키워드 균등 배분)' : ''}\n\n${summary}\n\n총 ${runTargets.length}건${doneSkipped ? ` (완료된 ${doneSkipped}건은 건너뜀)` : ''}`)) return;
 
   document.getElementById('btn-run').disabled = true;
   document.getElementById('progress-wrap').style.display = 'block';
 
   runTargets.forEach(e => {
     e.status = 'running'; e.result = '';
-    e._bizOk = undefined; e._bizMsg = ''; e._yupflOk = undefined; e._yupflMsg = '';
+    e._bizOk = undefined; e._bizMsg = '';
   });
   renderList();
 
@@ -450,7 +414,7 @@ async function startProcess() {
   document.getElementById('progress-bar').style.width = '10%';
   document.getElementById('progress-text').textContent = '로그인 중...';
 
-  const totalOps = bizTargets.length + yupflTargets.length;
+  const totalOps = runTargets.length;
   let processed = 0;
   function bumpProgress() {
     processed++;
@@ -459,8 +423,7 @@ async function startProcess() {
     document.getElementById('progress-text').textContent = `${processed} / ${totalOps} 처리 중...`;
   }
 
-  // 매크로 하나가 서버 오류로 죽어도 다른 매크로(비즈핏/유입플)는 계속 진행되도록
-  // 에러를 여기서 흡수하고, 그 매크로가 담당하던 항목들만 실패 처리한다.
+  // 서버 오류는 여기서 흡수하고 결과를 못 받은 항목만 실패 처리한다.
   async function runMacroBatch(url, targets, payload, matchFn, okField, msgField, label) {
     try {
       await runStream(url, payload, r => {
@@ -484,21 +447,9 @@ async function startProcess() {
     }
   }
 
-  // 비즈핏/유입플을 동시에 실행 — 순서대로 돌리면 사이트 로그인이 두 번 직렬로 걸려 느려짐
-  const tasks = [];
-  if (bizTargets.length) {
-    const payload = bizTargets.map(e => ({ mid: e.mid, pcode: e.pcode||'', agency: e.agency||'', keywords: e.keywords, distribute }));
-    tasks.push(runMacroBatch(`${SERVER}/process-stream`, bizTargets, payload,
-      r => entries.find(e => e.mid === r.mid && (e.pcode||'') === (r.pcode||'')), '_bizOk', '_bizMsg', '비즈핏'));
-  }
-  if (yupflTargets.length) {
-    const payload = yupflTargets.map(e => ({ mid: e.mid, keywords: e.yupflKeywords }));
-    // ponytail: 부분 실패 후 재실행하면 이미 성공한 쪽(비즈핏 또는 유입플)도 다시 시도됨 —
-    // 필요해지면 _bizOk/_yupflOk별로 재실행 대상을 나눠서 스킵 추가.
-    tasks.push(runMacroBatch(`${SERVER}/yupfl-process-stream`, yupflTargets, payload,
-      r => entries.find(e => e.mid === r.mid), '_yupflOk', '_yupflMsg', '유입플'));
-  }
-  await Promise.all(tasks);
+  const payload = runTargets.map(e => ({ mid: e.mid, pcode: e.pcode||'', agency: e.agency||'', keywords: e.keywords, distribute }));
+  await runMacroBatch(`${SERVER}/process-stream`, runTargets, payload,
+    r => entries.find(e => e.mid === r.mid && (e.pcode||'') === (r.pcode||'')), '_bizOk', '_bizMsg', '비즈핏');
 
   const successCnt = runTargets.filter(e => e.status === 'success').length;
   const failCnt     = runTargets.filter(e => e.status === 'fail').length;
@@ -534,9 +485,7 @@ function handleExcelFile(file) {
       const agencyCol = hasHdr ? hdr.findIndex(h => /영업점/i.test(h)) : 0;
       const midCol    = hasHdr ? Math.max(hdr.findIndex(h => /mid/i.test(h)), 0) : 1;
       const pcodeCol  = hasHdr ? hdr.findIndex(h => /pcode/i.test(h)) : 2;
-      const yupflCol  = hasHdr ? hdr.findIndex(h => /유입플/.test(h)) : 4;
-      // "유입플키워드" 헤더도 /키워드/에 걸리므로 그 열은 제외하고 찾는다
-      const kwCol     = hasHdr ? hdr.findIndex((h, i) => /키워드/i.test(h) && i !== yupflCol) : 3;
+      const kwCol     = hasHdr ? hdr.findIndex(h => /키워드/i.test(h)) : 3;
       const start     = hasHdr ? 1 : 0;
       // 영업점·Pcode는 어떤 경우든 양식에 있어야 하는 필수 컬럼 — 못 찾으면 양식 자체가 다른 것
       const missingCols = [];
@@ -554,19 +503,17 @@ function handleExcelFile(file) {
         const mid           = String(row[midCol]   || '').trim();
         const pcode         = pcodeCol >= 0 ? String(row[pcodeCol]||'').trim() : '';
         const keywords      = kwCol    >= 0 ? String(row[kwCol]   ||'').trim() : '';
-        const yupflKeywords = yupflCol >= 0 ? String(row[yupflCol]||'').trim() : '';
-        if (!mid || (!keywords && !yupflKeywords)) { skipped++; continue; }
-        // 비즈핏 키워드 변경은 pcode 기반이라 영업점·pcode 둘 다 필수 — 유입플만 쓰는 행은 면제
-        if (keywords && (!pcode || !agency)) { skipped++; continue; }
+        // 키워드 변경은 pcode 기반이라 영업점·pcode 둘 다 필수
+        if (!mid || !keywords || !pcode || !agency) { skipped++; continue; }
         if (entries.some(e => e.mid === mid && (e.pcode||'') === pcode)) { skipped++; continue; }
-        entries.push({ mid, pcode, agency, keywords, yupflKeywords, status: 'ready', result: '' });
+        entries.push({ mid, pcode, agency, keywords, status: 'ready', result: '' });
         added++;
       }
 
       save(); renderList();
       document.getElementById('excel-file-input').value = '';
       if (added > 0) addLog(`📊 엑셀 가져오기: ${added}개 추가${skipped?', '+skipped+'개 건너뜀':''}`, 'info');
-      else           addLog('⚠️ 추가된 항목 없음 — MID·키워드가 비어있거나 중복, 또는 비즈핏 키워드 행에 영업점/Pcode 누락', 'warn');
+      else           addLog('⚠️ 추가된 항목 없음 — 영업점·MID·Pcode·키워드가 비어있거나 중복', 'warn');
     } catch(err) { addLog(`❌ 엑셀 읽기 실패: ${err.message}`, 'fail'); }
   };
   reader.readAsArrayBuffer(file);
