@@ -36,11 +36,6 @@
 
   .divider { border: none; border-top: 1px solid #e8eaf0; margin: 14px 0; }
 
-  /* 구글 시트 설정 */
-  .sheet-row { display: flex; gap: 8px; align-items: flex-end; }
-  .sheet-row > div:first-child { flex: 1; }
-  .sheet-row > div:last-child { width: 60px; }
-
   /* 공통 룰 박스 */
   .rule-box { background: #f8f9fb; border: 1px solid #e8eaf0; border-radius: 8px; padding: 12px; }
   .rule-row { display: grid; grid-template-columns: 1fr 24px 1fr; gap: 6px; align-items: center; margin-bottom: 8px; }
@@ -143,27 +138,6 @@
   <!-- 좌측: 설정 + 엑셀 등록 -->
   <div style="display:flex;flex-direction:column;gap:14px;">
 
-    <!-- 구글 시트 연동 -->
-    <div class="card">
-      <div class="card-header"><span class="card-title">📋 구글 시트 연동</span></div>
-      <div class="card-body">
-        <div style="font-size:11px;color:#718096;margin-bottom:10px;line-height:1.5;">아래 시트의 MID 목록을 불러오되, 접수관리에서 진행 중인 캠페인의 MID는 제외합니다.</div>
-        <label>Spreadsheet ID</label>
-        <input type="text" id="gs-id" placeholder="14j9wwFed..." value="14j9wwFedE-kwAebFSnBWjgCYcoCUW2L0hDdBmtGqAf8" />
-        <div class="sheet-row">
-          <div>
-            <label>시트명</label>
-            <input type="text" id="gs-sheet" placeholder="종료리스트" value="종료리스트" />
-          </div>
-          <div>
-            <label>MID 열</label>
-            <input type="text" id="gs-col" placeholder="B" value="B" style="text-align:center;" />
-          </div>
-        </div>
-        <button class="btn btn-blue btn-full" onclick="fetchMids()" id="btn-fetch">📥 MID 불러오기</button>
-      </div>
-    </div>
-
     <!-- 엑셀 등록 -->
     <div class="card">
       <div class="card-header"><span class="card-title">📂 엑셀 등록</span><a class="excel-tpl-btn" href="양식/애드로그메모_양식.xlsx" download="애드로그메모_양식.xlsx" title="양식 다운로드"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2h-4v11H5l7 7 7-7h-5V2z"/></svg></a></div>
@@ -233,7 +207,7 @@
             </tr>
           </thead>
           <tbody id="mid-tbody">
-            <tr><td colspan="8"><div class="empty-msg">등록된 MID가 없습니다.<br>구글 시트에서 불러오거나 엑셀로 등록하세요.</div></td></tr>
+            <tr><td colspan="8"><div class="empty-msg">등록된 MID가 없습니다.<br>엑셀로 등록하세요.</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -272,41 +246,6 @@ const SERVER = 'https://macro-2-adlog-memo-938928195180.asia-northeast3.run.app'
 let entries = [];  // [{mid, change_from, change_to, delete_cond, status, result, checked}]
 
 function save() { if (window.fbSave) window.fbSave(entries.map(e => ({ mid: e.mid, change_from: e.change_from, change_to: e.change_to, delete_cond: e.delete_cond }))); }
-
-// ── 구글 시트 불러오기 ──
-async function fetchMids() {
-  const sid   = document.getElementById('gs-id').value.trim();
-  const sheet = document.getElementById('gs-sheet').value.trim();
-  const col   = document.getElementById('gs-col').value.trim() || 'B';
-  if (!sid || !sheet) { alert('Spreadsheet ID와 시트명을 입력해주세요.'); return; }
-
-  document.getElementById('btn-fetch').disabled = true;
-  addLog(`구글 시트 조회 중... (진행 중 캠페인 제외)`, 'info');
-
-  try {
-    const res  = await fetch(`${SERVER}/fetch-mids`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ spreadsheet_id: sid, sheet_name: sheet, mid_col: col }),
-    });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.message);
-
-    let added = 0;
-    data.mids.forEach(mid => {
-      if (!entries.some(e => e.mid === mid)) {
-        entries.push({ mid, change_from: '', change_to: '', delete_cond: '', status: 'ready', result: '', checked: false });
-        added++;
-      }
-    });
-    save(); renderTable();
-    addLog(`✅ 시트 MID ${data.total}건 — 진행 중 ${data.skipped}건 제외, ${data.count}건 중 ${added}개 추가됨${data.count - added ? ` (테이블 중복 ${data.count - added}개 스킵)` : ''}`, 'success');
-  } catch(e) {
-    addLog(`❌ 불러오기 실패: ${e.message}`, 'fail');
-  } finally {
-    document.getElementById('btn-fetch').disabled = false;
-  }
-}
 
 function removeAll() {
   if (!entries.length) { alert('삭제할 항목이 없습니다.'); return; }
@@ -369,7 +308,7 @@ function renderTable() {
   document.getElementById('sum-total').textContent  = entries.length;
 
   if (!entries.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-msg">등록된 MID가 없습니다.<br>구글 시트에서 불러오거나 엑셀로 등록하세요.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-msg">등록된 MID가 없습니다.<br>엑셀로 등록하세요.</div></td></tr>`;
     syncAll(); return;
   }
 
