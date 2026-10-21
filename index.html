@@ -657,7 +657,7 @@
               <a href="https://docs.google.com/spreadsheets/d/1W7d-IIyj2ecSrVZ8m6Vd7-_oY1SAWU1U6wNkrQFpJjQ/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer" class="link-card sheet">
                 <span class="material-symbols-outlined">key</span><span>플레이스 키워드</span>
               </a>
-              <a href="https://docs.google.com/spreadsheets/d/1wyDZfLNsWUgajQEPibjw8Iun9nRnecmDGwJ3cxvVEhA/edit" target="_blank" rel="noopener noreferrer" class="link-card sheet">
+              <a href="https://docs.google.com/spreadsheets/d/1wyDZfLNsWUgajQEPibjw8Iun9nRnecmDGwJ3cxvVEhA/edit" target="_blank" rel="noopener noreferrer" class="link-card sheet" data-stats="guide">
                 <span class="material-symbols-outlined">menu_book</span><span>플레이스 가이드</span>
               </a>
             </div>
@@ -975,6 +975,9 @@
 
     // Hi 리워드 통계 배지
     onValue(ref(db, 'hi/stats/hireward'), (snap) => applyCardBadge('[data-stats="hireward"]', snap.val()));
+
+    // 플레이스 가이드 배지 — 접수가이드 GAS가 시트 변경 시 기록
+    onValue(ref(db, 'hi/stats/guide'), (snap) => applyCardBadge('[data-stats="guide"]', snap.val()));
   </script>
 
   <script>
