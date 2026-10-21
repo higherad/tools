@@ -1,6 +1,5 @@
 [
   { "file": "tools/영업점_순위_비교.html",      "label": "📊 영업점 순위 비교",      "addedAt": "2026-03-17", "updatedAt": "2026-06-02" },
-  { "file": "tools/진행중_중복_체크.html",       "label": "💻 진행중 중복 체크",       "addedAt": "2026-04-02", "updatedAt": "2026-06-02" },
   { "file": "tools/10위_이내_키워드.html",       "label": "🔍 10위 이내 키워드",       "addedAt": "2026-03-05", "updatedAt": "2026-06-02" },
   { "file": "tools/미션_진행_상황판.html",       "label": "📒 미션 진행 상황판",       "addedAt": "2026-03-06", "updatedAt": "2026-05-06" },
   { "file": "tools/키워드_쉼표_병합기.html",     "label": "⚡ 키워드 쉼표 병합기",     "addedAt": "2026-03-05", "updatedAt": "2026-06-02" },
@@ -9,6 +8,5 @@
   { "file": "tools/블로그_태그_검색.html",       "label": "🏷️ 블로그 태그 검색",       "addedAt": "2026-03-11", "updatedAt": "2026-06-02" },
   { "file": "tools/자동완성_체크.html",          "label": "✅ 자동완성 체크",          "addedAt": "2026-03-05", "updatedAt": "2026-07-22" },
   { "file": "tools/등급_확인.html",              "label": "🎖️ 등급 확인",              "addedAt": "2026-03-05", "updatedAt": "2026-06-02" },
-  { "file": "tools/자료실.html",                 "label": "📂 자료실",                 "addedAt": "2026-05-15", "updatedAt": "2026-06-02" },
   { "file": "tools/카카오_찜조회.html",           "label": "💛 카카오 찜 조회",         "addedAt": "2026-07-24", "updatedAt": "2026-07-24" }
 ]
