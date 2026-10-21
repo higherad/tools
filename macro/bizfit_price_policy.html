@@ -562,7 +562,7 @@ async function startCollect() {
   if (selGrades.length === 0)   { alert('등급을 선택해주세요.'); return; }
 
   const total = selBranches.length * selGrades.length;
-  if (!confirm(`현재 단가를 수집해 구글 시트에 기록하시겠습니까?\n\n영업점: ${selBranches.length}개\n등급: ${selGrades.length}개\n총 ${total}건\n\n하나의 시트에 전체 영업점×등급 데이터가 통합 기록됩니다(기존 내용은 덮어씀).`)) return;
+  if (!confirm(`현재 단가를 수집해 구글 시트에 기록하시겠습니까?\n\n영업점: ${selBranches.length}개\n등급: ${selGrades.length}개\n총 ${total}건\n\n업체별 시트(시트 이름 = 업체명)에 기록됩니다. 같은 이름 시트는 덮어쓰고, 0원은 빈칸.`)) return;
 
   addLog(`▶ 단가 수집 시작 (영업점 ${selBranches.length}개 × 등급 ${selGrades.length}개)`, 'info');
 
