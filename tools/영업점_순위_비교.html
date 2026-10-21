@@ -74,8 +74,6 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxyFuM-npYQ_Rkgezgl6LqfhUCCdc3mff07ESh88VxE2nTqYeR5j1JriyY8mTRdSH_a/exec";
-
     let rawData = { branchNames: [], dateLabels: ["-","-","-","-","-"], results: [] };
     let currentBucket = "전체";
 
@@ -84,8 +82,18 @@
     async function fetchData() {
         document.getElementById('contentArea').innerHTML = '<div class="loading">데이터 동기화 중...</div>';
         try {
-            const response = await fetch(`${GAS_URL}?action=getRankData&t=${Date.now()}`);
-            rawData = await response.json();
+            // 14시 파이프라인이 정리해 저장한 순위 변동 목록(RTDB hi/rank_change) — tools 로그인 세션으로 읽음
+            const [{ db, auth }, { ref, get }] = await Promise.all([
+                import('../hi-tools.js'),
+                import('https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js'),
+            ]);
+            await auth.authStateReady();
+            const data = (await get(ref(db, 'hi/rank_change'))).val();
+            if (!data) {
+                document.getElementById('contentArea').innerHTML = '<div class="loading">데이터 수집중입니다. 14시 순위 수집이 끝나면 표시됩니다.</div>';
+                return;
+            }
+            rawData = { branchNames: [], dateLabels: ["-","-","-","-","-"], results: [], ...data };
 
             if (rawData.dateTitle) {
                 document.getElementById('mainTitle').innerText = "Higher Ad | 📊 " + rawData.dateTitle;
@@ -95,7 +103,7 @@
             filter.innerHTML = '<option value="all">전체 영업점 보기</option>' +
                 rawData.branchNames.map(name => `<option value="${name}">${name}</option>`).join('');
 
-            document.getElementById('lastUpdated').innerText = "최근 업데이트: " + new Date().toLocaleTimeString();
+            document.getElementById('lastUpdated').innerText = "최근 업데이트: " + (rawData.updatedAt ? new Date(rawData.updatedAt).toLocaleString() : '-');
             renderTabs();
             renderData();
         } catch (e) {

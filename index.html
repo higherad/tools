@@ -747,7 +747,7 @@
   </div><!-- /.shell -->
 
   <script type="module">
-    import { db, auth as firebaseAuth } from "./ha-tools.js";
+    import { db, auth as firebaseAuth } from "./hi-tools.js";
     import { signOut } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
     import { ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
 
@@ -1396,7 +1396,7 @@
       `<span class="mc-cmt">// scheduled tasks — Asia/Seoul</span>`,
       ``,
       `<span class="mc-kw">import</span> <span class="mc-op">{</span> <span class="mc-var">Schedule</span><span class="mc-op">,</span> <span class="mc-var">Runner</span> <span class="mc-op">}</span> <span class="mc-kw">from</span> <span class="mc-str">'./macro/core.js'</span><span class="mc-op">;</span>`,
-      `<span class="mc-kw">import</span> <span class="mc-op">{</span> <span class="mc-var">db</span> <span class="mc-op">}</span> <span class="mc-kw">from</span> <span class="mc-str">'./ha-tools.js'</span><span class="mc-op">;</span>`,
+      `<span class="mc-kw">import</span> <span class="mc-op">{</span> <span class="mc-var">db</span> <span class="mc-op">}</span> <span class="mc-kw">from</span> <span class="mc-str">'./hi-tools.js'</span><span class="mc-op">;</span>`,
       ``,
       `<span class="mc-kw">const</span> <span class="mc-var">macros</span> <span class="mc-op">=</span> <span class="mc-kw">await</span> <span class="mc-fn">Runner</span><span class="mc-op">.</span><span class="mc-fn">load</span><span class="mc-op">(</span><span class="mc-str">'./macro/manifest.json'</span><span class="mc-op">);</span>`,
       ``,

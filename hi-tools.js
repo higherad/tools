@@ -1,6 +1,6 @@
 /**
- * FIREBASE-CONFIG.JS — Firebase 공통 초기화 모듈
- * index.html / login.html 에서 import해서 사용
+ * hi-tools.js — Firebase 공통 초기화 모듈(app·auth·db)
+ * index.html·login.html·macro/*·tools/* 가 import — 로그인 세션을 여기 auth 하나로 공유
  */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
