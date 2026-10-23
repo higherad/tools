@@ -804,10 +804,10 @@
       setupTabDragAndDrop();
     }
 
-    // 2b. 네이버 공지 모아보기 — naver-notice-bot(Cloud Run)이 매일 09:00 KST에
+    // 2b. 네이버 공지 모아보기 — tools-naver-notice-bot(Cloud Run)이 매일 09:00 KST에
     // Firebase에 써두는 데이터를 실시간 구독. 새로고침 버튼은 같은 Cloud Run
     // 엔드포인트를 직접 호출해 즉시 응답을 받고, 그 결과가 Firebase에도 반영되며 구독 갱신됨.
-    const NAVER_NOTICE_REFRESH_URL = 'https://naver-notice-bot-938928195180.asia-northeast3.run.app/refresh';
+    const NAVER_NOTICE_REFRESH_URL = 'https://tools-naver-notice-bot-938928195180.asia-northeast3.run.app/refresh';
 
     function fmtNbUpdated(iso) {
       if (!iso) return '–';
