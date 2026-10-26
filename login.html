@@ -108,7 +108,7 @@
     location.replace("./");
   }
 
-  // ✅ [수정] DB 기반 로그인 처리 (ha-store.js 방식)
+  // 로그인 — 서버(/tools-login) 확인 후 받은 커스텀 토큰으로 Firebase Auth 세션 생성
   window.handleLogin = async () => {
     const idField = document.getElementById('userId');
     const pwField = document.getElementById('userPw');
