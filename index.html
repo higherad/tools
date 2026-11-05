@@ -1130,7 +1130,7 @@
         }
         document.querySelectorAll('#iframeContainer iframe').forEach(f => f.classList.remove('active'));
         mFrame.classList.add('active');
-        mFrame.src = tool.file;
+        mFrame.src = withVer(tool.file);
 
         if (!document.getElementById('sidebar').classList.contains('collapsed')) toggleSidebar();
         return;
@@ -1167,7 +1167,7 @@
 
       const ifrm = document.createElement('iframe');
       ifrm.id = tabId;
-      ifrm.src = tool.file;
+      ifrm.src = withVer(tool.file);
 
       iframeContainer.appendChild(ifrm);
 
@@ -1461,6 +1461,35 @@
       const mobileIcon = document.getElementById('toggleIcon');
       if(mobileIcon) mobileIcon.textContent = isCollapsed ? 'expand_more' : 'expand_less';
     }
+    // ── 새 버전 배포 감지 (higher index.html과 같은 방식) ──
+    // GitHub Pages는 배포 때마다 모든 파일 Last-Modified가 배포 시각으로 바뀜 — 지금 화면보다 1분 넘게 새로우면 새로고침 팝업
+    // 도구는 iframe 안이라 그 안의 클릭은 여기까지 안 옴 → 감지 즉시 팝업(5분 주기·탭 복귀·바깥 클릭 때 확인)
+    // 도구 iframe 주소에 ?v=지금 화면 배포 시각을 붙여, 새로고침 후 브라우저 캐시의 옛 도구 페이지를 받지 않게 함
+    const loadedAt = Date.parse(document.lastModified);
+    function withVer(file) { return `${file}?v=${loadedAt}`; }
+    let lastVerCheck = 0, outdated = false;
+    async function checkVersion() {
+      if (outdated || Date.now() - lastVerCheck < 60000) return;
+      lastVerCheck = Date.now();
+      try {
+        const res = await fetch(`index.html?v=${Date.now()}`, { method: 'HEAD', cache: 'no-store' });
+        outdated = Date.parse(res.headers.get('Last-Modified')) > loadedAt + 60000;
+        if (outdated) showReloadNotice();
+      } catch {}
+    }
+    function showReloadNotice() {
+      if (document.getElementById('reload-notice')) return;
+      const el = document.createElement('div');
+      el.id = 'reload-notice';
+      el.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center';
+      el.innerHTML = `<div style="background:#fff;border-radius:12px;padding:24px 28px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.25);font-size:14px;line-height:1.6">
+        <b style="font-size:16px">새 버전이 배포되었습니다</b><br>업데이트를 적용하려면 새로고침해 주세요.<br>
+        <button onclick="location.replace(location.pathname + '?v=' + Date.now())" style="margin-top:14px;padding:8px 20px;border:0;border-radius:8px;background:#2563eb;color:#fff;font-weight:600;cursor:pointer">새로고침</button></div>`;
+      document.body.appendChild(el);
+    }
+    document.addEventListener('click', checkVersion, true);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) checkVersion(); });
+    setInterval(checkVersion, 5 * 60000);
   </script>
 </body>
 </html>

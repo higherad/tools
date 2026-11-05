@@ -6,74 +6,76 @@
 <title>순위 그래프</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
-  :root { --bg:#f5f6f8; --card:#fff; --border:#e3e5e8; --text:#202124; --muted:#80868b; --up:#d93025; --down:#1967d2; }
-  * { box-sizing: border-box; }
-  body { margin:0; padding:20px; font-family:'Pretendard',-apple-system,sans-serif; background:var(--bg); color:var(--text); }
-  .wrap { max-width:1400px; margin:0 auto; }
-  h1 { font-size:19px; margin:0 0 4px; }
-  .sub { font-size:12.5px; color:var(--muted); margin-bottom:16px; }
-  .drop { border:2px dashed #c4c7cc; border-radius:14px; background:var(--card); padding:28px; text-align:center; cursor:pointer; color:var(--muted); font-size:14px; }
-  .drop.over { border-color:#2a78d6; background:#eef5fd; color:var(--text); }
-  .drop.small { padding:10px; font-size:12.5px; }
-  .main { display:none; gap:14px; margin-top:14px; height:calc(100vh - 170px); min-height:480px; }
-  .main.on { display:flex; }
-  .side { width:330px; flex:none; background:var(--card); border:1px solid var(--border); border-radius:12px; display:flex; flex-direction:column; overflow:hidden; }
-  .side-top { padding:10px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:8px; }
-  .side-top input[type=text] { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:8px; font:inherit; font-size:13px; }
-  .side-top .row { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--muted); }
-  .side-top button { border:1px solid var(--border); background:#fff; border-radius:6px; padding:4px 8px; font:inherit; font-size:12px; cursor:pointer; }
-  .list { overflow-y:auto; flex:1; }
-  .item { display:flex; align-items:center; gap:8px; padding:7px 10px; border-bottom:1px solid #f1f2f4; cursor:pointer; font-size:12.5px; }
-  .item:hover { background:#f7f8fa; }
-  .item.sel { background:#eef5fd; }
-  .dot { width:10px; height:10px; border-radius:50%; flex:none; background:transparent; border:1px solid #ccc; }
-  .item .txt { flex:1; min-width:0; }
-  .item .nm { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .item .kw { color:var(--muted); font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .item .chg { font-weight:700; font-size:12px; min-width:42px; text-align:right; }
-  .up { color:var(--up); } .down { color:var(--down); }
-  .chart-box { flex:1; min-width:0; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; position:relative; }
-  .empty { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:14px; }
+  /* 디자인: RankForMe 항목 상세 팝업(sheet·stats·chart) 그대로 */
+  :root { --bg:#f3f5f9; --card:#fff; --text:#131722; --sub:#6b7385; --line:#e5e8ef; --pri:#3b5bfd; --pri-soft:#edf0ff; --up:#e5383b; --down:#2f6fed; --start:#ff7a00;
+    --shadow:0 1px 2px rgba(20,25,40,.06),0 4px 14px rgba(20,25,40,.05); }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  html,body { margin:0; background:var(--bg); color:var(--text); font-family:Pretendard,-apple-system,system-ui,sans-serif; font-size:15px; letter-spacing:-.2px; }
+  body { padding:20px 16px; }
+  button { font:inherit; border:0; background:none; cursor:pointer; color:inherit; }
+  .wrap { max-width:760px; margin:0 auto; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .muted { color:var(--sub); } .small { font-size:13px; } .tiny { font-size:12px; }
+  .up { color:var(--up); font-weight:700; } .down { color:var(--down); font-weight:700; }
+  .card { background:var(--card); border-radius:18px; padding:16px; box-shadow:var(--shadow); margin-bottom:12px; }
+  .drop { border:2px dashed var(--line); text-align:center; cursor:pointer; color:var(--sub); padding:28px 16px; }
+  .drop.over { border-color:var(--pri); background:var(--pri-soft); color:var(--text); }
+  .drop.small { padding:12px; font-size:13px; }
+  .input { width:100%; height:44px; padding:0 14px; border:1px solid var(--line); border-radius:12px; font:inherit; background:var(--card); outline:none; }
+  .input:focus { border-color:var(--pri); }
+  .list-row { display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--line); cursor:pointer; }
+  .list-row:last-child { border-bottom:0; }
+  .list-row:hover .nm { color:var(--pri); }
+  .list-row .grow { flex:1; min-width:0; }
+  .list-row .nm { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .list-row .chg { font-size:14px; min-width:44px; text-align:right; }
+  .tag { display:inline-block; white-space:nowrap; font-size:11px; font-weight:700; padding:2px 7px; border-radius:6px; background:var(--line); color:var(--sub); }
+  .row { display:flex; align-items:center; gap:6px; }
+  .grow { flex:1; }
+
+  .bd { position:fixed; inset:0; background:rgba(0,0,0,.42); z-index:50; animation:fade .2s; }
+  .sheet { position:fixed; left:0; right:0; bottom:0; z-index:51; background:var(--card); border-radius:22px 22px 0 0; max-height:90dvh; overflow:auto; padding:8px 18px 20px; animation:slide .25s cubic-bezier(.2,.8,.2,1); }
+  .sheet .grab { width:40px; height:5px; border-radius:3px; background:var(--line); margin:4px auto 12px; }
+  .sheet h2 { font-size:19px; margin:8px 0 4px; }
+  @media (min-width:700px) { .sheet { left:50%; right:auto; width:560px; transform:translateX(-50%); bottom:auto; top:50%; translate:0 -50%; border-radius:22px; animation:fade .2s; } }
+  @keyframes fade { from { opacity:0 } }
+  @keyframes slide { from { transform:translateY(100%) } }
+  .iconbtn { width:34px; height:34px; border-radius:10px; display:grid; place-items:center; color:var(--sub); font-size:18px; }
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; text-align:center; }
+  .stats div { background:var(--bg); border-radius:12px; padding:10px 4px; }
+  .stats b { display:block; font-size:20px; }
+  .stats span { font-size:12px; color:var(--sub); }
+  .seg { display:flex; gap:6px; flex-wrap:wrap; margin:0 0 10px; }
+  .seg button { height:32px; padding:0 12px; border-radius:10px; background:var(--bg); color:var(--sub); font-size:13px; font-weight:600; white-space:nowrap; }
+  .seg button.on { background:var(--pri-soft); color:var(--pri); }
+  .ctip { position:absolute; transform:translate(-50%,calc(-100% - 12px)); background:var(--card); border:1px solid var(--line); box-shadow:0 4px 14px rgba(20,25,40,.12); border-radius:10px; padding:6px 10px; font-size:13px; pointer-events:none; white-space:nowrap; display:flex; gap:6px; align-items:baseline; flex-wrap:wrap; width:max-content; max-width:220px; }
+  .ctip.below { transform:translate(-50%,12px); } .ctip b { font-size:14px; } .ctip div { flex-basis:100%; white-space:normal; }
+  .empty { text-align:center; color:var(--sub); padding:30px 0; font-size:13px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>📈 순위 그래프</h1>
-  <div class="sub">진행현황에서 받은 순위표 엑셀을 넣으면 업체별 순위를 꺾은선으로 보여줍니다. 최대 8개까지 겹쳐 볼 수 있습니다.</div>
-  <div class="drop" id="drop">순위표 파일(.xlsx)을 끌어다 놓거나 클릭해서 선택</div>
+  <div class="muted small" style="margin-bottom:14px">진행현황에서 받은 순위표 엑셀을 넣고 업체를 누르면 순위 그래프를 보여줍니다.</div>
+  <div class="card drop" id="drop">순위표 파일(.xlsx)을 끌어다 놓거나 클릭해서 선택</div>
   <input type="file" id="file" accept=".xlsx,.xls" hidden>
-
-  <div class="main" id="main">
-    <div class="side">
-      <div class="side-top">
-        <input type="text" id="q" placeholder="업체명·키워드·MID 검색">
-        <div class="row">
-          <label><input type="checkbox" id="as300"> '-'를 300위로 표시</label>
-          <button id="clear">선택 해제</button>
-        </div>
-      </div>
-      <div class="list" id="list"></div>
-    </div>
-    <div class="chart-box">
-      <canvas id="cv"></canvas>
-      <div class="empty" id="empty">왼쪽에서 업체를 선택하세요</div>
-    </div>
+  <div class="card" id="listCard" hidden>
+    <input class="input" id="q" placeholder="업체명·키워드·MID·대행사 검색">
+    <div id="list" style="margin-top:6px"></div>
   </div>
 </div>
 
 <script>
-// 범주형 8색 고정 순서 — 선택된 업체가 빈 슬롯을 받고, 해제 전까지 같은 색 유지
-const COLORS = ['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#6250d6','#e34948'];
-const NO_RANK = 300;
+const START_FILL = 'FFD966'; // higherad-rank 순위표가 캠페인 시작일 셀에 칠하는 색
+const W = 320, H = 150, P = 36;
 
-let rows = [], dates = [], chart = null;
-const slotOf = new Map(); // row index → color slot
-
+let rows = [], dates = [], cur = null; // cur = { row, seg }
 const $ = id => document.getElementById(id);
-const drop = $('drop'), fileIn = $('file');
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 
+const drop = $('drop'), fileIn = $('file');
 drop.onclick = () => fileIn.click();
 fileIn.onchange = () => fileIn.files[0] && load(fileIn.files[0]);
 drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
@@ -82,102 +84,130 @@ drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); e.dataTr
 
 async function load(file) {
   try {
-    const wb = XLSX.read(await file.arrayBuffer());
-    const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: null });
+    const wb = XLSX.read(await file.arrayBuffer(), { cellStyles: true });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
     const head = (aoa[0] || []).map(v => String(v ?? '').trim());
     const col = name => head.indexOf(name);
     const dateIdx = head.map((h, i) => /^\d{2}-\d{2}$/.test(h) ? i : -1).filter(i => i >= 0);
     if (col('업체명') < 0 || !dateIdx.length) throw new Error('순위표 형식이 아닙니다');
 
     dates = dateIdx.map(i => head[i]);
-    rows = aoa.slice(1).filter(r => r && r[col('업체명')] != null).map(r => ({
+    rows = aoa.slice(1).map((r, ri) => ({ r, ri: ri + 1 })).filter(({ r }) => r && r[col('업체명')] != null).map(({ r, ri }) => ({
       name: String(r[col('업체명')] ?? ''),
       agency: String(r[col('대행사')] ?? ''),
+      grade: String(r[col('등급')] ?? ''),
       kw: String(r[col('순위키워드')] ?? ''),
       mid: String(r[col('MID')] ?? ''),
+      status: String(r[col('상태')] ?? ''),
       chg: col('비교') >= 0 ? r[col('비교')] : null,
-      // 숫자 = 순위, '-' = 300위 밖/미체크, 빈 칸 = 추적 전
+      // 숫자 = 순위, '-' = 300위 밖/미체크, null = 추적 전
       vals: dateIdx.map(i => typeof r[i] === 'number' ? r[i] : (String(r[i] ?? '').trim() === '-' ? '-' : null)),
+      // 시작일 = 노란 배경 셀의 날짜 열 위치
+      starts: dateIdx.map((ci, k) => (ws[XLSX.utils.encode_cell({ r: ri, c: ci })]?.s?.fgColor?.rgb || '').toUpperCase().endsWith(START_FILL) ? k : -1).filter(k => k >= 0),
     }));
     if (!rows.length) throw new Error('데이터 행이 없습니다');
 
-    slotOf.clear();
-    slotOf.set(0, 0);
     drop.classList.add('small');
     drop.textContent = `${file.name} · ${rows.length}건 — 다른 파일로 바꾸려면 클릭`;
-    $('main').classList.add('on');
-    renderList(); renderChart();
+    $('listCard').hidden = false;
+    renderList();
   } catch (e) {
     alert(`파일을 읽지 못했습니다: ${e.message}`);
   }
 }
 
+const dHtml = d => typeof d !== 'number' || !d ? '<span class="muted">-</span>' : d > 0 ? `<span class="up">▲${d}</span>` : `<span class="down">▼${-d}</span>`;
+
 function renderList() {
   const q = $('q').value.trim().toLowerCase();
-  $('list').innerHTML = rows.map((r, i) => {
-    if (q && !`${r.name} ${r.kw} ${r.mid} ${r.agency}`.toLowerCase().includes(q)) return '';
-    const s = slotOf.get(i);
-    const chg = typeof r.chg === 'number'
-      ? `<span class="chg ${r.chg > 0 ? 'up' : r.chg < 0 ? 'down' : ''}">${r.chg > 0 ? '▲' + r.chg : r.chg < 0 ? '▼' + -r.chg : '-'}</span>`
-      : '<span class="chg"></span>';
-    return `<div class="item${s != null ? ' sel' : ''}" data-i="${i}" title="${esc(r.agency)} · MID ${esc(r.mid)}">
-      <span class="dot" style="${s != null ? `background:${COLORS[s]};border-color:${COLORS[s]}` : ''}"></span>
-      <div class="txt"><div class="nm">${esc(r.name)}</div><div class="kw">${esc(r.kw)}</div></div>${chg}</div>`;
-  }).join('');
+  const html = rows.map((r, i) => (q && !`${r.name} ${r.kw} ${r.mid} ${r.agency}`.toLowerCase().includes(q)) ? '' :
+    `<div class="list-row" data-i="${i}"><div class="grow"><div class="nm">${esc(r.name)}</div>
+      <div class="tiny muted" style="margin-top:2px">${esc(r.kw)} · ${esc(r.agency)}</div></div><span class="chg">${dHtml(r.chg)}</span></div>`).join('');
+  $('list').innerHTML = html || '<div class="empty">검색 결과가 없어요</div>';
 }
-
-$('list').onclick = e => {
-  const el = e.target.closest('.item'); if (!el) return;
-  const i = +el.dataset.i;
-  if (slotOf.has(i)) slotOf.delete(i);
-  else {
-    const used = new Set(slotOf.values());
-    const free = COLORS.findIndex((_, k) => !used.has(k));
-    if (free < 0) return alert('최대 8개까지 선택할 수 있습니다.');
-    slotOf.set(i, free);
-  }
-  renderList(); renderChart();
-};
 $('q').oninput = renderList;
-$('as300').onchange = renderChart;
-$('clear').onclick = () => { slotOf.clear(); renderList(); renderChart(); };
+$('list').onclick = e => { const el = e.target.closest('.list-row'); if (el) openItem(+el.dataset.i, -1); };
 
-function renderChart() {
-  const as300 = $('as300').checked;
-  const datasets = [...slotOf.entries()].map(([i, s]) => ({
-    label: `${rows[i].name} (${rows[i].kw})`,
-    data: rows[i].vals.map(v => v === '-' ? (as300 ? NO_RANK : null) : v),
-    borderColor: COLORS[s], backgroundColor: COLORS[s],
-    borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, tension: 0, spanGaps: false,
-  }));
-  $('empty').style.display = datasets.length ? 'none' : 'flex';
-  if (chart) chart.destroy();
-  chart = new Chart($('cv'), {
-    type: 'line',
-    data: { labels: dates, datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false, animation: false,
-      interaction: { mode: 'index', intersect: false },
-      scales: {
-        y: { reverse: true, min: 1, title: { display: true, text: '순위' }, grid: { color: '#eef0f2' }, ticks: { precision: 0 } },
-        x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 12 } },
-      },
-      plugins: {
-        legend: { position: 'top', labels: { boxWidth: 12, boxHeight: 12, usePointStyle: true } },
-        tooltip: {
-          callbacks: {
-            label: c => {
-              const raw = rows[[...slotOf.keys()][c.datasetIndex]].vals[c.dataIndex];
-              return ` ${c.dataset.label}: ${raw === '-' ? '300위 밖' : raw + '위'}`;
-            },
-          },
-        },
-      },
-    },
-  });
+// seg = -1: 전체, k: k번째 시작일 ~ 다음 시작일 전날(마지막이면 끝까지)
+function openItem(i, seg) {
+  cur = { i, seg };
+  const r = rows[i];
+  const a = seg < 0 ? 0 : r.starts[seg];
+  const b = seg < 0 || seg === r.starts.length - 1 ? dates.length : r.starts[seg + 1];
+  const vals = r.vals.slice(a, b), labels = dates.slice(a, b);
+  const nums = vals.filter(v => typeof v === 'number');
+  const first = nums[0], last = vals.at(-1);
+  const marks = seg < 0 ? r.starts : [];
+
+  const segBtns = r.starts.length ? `<div class="seg"><button class="${seg < 0 ? 'on' : ''}" data-seg="-1">전체</button>${
+    r.starts.map((k, n) => `<button class="${seg === n ? 'on' : ''}" data-seg="${n}">${dates[k].replace('-', '/')} 시작</button>`).join('')}</div>` : '';
+
+  sheet(`<div class="row">${r.agency ? `<span class="tag">${esc(r.agency)}</span>` : ''}${r.status ? `<span class="tag">${esc(r.status)}</span>` : ''}<span class="grow"></span>
+      <button class="iconbtn" onclick="closeSheet()" title="닫기">✕</button></div>
+    <h2>${esc(r.name)}</h2><div class="muted small">${esc(r.kw)} · MID ${esc(r.mid)}${r.grade ? ' · ' + esc(r.grade) : ''}</div>
+    <div class="stats" style="margin:14px 0">${[
+      [first ?? '-', seg < 0 ? '처음' : '시작'],
+      [typeof last === 'number' ? last : '-', '마지막'],
+      [dHtml(first != null && typeof last === 'number' ? first - last : null), '변동'],
+      [nums.length ? Math.min(...nums) : '-', '최고'],
+    ].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+    ${segBtns}
+    <div class="card" style="box-shadow:none;border:1px solid var(--line);padding:12px 8px 6px;margin:0">${chart(vals, labels, marks)}</div>
+    <div class="tiny muted" style="margin-top:8px">${marks.length ? '<span style="color:var(--start)">●</span> 캠페인 시작일 · ' : ''}선이 끊긴 곳은 300위 밖이거나 체크되지 않은 날</div>`);
 }
 
-function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+function sheet(html) {
+  closeSheet();
+  const bd = document.createElement('div'); bd.className = 'bd'; bd.onclick = closeSheet;
+  const sh = document.createElement('div'); sh.className = 'sheet';
+  sh.innerHTML = '<div class="grab"></div>' + html;
+  sh.onclick = e => { const b = e.target.closest('[data-seg]'); if (b) openItem(cur.i, +b.dataset.seg); };
+  document.body.append(bd, sh);
+}
+function closeSheet() { document.querySelectorAll('.bd,.sheet').forEach(el => el.remove()); }
+document.addEventListener('keydown', e => e.key === 'Escape' && closeSheet());
+
+function chart(vals, labels, marks) {
+  const nn = vals.filter(v => typeof v === 'number');
+  if (!nn.length) return '<div class="empty">이 기간 순위 기록이 없어요</div>';
+  const lo = Math.min(...nn), hi = Math.max(...nn, lo + 1), n = vals.length;
+  const st = (W - P - 8) / Math.max(n - 1, 1);
+  const x = i => P + i * st, y = v => 10 + (v - lo) / (hi - lo) * (H - 34);
+  let path = '', pen = false;
+  vals.forEach((v, i) => { if (typeof v !== 'number') { pen = false; return; } path += (pen ? 'L' : 'M') + x(i).toFixed(1) + ',' + y(v).toFixed(1); pen = true; });
+  const last = vals.at(-1);
+  const xl = [...new Set([0, Math.floor((n - 1) / 2), n - 1])];
+  CH = { vals, labels, marks, lo, hi, st };
+  return `<div style="position:relative"><svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;touch-action:pan-y" onpointermove="chartTip(event,this)" onpointerleave="this.querySelector('.tip').style.display='none';this.nextElementSibling.hidden=true">
+    <g class="tip" style="display:none"><line y1="6" y2="${H - 22}" stroke="var(--line)" stroke-width="1.5"/><circle r="5" fill="var(--card)" stroke="var(--pri)" stroke-width="2.5"/></g>
+    ${[...new Set([lo, Math.round((lo + hi) / 2), hi])].map(v => `<line x1="${P}" x2="${W - 8}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${P - 6}" y="${y(v) + 4}" font-size="10" text-anchor="end" fill="var(--sub)">${v}위</text>`).join('')}
+    ${marks.map(k => `<line x1="${x(k)}" x2="${x(k)}" y1="6" y2="${H - 22}" stroke="var(--start)" stroke-dasharray="3 3"/><circle cx="${x(k)}" cy="8" r="4" fill="var(--start)"/>`).join('')}
+    <path d="${path}" fill="none" stroke="var(--pri)" stroke-width="2.2" stroke-linejoin="round"/>
+    ${typeof last === 'number' ? `<circle cx="${x(n - 1)}" cy="${y(last)}" r="4.5" fill="var(--pri)" stroke="var(--card)" stroke-width="2"/>` : ''}
+    ${xl.map((i, k) => `<text x="${x(i)}" y="${H - 4}" font-size="10" text-anchor="${xl.length === 1 ? 'middle' : k === 0 ? 'start' : k === xl.length - 1 ? 'end' : 'middle'}" fill="var(--sub)">${labels[i].replace('-', '/')}</text>`).join('')}
+  </svg><div class="ctip" hidden></div></div>`;
+}
+
+// 그래프 툴팁: 가리킨 날의 점 + 위에 작은 카드(날짜·순위·전날 대비·시작일 표시)
+let CH = null;
+function chartTip(e, svg) {
+  const { vals, labels, marks, lo, hi, st } = CH, b = svg.getBoundingClientRect();
+  const i = Math.max(0, Math.min(vals.length - 1, Math.round(((e.clientX - b.left) / b.width * W - P) / st)));
+  const v = vals[i], num = typeof v === 'number', xx = P + i * st, yy = num ? 10 + (v - lo) / (hi - lo) * (H - 34) : H - 22;
+  const g = svg.querySelector('.tip'), tip = svg.nextElementSibling; g.style.display = '';
+  const ln = g.querySelector('line'); ln.setAttribute('x1', xx); ln.setAttribute('x2', xx);
+  const c = g.querySelector('circle'); c.setAttribute('cx', xx); c.setAttribute('cy', yy); c.style.display = num ? '' : 'none';
+  const p = vals[i - 1];
+  tip.innerHTML = `<span class="tiny muted">${labels[i].replace('-', '/')}</span><b>${num ? v + '위' : v === '-' ? '300위 밖' : '기록 없음'}</b>${
+    i && num && typeof p === 'number' && p !== v ? (p > v ? `<span class="up">▲${p - v}</span>` : `<span class="down">▼${v - p}</span>`) : ''}${
+    marks.includes(i) ? '<div class="tiny" style="color:var(--start)">● 캠페인 시작</div>' : ''}`;
+  tip.hidden = false;
+  const px = xx / W * b.width, half = tip.offsetWidth / 2;
+  tip.style.left = Math.max(half, Math.min(b.width - half, px)) + 'px';
+  tip.style.top = yy / H * b.height + 'px';
+  tip.classList.toggle('below', yy < H * .35);
+}
 </script>
 </body>
 </html>
