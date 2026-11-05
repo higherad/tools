@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
-  /* 디자인: RankForMe 항목 상세 팝업(sheet·stats·chart) 그대로 */
+  /* 디자인: RankForMe 항목 상세 팝업(stats·chart) — 팝업 대신 오른쪽 패널에 표시 */
   :root { --bg:#f3f5f9; --card:#fff; --text:#131722; --sub:#6b7385; --line:#e5e8ef; --pri:#3b5bfd; --pri-soft:#edf0ff; --up:#e5383b; --down:#2f6fed; --start:#ff7a00;
     --shadow:0 1px 2px rgba(20,25,40,.06),0 4px 14px rgba(20,25,40,.05); }
   * { box-sizing:border-box; }
@@ -15,7 +15,15 @@
   html,body { margin:0; background:var(--bg); color:var(--text); font-family:Pretendard,-apple-system,system-ui,sans-serif; font-size:15px; letter-spacing:-.2px; }
   body { padding:20px 16px; }
   button { font:inherit; border:0; background:none; cursor:pointer; color:inherit; }
-  .wrap { max-width:760px; margin:0 auto; }
+  .wrap { max-width:1280px; margin:0 auto; }
+  .main { display:flex; gap:14px; align-items:flex-start; }
+  .main[hidden] { display:none !important; }
+  #listCard { width:340px; flex:none; margin:0; position:sticky; top:12px; max-height:calc(100vh - 24px); display:flex; flex-direction:column; }
+  #listCard .input { flex:none; }
+  #list { overflow-y:auto; margin:6px -16px 0; padding:0 16px; }
+  #detail { flex:1; min-width:0; margin:0; position:sticky; top:12px; }
+  #detail h2 { font-size:19px; margin:8px 0 4px; }
+  .list-row.sel { background:var(--pri-soft); margin:0 -10px; padding:11px 10px; border-radius:10px; border-bottom-color:transparent; }
   h1 { font-size:20px; margin:0 0 4px; }
   .muted { color:var(--sub); } .small { font-size:13px; } .tiny { font-size:12px; }
   .up { color:var(--up); font-weight:700; } .down { color:var(--down); font-weight:700; }
@@ -35,14 +43,6 @@
   .row { display:flex; align-items:center; gap:6px; }
   .grow { flex:1; }
 
-  .bd { position:fixed; inset:0; background:rgba(0,0,0,.42); z-index:50; animation:fade .2s; }
-  .sheet { position:fixed; left:0; right:0; bottom:0; z-index:51; background:var(--card); border-radius:22px 22px 0 0; max-height:90dvh; overflow:auto; padding:8px 18px 20px; animation:slide .25s cubic-bezier(.2,.8,.2,1); }
-  .sheet .grab { width:40px; height:5px; border-radius:3px; background:var(--line); margin:4px auto 12px; }
-  .sheet h2 { font-size:19px; margin:8px 0 4px; }
-  @media (min-width:700px) { .sheet { left:50%; right:auto; width:560px; transform:translateX(-50%); bottom:auto; top:50%; translate:0 -50%; border-radius:22px; animation:fade .2s; } }
-  @keyframes fade { from { opacity:0 } }
-  @keyframes slide { from { transform:translateY(100%) } }
-  .iconbtn { width:34px; height:34px; border-radius:10px; display:grid; place-items:center; color:var(--sub); font-size:18px; }
   .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; text-align:center; }
   .stats div { background:var(--bg); border-radius:12px; padding:10px 4px; }
   .stats b { display:block; font-size:20px; }
@@ -58,18 +58,21 @@
 <body>
 <div class="wrap">
   <h1>📈 순위 그래프</h1>
-  <div class="muted small" style="margin-bottom:14px">진행현황에서 받은 순위표 엑셀을 넣고 업체를 누르면 순위 그래프를 보여줍니다.</div>
+  <div class="muted small" style="margin-bottom:14px">진행현황에서 받은 순위표 엑셀을 넣고 업체를 고르면 오른쪽에 순위 그래프를 보여줍니다.</div>
   <div class="card drop" id="drop">순위표 파일(.xlsx)을 끌어다 놓거나 클릭해서 선택</div>
   <input type="file" id="file" accept=".xlsx,.xls" hidden>
-  <div class="card" id="listCard" hidden>
-    <input class="input" id="q" placeholder="업체명·키워드·MID·대행사 검색">
-    <div id="list" style="margin-top:6px"></div>
+  <div class="main" id="main" hidden>
+    <div class="card" id="listCard">
+      <input class="input" id="q" placeholder="업체명·키워드·MID·대행사 검색">
+      <div id="list"></div>
+    </div>
+    <div class="card" id="detail"></div>
   </div>
 </div>
 
 <script>
 const START_FILL = 'FFD966'; // higherad-rank 순위표가 캠페인 시작일 셀에 칠하는 색
-const W = 320, H = 150, P = 36;
+const W = 600, H = 260, P = 36;
 
 let rows = [], dates = [], cur = null; // cur = { row, seg }
 const $ = id => document.getElementById(id);
@@ -110,8 +113,10 @@ async function load(file) {
 
     drop.classList.add('small');
     drop.textContent = `${file.name} · ${rows.length}건 — 다른 파일로 바꾸려면 클릭`;
-    $('listCard').hidden = false;
+    $('main').hidden = false;
+    $('q').value = '';
     renderList();
+    openItem(0, -1);
   } catch (e) {
     alert(`파일을 읽지 못했습니다: ${e.message}`);
   }
@@ -122,7 +127,7 @@ const dHtml = d => typeof d !== 'number' || !d ? '<span class="muted">-</span>' 
 function renderList() {
   const q = $('q').value.trim().toLowerCase();
   const html = rows.map((r, i) => (q && !`${r.name} ${r.kw} ${r.mid} ${r.agency}`.toLowerCase().includes(q)) ? '' :
-    `<div class="list-row" data-i="${i}"><div class="grow"><div class="nm">${esc(r.name)}</div>
+    `<div class="list-row${cur && cur.i === i ? ' sel' : ''}" data-i="${i}"><div class="grow"><div class="nm">${esc(r.name)}</div>
       <div class="tiny muted" style="margin-top:2px">${esc(r.kw)} · ${esc(r.agency)}</div></div><span class="chg">${dHtml(r.chg)}</span></div>`).join('');
   $('list').innerHTML = html || '<div class="empty">검색 결과가 없어요</div>';
 }
@@ -143,8 +148,8 @@ function openItem(i, seg) {
   const segBtns = r.starts.length ? `<div class="seg"><button class="${seg < 0 ? 'on' : ''}" data-seg="-1">전체</button>${
     r.starts.map((k, n) => `<button class="${seg === n ? 'on' : ''}" data-seg="${n}">${dates[k].replace('-', '/')} 시작</button>`).join('')}</div>` : '';
 
-  sheet(`<div class="row">${r.agency ? `<span class="tag">${esc(r.agency)}</span>` : ''}${r.status ? `<span class="tag">${esc(r.status)}</span>` : ''}<span class="grow"></span>
-      <button class="iconbtn" onclick="closeSheet()" title="닫기">✕</button></div>
+  document.querySelectorAll('.list-row').forEach(el => el.classList.toggle('sel', +el.dataset.i === i));
+  $('detail').innerHTML = (`<div class="row">${r.agency ? `<span class="tag">${esc(r.agency)}</span>` : ''}${r.status ? `<span class="tag">${esc(r.status)}</span>` : ''}</div>
     <h2>${esc(r.name)}</h2><div class="muted small">${esc(r.kw)} · MID ${esc(r.mid)}${r.grade ? ' · ' + esc(r.grade) : ''}</div>
     <div class="stats" style="margin:14px 0">${[
       [first ?? '-', seg < 0 ? '처음' : '시작'],
@@ -157,16 +162,7 @@ function openItem(i, seg) {
     <div class="tiny muted" style="margin-top:8px">${marks.length ? '<span style="color:var(--start)">●</span> 캠페인 시작일 · ' : ''}선이 끊긴 곳은 300위 밖이거나 체크되지 않은 날</div>`);
 }
 
-function sheet(html) {
-  closeSheet();
-  const bd = document.createElement('div'); bd.className = 'bd'; bd.onclick = closeSheet;
-  const sh = document.createElement('div'); sh.className = 'sheet';
-  sh.innerHTML = '<div class="grab"></div>' + html;
-  sh.onclick = e => { const b = e.target.closest('[data-seg]'); if (b) openItem(cur.i, +b.dataset.seg); };
-  document.body.append(bd, sh);
-}
-function closeSheet() { document.querySelectorAll('.bd,.sheet').forEach(el => el.remove()); }
-document.addEventListener('keydown', e => e.key === 'Escape' && closeSheet());
+$('detail').onclick = e => { const b = e.target.closest('[data-seg]'); if (b) openItem(cur.i, +b.dataset.seg); };
 
 function chart(vals, labels, marks) {
   const nn = vals.filter(v => typeof v === 'number');
