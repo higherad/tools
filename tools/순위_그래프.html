@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>순위 그래프</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --border:#e3e5e8; --text:#202124; --muted:#80868b; --up:#d93025; --down:#1967d2; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:20px; font-family:'Pretendard',-apple-system,sans-serif; background:var(--bg); color:var(--text); }
+  .wrap { max-width:1400px; margin:0 auto; }
+  h1 { font-size:19px; margin:0 0 4px; }
+  .sub { font-size:12.5px; color:var(--muted); margin-bottom:16px; }
+  .drop { border:2px dashed #c4c7cc; border-radius:14px; background:var(--card); padding:28px; text-align:center; cursor:pointer; color:var(--muted); font-size:14px; }
+  .drop.over { border-color:#2a78d6; background:#eef5fd; color:var(--text); }
+  .drop.small { padding:10px; font-size:12.5px; }
+  .main { display:none; gap:14px; margin-top:14px; height:calc(100vh - 170px); min-height:480px; }
+  .main.on { display:flex; }
+  .side { width:330px; flex:none; background:var(--card); border:1px solid var(--border); border-radius:12px; display:flex; flex-direction:column; overflow:hidden; }
+  .side-top { padding:10px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:8px; }
+  .side-top input[type=text] { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:8px; font:inherit; font-size:13px; }
+  .side-top .row { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--muted); }
+  .side-top button { border:1px solid var(--border); background:#fff; border-radius:6px; padding:4px 8px; font:inherit; font-size:12px; cursor:pointer; }
+  .list { overflow-y:auto; flex:1; }
+  .item { display:flex; align-items:center; gap:8px; padding:7px 10px; border-bottom:1px solid #f1f2f4; cursor:pointer; font-size:12.5px; }
+  .item:hover { background:#f7f8fa; }
+  .item.sel { background:#eef5fd; }
+  .dot { width:10px; height:10px; border-radius:50%; flex:none; background:transparent; border:1px solid #ccc; }
+  .item .txt { flex:1; min-width:0; }
+  .item .nm { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .item .kw { color:var(--muted); font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .item .chg { font-weight:700; font-size:12px; min-width:42px; text-align:right; }
+  .up { color:var(--up); } .down { color:var(--down); }
+  .chart-box { flex:1; min-width:0; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; position:relative; }
+  .empty { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📈 순위 그래프</h1>
+  <div class="sub">진행현황에서 받은 순위표 엑셀을 넣으면 업체별 순위를 꺾은선으로 보여줍니다. 최대 8개까지 겹쳐 볼 수 있습니다.</div>
+  <div class="drop" id="drop">순위표 파일(.xlsx)을 끌어다 놓거나 클릭해서 선택</div>
+  <input type="file" id="file" accept=".xlsx,.xls" hidden>
+
+  <div class="main" id="main">
+    <div class="side">
+      <div class="side-top">
+        <input type="text" id="q" placeholder="업체명·키워드·MID 검색">
+        <div class="row">
+          <label><input type="checkbox" id="as300"> '-'를 300위로 표시</label>
+          <button id="clear">선택 해제</button>
+        </div>
+      </div>
+      <div class="list" id="list"></div>
+    </div>
+    <div class="chart-box">
+      <canvas id="cv"></canvas>
+      <div class="empty" id="empty">왼쪽에서 업체를 선택하세요</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 범주형 8색 고정 순서 — 선택된 업체가 빈 슬롯을 받고, 해제 전까지 같은 색 유지
+const COLORS = ['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#6250d6','#e34948'];
+const NO_RANK = 300;
+
+let rows = [], dates = [], chart = null;
+const slotOf = new Map(); // row index → color slot
+
+const $ = id => document.getElementById(id);
+const drop = $('drop'), fileIn = $('file');
+
+drop.onclick = () => fileIn.click();
+fileIn.onchange = () => fileIn.files[0] && load(fileIn.files[0]);
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); e.dataTransfer.files[0] && load(e.dataTransfer.files[0]); };
+
+async function load(file) {
+  try {
+    const wb = XLSX.read(await file.arrayBuffer());
+    const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: null });
+    const head = (aoa[0] || []).map(v => String(v ?? '').trim());
+    const col = name => head.indexOf(name);
+    const dateIdx = head.map((h, i) => /^\d{2}-\d{2}$/.test(h) ? i : -1).filter(i => i >= 0);
+    if (col('업체명') < 0 || !dateIdx.length) throw new Error('순위표 형식이 아닙니다');
+
+    dates = dateIdx.map(i => head[i]);
+    rows = aoa.slice(1).filter(r => r && r[col('업체명')] != null).map(r => ({
+      name: String(r[col('업체명')] ?? ''),
+      agency: String(r[col('대행사')] ?? ''),
+      kw: String(r[col('순위키워드')] ?? ''),
+      mid: String(r[col('MID')] ?? ''),
+      chg: col('비교') >= 0 ? r[col('비교')] : null,
+      // 숫자 = 순위, '-' = 300위 밖/미체크, 빈 칸 = 추적 전
+      vals: dateIdx.map(i => typeof r[i] === 'number' ? r[i] : (String(r[i] ?? '').trim() === '-' ? '-' : null)),
+    }));
+    if (!rows.length) throw new Error('데이터 행이 없습니다');
+
+    slotOf.clear();
+    slotOf.set(0, 0);
+    drop.classList.add('small');
+    drop.textContent = `${file.name} · ${rows.length}건 — 다른 파일로 바꾸려면 클릭`;
+    $('main').classList.add('on');
+    renderList(); renderChart();
+  } catch (e) {
+    alert(`파일을 읽지 못했습니다: ${e.message}`);
+  }
+}
+
+function renderList() {
+  const q = $('q').value.trim().toLowerCase();
+  $('list').innerHTML = rows.map((r, i) => {
+    if (q && !`${r.name} ${r.kw} ${r.mid} ${r.agency}`.toLowerCase().includes(q)) return '';
+    const s = slotOf.get(i);
+    const chg = typeof r.chg === 'number'
+      ? `<span class="chg ${r.chg > 0 ? 'up' : r.chg < 0 ? 'down' : ''}">${r.chg > 0 ? '▲' + r.chg : r.chg < 0 ? '▼' + -r.chg : '-'}</span>`
+      : '<span class="chg"></span>';
+    return `<div class="item${s != null ? ' sel' : ''}" data-i="${i}" title="${esc(r.agency)} · MID ${esc(r.mid)}">
+      <span class="dot" style="${s != null ? `background:${COLORS[s]};border-color:${COLORS[s]}` : ''}"></span>
+      <div class="txt"><div class="nm">${esc(r.name)}</div><div class="kw">${esc(r.kw)}</div></div>${chg}</div>`;
+  }).join('');
+}
+
+$('list').onclick = e => {
+  const el = e.target.closest('.item'); if (!el) return;
+  const i = +el.dataset.i;
+  if (slotOf.has(i)) slotOf.delete(i);
+  else {
+    const used = new Set(slotOf.values());
+    const free = COLORS.findIndex((_, k) => !used.has(k));
+    if (free < 0) return alert('최대 8개까지 선택할 수 있습니다.');
+    slotOf.set(i, free);
+  }
+  renderList(); renderChart();
+};
+$('q').oninput = renderList;
+$('as300').onchange = renderChart;
+$('clear').onclick = () => { slotOf.clear(); renderList(); renderChart(); };
+
+function renderChart() {
+  const as300 = $('as300').checked;
+  const datasets = [...slotOf.entries()].map(([i, s]) => ({
+    label: `${rows[i].name} (${rows[i].kw})`,
+    data: rows[i].vals.map(v => v === '-' ? (as300 ? NO_RANK : null) : v),
+    borderColor: COLORS[s], backgroundColor: COLORS[s],
+    borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, tension: 0, spanGaps: false,
+  }));
+  $('empty').style.display = datasets.length ? 'none' : 'flex';
+  if (chart) chart.destroy();
+  chart = new Chart($('cv'), {
+    type: 'line',
+    data: { labels: dates, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        y: { reverse: true, min: 1, title: { display: true, text: '순위' }, grid: { color: '#eef0f2' }, ticks: { precision: 0 } },
+        x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 12 } },
+      },
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 12, boxHeight: 12, usePointStyle: true } },
+        tooltip: {
+          callbacks: {
+            label: c => {
+              const raw = rows[[...slotOf.keys()][c.datasetIndex]].vals[c.dataIndex];
+              return ` ${c.dataset.label}: ${raw === '-' ? '300위 밖' : raw + '위'}`;
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+</script>
+</body>
+</html>
