@@ -1,6 +1,5 @@
 [
   { "file": "tools/순위_그래프.html",           "label": "📈 순위 그래프",           "addedAt": "2026-11-05", "updatedAt": "2026-11-05" },
-  { "file": "tools/영업점_순위_비교.html",      "label": "📊 영업점 순위 비교",      "addedAt": "2026-03-17", "updatedAt": "2026-06-02" },
   { "file": "tools/10위_이내_키워드.html",       "label": "🔍 10위 이내 키워드",       "addedAt": "2026-03-05", "updatedAt": "2026-06-02" },
   { "file": "tools/미션_진행_상황판.html",       "label": "📒 미션 진행 상황판",       "addedAt": "2026-03-06", "updatedAt": "2026-05-06" },
   { "file": "tools/키워드_쉼표_병합기.html",     "label": "⚡ 키워드 쉼표 병합기",     "addedAt": "2026-03-05", "updatedAt": "2026-06-02" },
