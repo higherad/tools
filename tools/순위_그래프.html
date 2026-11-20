@@ -71,7 +71,7 @@
 </div>
 
 <script>
-const START_FILL = 'FFD966'; // higherad-rank 순위표가 캠페인 시작일 셀에 칠하는 색
+const START_FILL = 'C6E0B4'; // higherad-rank 순위표가 캠페인 시작일 셀에 칠하는 색
 const W = 600, H = 260, P = 36;
 
 let rows = [], dates = [], cur = null; // cur = { row, seg }
@@ -106,7 +106,7 @@ async function load(file) {
       chg: col('비교') >= 0 ? r[col('비교')] : null,
       // 숫자 = 순위, '-' = 300위 밖/미체크, null = 추적 전
       vals: dateIdx.map(i => typeof r[i] === 'number' ? r[i] : (String(r[i] ?? '').trim() === '-' ? '-' : null)),
-      // 시작일 = 노란 배경 셀의 날짜 열 위치
+      // 시작일 = 연두 배경 셀의 날짜 열 위치
       starts: dateIdx.map((ci, k) => (ws[XLSX.utils.encode_cell({ r: ri, c: ci })]?.s?.fgColor?.rgb || '').toUpperCase().endsWith(START_FILL) ? k : -1).filter(k => k >= 0),
     }));
     if (!rows.length) throw new Error('데이터 행이 없습니다');
